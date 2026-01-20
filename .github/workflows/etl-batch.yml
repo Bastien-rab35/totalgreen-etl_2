@@ -1,0 +1,55 @@
+name: Pipeline ETL - Mode BATCH
+
+on:
+  schedule:
+    # Collecte Data Lake: toutes les heures
+    - cron: '0 * * * *'
+  
+  workflow_dispatch:
+
+jobs:
+  # Job 1: Collecte horaire (Data Lake seulement)
+  collect-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Collect to Data Lake only
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          AQICN_API_KEY: ${{ secrets.AQICN_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd src
+          python etl_batch.py
+  
+  # Job 2: Traitement batch (1×/jour à minuit)
+  process-batch:
+    runs-on: ubuntu-latest
+    # S'exécute seulement à minuit UTC
+    if: github.event.schedule == '0 0 * * *' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Process batch from Data Lake
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          cd src
+          python etl_batch.py --batch

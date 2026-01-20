@@ -1,0 +1,48 @@
+name: Pipeline ETL Automatique
+
+on:
+  schedule:
+    # Toutes les heures (entre 6h et 23h UTC pour économiser les minutes)
+    - cron: '0 6-23 * * *'
+  
+  # Permet d'exécuter manuellement depuis GitHub
+  workflow_dispatch:
+
+jobs:
+  run-etl:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Run ETL Pipeline
+        env:
+          OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+          AQICN_API_KEY: ${{ secrets.AQICN_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          AWS_REGION: eu-west-3
+          COLLECTION_INTERVAL: 60
+        run: |
+          cd src
+          python etl_pipeline.py
+      
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: etl-logs-${{ github.run_number }}
+          path: logs/
+          retention-days: 7
