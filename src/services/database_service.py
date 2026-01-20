@@ -94,6 +94,28 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Erreur log ETL: {e}")
     
+    def insert_measure_direct(self, measure: Dict) -> bool:
+        """
+        Insère directement une mesure (utilisé par le pipeline de transformation)
+        
+        Args:
+            measure: Dictionnaire contenant les données de la mesure
+            
+        Returns:
+            True si succès, False sinon
+        """
+        try:
+            # Nettoyage des valeurs None
+            measure = {k: v for k, v in measure.items() if v is not None}
+            
+            response = self.client.table('measures').insert(measure).execute()
+            logger.info(f"Mesure insérée pour city_id={measure.get('city_id')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'insertion de la mesure: {e}")
+            return False
+    
     def get_latest_measures(self, city_id: int, limit: int = 10) -> List[Dict]:
         """Récupère les dernières mesures"""
         try:
