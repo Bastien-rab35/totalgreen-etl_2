@@ -2,11 +2,11 @@
 
 Projet de surveillance environnementale pour les 10 plus grandes villes métropolitaines françaises.
 
-## 📋 Vue d'ensemble
+##  Vue d'ensemble
 
 Ce projet collecte automatiquement des données météorologiques (OpenWeather) et de qualité de l'air (AQICN) pour 10 villes françaises, avec stockage sécurisé dans Supabase (PostgreSQL) en conformité RGPD.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 MSPR 1/
@@ -31,7 +31,7 @@ MSPR 1/
 └── README.md                 # Cette documentation
 ```
 
-## 🚀 Installation
+## Installation
 
 ### 1. Prérequis
 
@@ -80,7 +80,7 @@ Dans Supabase, exécutez les scripts SQL dans l'ordre :
 \i sql/insert_cities.sql
 ```
 
-## 🧪 Tests
+## Tests
 
 Avant la première exécution, testez les connexions :
 
@@ -96,7 +96,7 @@ Vérifications effectuées :
 - ✓ Connexion à Supabase
 - ✓ Estimation des quotas (240/1000 appels/jour)
 
-## ▶️ Utilisation
+## Utilisation
 
 ### Exécution manuelle (ponctuelle)
 
@@ -202,27 +202,27 @@ ORDER BY execution_time DESC
 LIMIT 10;
 ```
 
-## 📦 Livrables du projet
+## Livrables du projet
 
 ### Phase 1 : Initialisation & Audit
-- ✅ Rapport d'audit de données
-- ✅ Matrice de correspondance API
-- ✅ Validation des quotas (240/1000)
+- Rapport d'audit de données
+- Matrice de correspondance API
+- Validation des quotas (240/1000)
 
 ### Phase 2 : Modélisation & Ingestion
-- ✅ Schéma SQL (DDL)
-- ✅ Pipeline ETL Python fonctionnel
+- Schéma SQL (DDL)
+- Pipeline ETL Python fonctionnel
 
 ### Phase 3 : Automatisation & Sécurité
-- ✅ Système de collecte horaire automatisé
-- ✅ Rapport de conformité RGPD
-- ✅ Logs de monitoring
+- Système de collecte horaire automatisé
+- Rapport de conformité RGPD
+- Logs de monitoring
 
 ### Phase 4 : Restitution
-- 🔄 Dashboards de visualisation (à venir)
-- 🔄 Export pour analyse R/Excel (à venir)
+- Dashboards de visualisation (à venir)
+- Export pour analyse R/Excel (à venir)
 
-## 🐛 Dépannage
+## Dépannage
 
 ### Erreur de connexion Supabase
 - Vérifiez `SUPABASE_URL` et `SUPABASE_KEY` dans `.env`
@@ -235,7 +235,7 @@ LIMIT 10;
 ### Aucune ville dans le référentiel
 - Exécutez `sql/insert_cities.sql` dans Supabase
 
-## 👥 Support
+## Support
 
 Pour toute question, consultez la documentation du projet ou contactez l'équipe TotalGreen.
 
