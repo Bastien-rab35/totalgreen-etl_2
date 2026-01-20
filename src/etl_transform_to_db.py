@@ -86,7 +86,7 @@ class TransformToDB:
             # Pour combiner météo + AQI, il faut grouper par city_id + timestamp
             measure = {
                 'city_id': city_id,
-                'measured_at': parsed_data.get('measured_at') or datetime.utcnow().isoformat()
+                'captured_at': datetime.utcnow().isoformat()
             }
             
             if source == 'openweather':

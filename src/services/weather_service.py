@@ -60,3 +60,7 @@ class WeatherService:
             'weather_main': weather.get('main'),
             'weather_description': weather.get('description')
         }
+    
+    def parse_weather_data(self, raw_data: Dict) -> Dict:
+        """Méthode publique pour parser depuis Data Lake"""
+        return self._parse_weather_data(raw_data)

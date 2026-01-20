@@ -55,3 +55,7 @@ class AirQualityService:
         if attributions:
             return attributions[0].get('name')
         return data.get('city', {}).get('name')
+    
+    def parse_air_quality_data(self, raw_data: Dict) -> Dict:
+        """Méthode publique pour parser depuis Data Lake"""
+        return self._parse_aqi_data(raw_data)
