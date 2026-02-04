@@ -3,6 +3,7 @@ Service de collecte des données de qualité de l'air depuis AQICN API
 """
 import requests
 import logging
+from datetime import datetime
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -59,3 +60,12 @@ class AirQualityService:
     def parse_air_quality_data(self, raw_data: Dict) -> Dict:
         """Méthode publique pour parser depuis Data Lake"""
         return self._parse_aqi_data(raw_data)
+    
+    def get_timestamp(self, raw_data: Dict) -> Optional[datetime]:
+        """Extrait le timestamp de l'API (moment réel de la mesure)"""
+        data = raw_data.get('data', {})
+        time_data = data.get('time', {})
+        timestamp = time_data.get('v')  # Unix timestamp
+        if timestamp:
+            return datetime.fromtimestamp(timestamp)
+        return None

@@ -61,6 +61,13 @@ class WeatherService:
             'weather_description': weather.get('description')
         }
     
+    def get_timestamp(self, raw_data: Dict) -> Optional[datetime]:
+        """Extrait le timestamp de l'API (moment réel de la mesure)"""
+        timestamp = raw_data.get('dt')
+        if timestamp:
+            return datetime.fromtimestamp(timestamp)
+        return None
+    
     def parse_weather_data(self, raw_data: Dict) -> Dict:
         """Méthode publique pour parser depuis Data Lake"""
         return self._parse_weather_data(raw_data)

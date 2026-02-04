@@ -84,9 +84,10 @@ class TransformToDB:
             # Charger dans la BDD
             # Note: Cette version charge source par source
             # Pour combiner météo + AQI, il faut grouper par city_id + timestamp
+            # Utiliser le timestamp du data lake (celui de l'API)
             measure = {
                 'city_id': city_id,
-                'captured_at': datetime.utcnow().isoformat()
+                'captured_at': raw_entry.get('collected_at', datetime.utcnow().isoformat())
             }
             
             if source == 'openweather':

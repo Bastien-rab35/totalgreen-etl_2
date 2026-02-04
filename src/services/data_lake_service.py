@@ -29,15 +29,18 @@ class DataLakeService:
             raise
     
     def store_raw_data(self, city_id: int, city_name: str, source: str, 
-                       raw_data: Dict) -> Optional[int]:
+                       raw_data: Dict, collected_at: Optional[datetime] = None) -> Optional[int]:
         """Stocke les données brutes JSON dans le data lake"""
         try:
+            # Utilise le timestamp de l'API si fourni, sinon le moment actuel
+            timestamp = collected_at if collected_at else datetime.utcnow()
+            
             entry = {
                 'city_id': city_id,
                 'city_name': city_name,
                 'source': source,
                 'raw_data': raw_data,
-                'collected_at': datetime.utcnow().isoformat(),
+                'collected_at': timestamp.isoformat(),
                 'processed': False
             }
             

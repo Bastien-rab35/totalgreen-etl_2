@@ -71,8 +71,10 @@ class ExtractToLake:
             # 1. Extraction Météo
             weather_data = self.weather_service.fetch_weather_data(city_name)
             if weather_data and weather_data.get('raw'):
+                # Extraire le timestamp réel de l'API
+                weather_timestamp = self.weather_service.get_timestamp(weather_data['raw'])
                 raw_weather_id = self.data_lake_service.store_raw_data(
-                    city_id, city_name, 'openweather', weather_data['raw']
+                    city_id, city_name, 'openweather', weather_data['raw'], weather_timestamp
                 )
                 if raw_weather_id:
                     logger.info(f"✓ Météo {city_name} → Data Lake (ID: {raw_weather_id})")
@@ -81,8 +83,10 @@ class ExtractToLake:
             # 2. Extraction Qualité de l'air
             aqi_data = self.air_quality_service.fetch_air_quality_data(city_name)
             if aqi_data and aqi_data.get('raw'):
+                # Extraire le timestamp réel de l'API
+                aqi_timestamp = self.air_quality_service.get_timestamp(aqi_data['raw'])
                 raw_aqi_id = self.data_lake_service.store_raw_data(
-                    city_id, city_name, 'aqicn', aqi_data['raw']
+                    city_id, city_name, 'aqicn', aqi_data['raw'], aqi_timestamp
                 )
                 if raw_aqi_id:
                     logger.info(f"✓ AQI {city_name} → Data Lake (ID: {raw_aqi_id})")

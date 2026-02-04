@@ -20,7 +20,11 @@ class DatabaseService:
             supabase_key: Clé d'API de service
         """
         try:
-            self.client: Client = create_client(supabase_url, supabase_key)
+            # Compatibilité avec supabase-py 2.x
+            self.client: Client = create_client(
+                supabase_url=supabase_url,
+                supabase_key=supabase_key
+            )
             logger.info("Connexion à Supabase établie")
         except Exception as e:
             logger.error(f"Erreur de connexion à Supabase: {e}")
