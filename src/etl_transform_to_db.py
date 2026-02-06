@@ -92,19 +92,32 @@ class TransformToDB:
             
             if source == 'openweather':
                 measure.update({
-                    'temperature': parsed_data.get('temperature'),
+                    'temp': parsed_data.get('temp'),
                     'feels_like': parsed_data.get('feels_like'),
                     'humidity': parsed_data.get('humidity'),
                     'pressure': parsed_data.get('pressure'),
                     'wind_speed': parsed_data.get('wind_speed'),
-                    'weather_description': parsed_data.get('description'),
+                    'wind_deg': parsed_data.get('wind_deg'),
+                    'wind_gust': parsed_data.get('wind_gust'),
+                    'clouds': parsed_data.get('clouds'),
+                    'visibility': parsed_data.get('visibility'),
+                    'rain_1h': parsed_data.get('rain_1h'),
+                    'snow_1h': parsed_data.get('snow_1h'),
+                    'weather_id': parsed_data.get('weather_id'),
+                    'weather_main': parsed_data.get('weather_main'),
+                    'weather_description': parsed_data.get('weather_description'),
                     'raw_weather_id': lake_id
                 })
             elif source == 'aqicn':
                 measure.update({
-                    'aqi': parsed_data.get('aqi'),
+                    'aqi_index': parsed_data.get('aqi_index'),
                     'pm25': parsed_data.get('pm25'),
                     'pm10': parsed_data.get('pm10'),
+                    'no2': parsed_data.get('no2'),
+                    'o3': parsed_data.get('o3'),
+                    'so2': parsed_data.get('so2'),
+                    'co': parsed_data.get('co'),
+                    'station_attribution': parsed_data.get('station_attribution'),
                     'raw_aqi_id': lake_id
                 })
             
