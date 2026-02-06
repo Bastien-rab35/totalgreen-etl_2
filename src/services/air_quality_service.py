@@ -39,14 +39,26 @@ class AirQualityService:
         data = raw_data.get('data', {})
         iaqi = data.get('iaqi', {})
         
+        # Helper pour convertir les valeurs (gérer "-" et autres cas)
+        def safe_value(val):
+            if val is None or val == "-" or val == "":
+                return None
+            try:
+                return float(val) if isinstance(val, (int, float)) else None
+            except (ValueError, TypeError):
+                return None
+        
+        aqi_raw = data.get('aqi')
+        aqi_value = safe_value(aqi_raw) if aqi_raw != "-" else None
+        
         return {
-            'aqi_index': data.get('aqi'),
-            'pm25': iaqi.get('pm25', {}).get('v'),
-            'pm10': iaqi.get('pm10', {}).get('v'),
-            'no2': iaqi.get('no2', {}).get('v'),
-            'o3': iaqi.get('o3', {}).get('v'),
-            'so2': iaqi.get('so2', {}).get('v'),
-            'co': iaqi.get('co', {}).get('v'),
+            'aqi_index': int(aqi_value) if aqi_value is not None else None,
+            'pm25': safe_value(iaqi.get('pm25', {}).get('v')),
+            'pm10': safe_value(iaqi.get('pm10', {}).get('v')),
+            'no2': safe_value(iaqi.get('no2', {}).get('v')),
+            'o3': safe_value(iaqi.get('o3', {}).get('v')),
+            'so2': safe_value(iaqi.get('so2', {}).get('v')),
+            'co': safe_value(iaqi.get('co', {}).get('v')),
             'station_attribution': self._get_attribution(data)
         }
     

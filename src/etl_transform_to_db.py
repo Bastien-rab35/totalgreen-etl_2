@@ -136,11 +136,119 @@ class TransformToDB:
             logger.error(f"Erreur transformation: {e}")
             return False
     
+    def group_by_city_and_time(self, data_list: list) -> dict:
+        """Groupe les entrées data lake par (city_id, timestamp arrondi à l'heure)"""
+        from collections import defaultdict
+        
+        grouped = defaultdict(lambda: {'weather': None, 'aqi': None})
+        
+        for entry in data_list:
+            city_id = entry['city_id']
+            # Arrondir le timestamp à l'heure
+            timestamp_str = entry.get('collected_at', '')
+            if timestamp_str:
+                # Extraire l'heure (YYYY-MM-DD HH:00:00)
+                dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
+                hour_key = dt.replace(minute=0, second=0, microsecond=0).isoformat()
+            else:
+                hour_key = datetime.utcnow().replace(minute=0, second=0, microsecond=0).isoformat()
+            
+            key = (city_id, hour_key)
+            
+            if entry['source'] == 'openweather':
+                grouped[key]['weather'] = entry
+            elif entry['source'] == 'aqicn':
+                grouped[key]['aqi'] = entry
+        
+        return grouped
+    
+    def transform_and_load_combined(self, weather_entry: dict, aqi_entry: dict) -> bool:
+        """Transforme et charge une mesure combinée météo + AQI"""
+        try:
+            # Utiliser weather comme base (toujours présent en priorité)
+            base_entry = weather_entry if weather_entry else aqi_entry
+            city_id = base_entry['city_id']
+            city_name = base_entry['city_name']
+            captured_at = base_entry.get('collected_at', datetime.utcnow().isoformat())
+            
+            logger.info(f"Transformation combinée - {city_name} @ {captured_at[:19]}")
+            
+            # Créer la measure de base
+            measure = {
+                'city_id': city_id,
+                'captured_at': captured_at
+            }
+            
+            # Ajouter les données météo si disponibles
+            if weather_entry:
+                raw_data = weather_entry['raw_data']
+                parsed = self.weather_service.parse_weather_data(raw_data)
+                if parsed:
+                    measure.update({
+                        'temp': parsed.get('temp'),
+                        'feels_like': parsed.get('feels_like'),
+                        'humidity': parsed.get('humidity'),
+                        'pressure': parsed.get('pressure'),
+                        'wind_speed': parsed.get('wind_speed'),
+                        'wind_deg': parsed.get('wind_deg'),
+                        'wind_gust': parsed.get('wind_gust'),
+                        'clouds': parsed.get('clouds'),
+                        'visibility': parsed.get('visibility'),
+                        'rain_1h': parsed.get('rain_1h'),
+                        'snow_1h': parsed.get('snow_1h'),
+                        'weather_id': parsed.get('weather_id'),
+                        'weather_main': parsed.get('weather_main'),
+                        'weather_description': parsed.get('weather_description'),
+                        'raw_weather_id': weather_entry['id']
+                    })
+            
+            # Ajouter les données AQI si disponibles
+            if aqi_entry:
+                raw_data = aqi_entry['raw_data']
+                parsed = self.air_quality_service.parse_air_quality_data(raw_data)
+                if parsed:
+                    measure.update({
+                        'aqi_index': parsed.get('aqi_index'),
+                        'pm25': parsed.get('pm25'),
+                        'pm10': parsed.get('pm10'),
+                        'no2': parsed.get('no2'),
+                        'o3': parsed.get('o3'),
+                        'so2': parsed.get('so2'),
+                        'co': parsed.get('co'),
+                        'station_attribution': parsed.get('station_attribution'),
+                        'raw_aqi_id': aqi_entry['id']
+                    })
+            
+            # Insérer dans la BDD
+            success = self.db_service.insert_measure_direct(measure)
+            
+            if success:
+                # Marquer toutes les entrées comme traitées
+                if weather_entry:
+                    self.data_lake_service.mark_as_processed(weather_entry['id'])
+                if aqi_entry:
+                    self.data_lake_service.mark_as_processed(aqi_entry['id'])
+                
+                sources = []
+                if weather_entry: sources.append('weather')
+                if aqi_entry: sources.append('aqi')
+                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → BDD")
+                return True
+            else:
+                logger.error(f"✗ Échec insertion {city_name}")
+                return False
+            
+        except Exception as e:
+            logger.error(f"Erreur transformation combinée: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
     def run(self, batch_size: int = 100) -> dict:
-        """Traite les données non traitées du Data Lake"""
+        """Traite les données non traitées du Data Lake en combinant météo + AQI"""
         start_time = time.time()
         logger.info("="*60)
-        logger.info(f"TRANSFORM → BDD - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        logger.info(f"TRANSFORM COMBINÉ → BDD - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("="*60)
         
         # Récupérer les données non traitées
@@ -152,18 +260,30 @@ class TransformToDB:
         
         logger.info(f"{len(unprocessed_data)} entrées à traiter")
         
+        # Grouper par (city_id, timestamp)
+        grouped = self.group_by_city_and_time(unprocessed_data)
+        logger.info(f"{len(grouped)} mesures combinées à créer")
+        
         success_count = 0
-        for entry in unprocessed_data:
-            if self.transform_and_load(entry):
+        processed_entries = 0
+        
+        for (city_id, timestamp), data in grouped.items():
+            weather = data['weather']
+            aqi = data['aqi']
+            
+            if self.transform_and_load_combined(weather, aqi):
                 success_count += 1
+                if weather: processed_entries += 1
+                if aqi: processed_entries += 1
         
         # Stats
         duration = time.time() - start_time
-        error_count = len(unprocessed_data) - success_count
+        error_count = len(grouped) - success_count
         stats = {
             'success': success_count,
             'errors': error_count,
-            'total': len(unprocessed_data),
+            'total': len(grouped),
+            'processed_entries': processed_entries,
             'duration': round(duration, 2)
         }
         
@@ -178,7 +298,7 @@ class TransformToDB:
         )
         
         logger.info("="*60)
-        logger.info(f"Transformation terminée - {success_count}/{len(unprocessed_data)} - {duration:.2f}s")
+        logger.info(f"Transformation terminée - {success_count} measures combinées ({processed_entries} entrées) - {duration:.2f}s")
         logger.info("="*60)
         
         return stats
