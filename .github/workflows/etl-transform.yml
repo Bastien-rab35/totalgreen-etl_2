@@ -1,9 +1,9 @@
-name: 2️⃣ Transform vers BDD (1x par jour)
+name: 2️⃣ Transform vers BDD (Toutes les heures)
 
 on:
   schedule:
-    # Tous les jours à 23h UTC (0h heure française)
-    - cron: '0 23 * * *'
+    # Toutes les heures, 24h/24
+    - cron: '0 * * * *'
   workflow_dispatch:  # Permet l'exécution manuelle
 
 jobs:
