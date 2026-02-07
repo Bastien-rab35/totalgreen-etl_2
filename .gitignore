@@ -1,8 +1,3 @@
-# Fichiers sensibles
-.env
-.env.local
-*.key
-
 # Python
 __pycache__/
 *.py[cod]
@@ -12,7 +7,9 @@ __pycache__/
 venv/
 env/
 ENV/
-.venv
+
+# Environment
+.env
 
 # IDE
 .vscode/
@@ -21,13 +18,13 @@ ENV/
 *.swo
 
 # Logs
-logs/
-*.log
-
-# Données temporaires
-data/temp/
-*.tmp
+logs/*.log
+!logs/.gitkeep
 
 # OS
 .DS_Store
 Thumbs.db
+
+# Data
+*.sqlite
+*.db

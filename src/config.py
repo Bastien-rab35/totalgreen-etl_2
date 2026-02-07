@@ -15,9 +15,6 @@ class Config:
     SUPABASE_URL = os.getenv('SUPABASE_URL')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY')
     
-    # Région (RGPD)
-    AWS_REGION = os.getenv('AWS_REGION', 'eu-central-1')
-    
     # Collecte
     COLLECTION_INTERVAL = int(os.getenv('COLLECTION_INTERVAL', 60))
     

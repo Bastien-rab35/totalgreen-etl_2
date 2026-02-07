@@ -22,9 +22,9 @@ MSPR 1/
 │   │   ├── air_quality_service.py  # API AQICN
 │   │   └── database_service.py     # Supabase
 │   ├── config.py             # Configuration centralisée
-│   ├── etl_pipeline.py       # Pipeline ETL principal
-│   ├── scheduler.py          # Automatisation horaire
-│   └── test_connections.py   # Tests de validation
+│   ├── etl_extract_to_lake.py    # Pipeline 1: Extract → Data Lake
+│   ├── etl_transform_to_db.py    # Pipeline 2: Transform → BDD
+│   └── etl_pipeline.py           # [DEPRECATED] Ancien pipeline monolithique
 ├── .env                       # Variables d'environnement (SECRET)
 ├── .env.example              # Exemple de configuration
 ├── requirements.txt          # Dépendances Python
@@ -65,7 +65,7 @@ OPENWEATHER_API_KEY=votre_clé_openweather
 AQICN_API_KEY=votre_clé_aqicn
 SUPABASE_URL=https://votre-projet.supabase.co
 SUPABASE_KEY=votre_clé_service
-AWS_REGION=eu-central-1
+COLLECTION_INTERVAL=60
 ```
 
 ### 4. Configuration de la base de données
@@ -82,19 +82,15 @@ Dans Supabase, exécutez les scripts SQL dans l'ordre :
 
 ## Tests
 
-Avant la première exécution, testez les connexions :
+Vérifiez le statut du système :
 
 ```bash
-cd src
-python test_connections.py
-```
+# Vérifier l'état de la base de données
+python scripts/check_bdd_status.py
 
-Vérifications effectuées :
-- ✓ Validation de la configuration
-- ✓ Connexion à l'API OpenWeather
-- ✓ Connexion à l'API AQICN
-- ✓ Connexion à Supabase
-- ✓ Estimation des quotas (240/1000 appels/jour)
+# Vérifier le data lake
+python scripts/check_data_lake.py
+```
 
 ## Utilisation
 
@@ -102,30 +98,29 @@ Vérifications effectuées :
 
 ```bash
 cd src
-python etl_pipeline.py
-```
+pyth⚠️ Architecture actuelle : GitHub Actions
 
-### Exécution automatisée (horaire)
+Le projet utilise **2 pipelines automatisés** via GitHub Actions :
 
-```bash
-cd src
-python scheduler.py
-```
+1. **Extract Pipeline** (`.github/workflows/etl-extract.yml`)
+   - Collecte des APIs → Data Lake (JSONB)
+   - Fréquence : Toutes les heures (`0 * * * *`)
+   
+2. **Transform Pipeline** (`.github/workflows/etl-transform.yml`)
+   - Data Lake → Base de données normalisée
+   - Fréquence : Toutes les heures (`0 * * * *`)
 
-Le scheduler :
-- Exécute le pipeline immédiatement au démarrage
-- Répète toutes les 60 minutes (configurable dans `.env`)
-- Enregistre tous les événements dans `logs/`
-
-### Arrêt du scheduler
+### Exécution manuelle (tests)
 
 ```bash
-Ctrl+C
+# Pipeline Extract
+cd src && python etl_extract_to_lake.py
+
+# Pipeline Transform
+cd src && python etl_transform_to_db.py
 ```
 
-## 📊 Structure de la base de données
-
-### Table `cities`
+Voir [ARCHITECTURE_2_PIPELINES.md](ARCHITECTURE_2_PIPELINES.md) pour plus de détails. Table `cities`
 - Référentiel des 10 villes
 - Coordonnées GPS (latitude, longitude)
 - Timezone
