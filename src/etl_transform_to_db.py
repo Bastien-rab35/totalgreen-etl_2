@@ -139,11 +139,15 @@ class TransformToDB:
     def group_by_city_and_time(self, data_list: list) -> dict:
         """Groupe les entrées data lake par (city_id, timestamp arrondi à l'heure)
         
-        IMPORTANT: Traite aussi les entrées orphelines après 2h d'attente
+        STRATÉGIE ANTI-PERTE:
+        1. Groupe weather+AQI par (city_id, heure) pour fusion optimale
+        2. Traite AUSSI les entrées orphelines (>2h d'âge) SEULES pour ne rien perdre
+        3. Garantit 0% de perte de données même si une API est en panne
         """
         from collections import defaultdict
         
         grouped = defaultdict(lambda: {'weather': None, 'aqi': None})
+        orphans = []  # Entrées orphelines à traiter immédiatement
         now = datetime.utcnow()
         
         for entry in data_list:
@@ -155,27 +159,50 @@ class TransformToDB:
                 dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                 hour_key = dt.replace(minute=0, second=0, microsecond=0).isoformat()
                 
-                # Vérifier si l'entrée est trop vieille (>2h sans paire)
+                # Calculer l'âge de l'entrée
                 age_hours = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
             else:
                 hour_key = now.replace(minute=0, second=0, microsecond=0).isoformat()
                 age_hours = 0
             
-            key = (city_id, hour_key)
-            
-            if entry['source'] == 'openweather':
-                if grouped[key]['weather'] is None:
-                    grouped[key]['weather'] = entry
-            elif entry['source'] == 'aqicn':
-                if grouped[key]['aqi'] is None:
-                    grouped[key]['aqi'] = entry
+            # STRATÉGIE: Si entrée > 2h, traiter IMMÉDIATEMENT même seule
+            # Sinon, grouper normalement pour tenter fusion
+            if age_hours > 2:
+                # Entrée orpheline : trop vieille, traiter maintenant
+                orphan_key = (city_id, hour_key, entry['id'])  # Clé unique pour éviter collision
+                if entry['source'] == 'openweather':
+                    grouped[orphan_key] = {'weather': entry, 'aqi': None}
+                else:
+                    grouped[orphan_key] = {'weather': None, 'aqi': entry}
+                orphans.append(orphan_key)
+                logger.warning(f"⏰ Entrée orpheline détectée (âge: {age_hours:.1f}h) - City {city_id} @ {hour_key[:19]} [{entry['source']}] → traitement immédiat")
+            else:
+                # Entrée récente : grouper normalement
+                key = (city_id, hour_key)
+                
+                if entry['source'] == 'openweather':
+                    if grouped[key]['weather'] is None:
+                        grouped[key]['weather'] = entry
+                elif entry['source'] == 'aqicn':
+                    if grouped[key]['aqi'] is None:
+                        grouped[key]['aqi'] = entry
         
-        # Log des mesures incomplètes
+        # Log des mesures incomplètes (normales, pas orphelines)
         for key, data in grouped.items():
-            if data['weather'] is None or data['aqi'] is None:
-                city_id, timestamp = key
-                missing = 'weather' if data['weather'] is None else 'aqi'
-                logger.warning(f"Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}")
+            if key not in orphans:  # Ne pas logger les orphelines (déjà loggées)
+                if data['weather'] is None or data['aqi'] is None:
+                    city_id, timestamp = key[:2]  # key peut être (city, time) ou (city, time, id)
+                    missing = 'weather' if data['weather'] is None else 'aqi'
+                    age_info = ""
+                    if data['weather']:
+                        dt = datetime.fromisoformat(data['weather']['collected_at'].replace('Z', '+00:00'))
+                        age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
+                        age_info = f" (âge: {age:.1f}h)"
+                    elif data['aqi']:
+                        dt = datetime.fromisoformat(data['aqi']['collected_at'].replace('Z', '+00:00'))
+                        age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
+                        age_info = f" (âge: {age:.1f}h)"
+                    logger.warning(f"⏳ Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}{age_info}")
         
         return grouped
     
