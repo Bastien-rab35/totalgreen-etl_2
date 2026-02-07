@@ -137,10 +137,14 @@ class TransformToDB:
             return False
     
     def group_by_city_and_time(self, data_list: list) -> dict:
-        """Groupe les entrées data lake par (city_id, timestamp arrondi à l'heure)"""
+        """Groupe les entrées data lake par (city_id, timestamp arrondi à l'heure)
+        
+        IMPORTANT: Traite aussi les entrées orphelines après 2h d'attente
+        """
         from collections import defaultdict
         
         grouped = defaultdict(lambda: {'weather': None, 'aqi': None})
+        now = datetime.utcnow()
         
         for entry in data_list:
             city_id = entry['city_id']
@@ -150,15 +154,28 @@ class TransformToDB:
                 # Extraire l'heure (YYYY-MM-DD HH:00:00)
                 dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
                 hour_key = dt.replace(minute=0, second=0, microsecond=0).isoformat()
+                
+                # Vérifier si l'entrée est trop vieille (>2h sans paire)
+                age_hours = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
             else:
-                hour_key = datetime.utcnow().replace(minute=0, second=0, microsecond=0).isoformat()
+                hour_key = now.replace(minute=0, second=0, microsecond=0).isoformat()
+                age_hours = 0
             
             key = (city_id, hour_key)
             
             if entry['source'] == 'openweather':
-                grouped[key]['weather'] = entry
+                if grouped[key]['weather'] is None:
+                    grouped[key]['weather'] = entry
             elif entry['source'] == 'aqicn':
-                grouped[key]['aqi'] = entry
+                if grouped[key]['aqi'] is None:
+                    grouped[key]['aqi'] = entry
+        
+        # Log des mesures incomplètes
+        for key, data in grouped.items():
+            if data['weather'] is None or data['aqi'] is None:
+                city_id, timestamp = key
+                missing = 'weather' if data['weather'] is None else 'aqi'
+                logger.warning(f"Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}")
         
         return grouped
     
