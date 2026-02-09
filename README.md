@@ -437,4 +437,3 @@ python src/etl_extract_to_lake.py
 **🏷️ Version** : 2.0.0 (Star Schema + ML)  
 **✅ Conformité** : RGPD (hébergement EU)  
 **⚡ Automatisation** : GitHub Actions  
-**📊 Score** : 46/45 points (102%) 🎉
