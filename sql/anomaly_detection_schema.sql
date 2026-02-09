@@ -52,7 +52,7 @@ COMMENT ON COLUMN anomalies.anomaly_type IS 'Type: business_rule (règles métie
 COMMENT ON COLUMN anomalies.severity IS 'Gravité: low, medium, high, critical';
 COMMENT ON COLUMN anomalies.anomaly_score IS 'Score Isolation Forest: plus négatif = plus anormal';
 COMMENT ON COLUMN fact_measures.is_anomaly IS 'TRUE si la mesure est flaggée comme anomalie';
-COMMENT ON COLUMN fact_measures.anomaly_score IS 'Score ML de l\'anomalie (si détectée)';
+COMMENT ON COLUMN fact_measures.anomaly_score IS 'Score ML de l''anomalie (si détectée)';
 
 -- Vue pour analyser les anomalies
 CREATE OR REPLACE VIEW v_anomalies_summary AS
