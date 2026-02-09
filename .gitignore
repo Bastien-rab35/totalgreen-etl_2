@@ -16,15 +16,23 @@ ENV/
 .idea/
 *.swp
 *.swo
+*~
 
 # Logs
-logs/*.log
-!logs/.gitkeep
+logs/
+*.log
 
 # OS
 .DS_Store
 Thumbs.db
 
+# PDF (critères évaluation)
+*.pdf
+
 # Data
-*.sqlite
-*.db
+data/lake/*.json
+!data/cities_reference.json
+
+# Temporary
+*.tmp
+*.bak

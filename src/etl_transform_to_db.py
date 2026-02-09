@@ -263,8 +263,8 @@ class TransformToDB:
                         'raw_aqi_id': aqi_entry['id']
                     })
             
-            # Insérer dans la BDD
-            success = self.db_service.insert_measure_direct(measure)
+            # Insérer dans le modèle en étoile (fact_measures)
+            success = self.db_service.insert_into_star_schema(measure)
             
             if success:
                 # Marquer toutes les entrées comme traitées
@@ -276,7 +276,7 @@ class TransformToDB:
                 sources = []
                 if weather_entry: sources.append('weather')
                 if aqi_entry: sources.append('aqi')
-                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → BDD")
+                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → fact_measures (⭐ modèle en étoile)")
                 return True
             else:
                 logger.error(f"✗ Échec insertion {city_name}")
