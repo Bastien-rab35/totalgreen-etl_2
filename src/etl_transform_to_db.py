@@ -1,14 +1,17 @@
 """
 Pipeline ETL - Partie 2: Transform → Load (BDD normalisée)
 Lit les données non traitées du Data Lake, les transforme et les charge dans la BDD
+Intègre la détection d'anomalies ML (Isolation Forest + règles métier)
 """
 import logging
 import time
 import os
+import numpy as np
 from datetime import datetime
 
 from config import config
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService
+from services.anomaly_detection_service import AnomalyDetectionService, format_anomaly_for_db
 
 # Création du dossier logs
 os.makedirs('../logs', exist_ok=True)
@@ -53,11 +56,36 @@ class TransformToDB:
                 config.SUPABASE_KEY
             )
             
-            logger.info("Service de transformation initialisé")
+            # Service de détection d'anomalies ML
+            self.anomaly_service = AnomalyDetectionService(contamination=0.05)
+            self._train_anomaly_model()
+            
+            logger.info("Service de transformation initialisé (avec ML anomaly detection)")
             
         except Exception as e:
             logger.error(f"Erreur d'initialisation: {e}")
             raise
+    
+    def _train_anomaly_model(self):
+        """Entraîne le modèle Isolation Forest sur les données historiques"""
+        try:
+            logger.info("⚡ Entraînement du modèle ML (Isolation Forest)...")
+            
+            # Récupérer données historiques
+            historical_data = self.db_service.get_historical_data_for_ml(limit=5000)
+            
+            if historical_data:
+                # Convertir en numpy array
+                X = np.array(historical_data)
+                
+                # Entraîner le modèle
+                self.anomaly_service.train_isolation_forest(X)
+                logger.info(f"✓ Modèle ML entraîné sur {len(historical_data)} mesures")
+            else:
+                logger.warning("⚠️  Pas assez de données historiques pour ML (min: 100). Détection ML désactivée.")
+                
+        except Exception as e:
+            logger.error(f"Erreur entraînement modèle ML: {e}")
     
     def transform_and_load(self, raw_entry: dict) -> bool:
         """Transforme et charge une entrée du Data Lake dans la BDD"""
@@ -263,6 +291,66 @@ class TransformToDB:
                         'raw_aqi_id': aqi_entry['id']
                     })
             
+            # ⚡ DÉTECTION D'ANOMALIES ML
+            anomalies_detected = []
+            anomaly_score = 0.0
+            
+            # Préparer les données pour analyse
+            measure_for_analysis = {
+                'temperature': measure.get('temp'),
+                'feels_like': measure.get('feels_like'),
+                'humidity': measure.get('humidity'),
+                'pressure': measure.get('pressure'),
+                'wind_speed': measure.get('wind_speed'),
+                'aqi': measure.get('aqi_index'),
+                'pm2_5': measure.get('pm25'),
+                'pm10': measure.get('pm10')
+            }
+            
+            # Récupérer statistiques de la ville
+            city_stats = self.db_service.get_city_statistics(city_name, days=30)
+            
+            # Détecter les anomalies
+            is_anomaly, anomalies_list, max_score = self.anomaly_service.detect_anomalies(
+                measure_for_analysis,
+                city_stats
+            )
+            
+            if is_anomaly:
+                anomalies_detected = anomalies_list
+                anomaly_score = max_score
+                
+                # Log des anomalies
+                severity_counts = {}
+                for anom in anomalies_list:
+                    sev = anom.get('severity', 'unknown')
+                    severity_counts[sev] = severity_counts.get(sev, 0) + 1
+                
+                severity_str = ', '.join([f"{k}:{v}" for k, v in severity_counts.items()])
+                logger.warning(f"🚨 Anomalies détectées pour {city_name}: {severity_str}")
+                
+                # Rejeter les mesures avec anomalies critiques
+                critical_anomalies = [a for a in anomalies_list if a.get('severity') == 'critical']
+                if critical_anomalies:
+                    logger.error(f"❌ Mesure rejetée pour {city_name} : {len(critical_anomalies)} anomalies critiques")
+                    
+                    # Stocker les anomalies critiques
+                    for anom in critical_anomalies:
+                        anomaly_record = format_anomaly_for_db(anom, city_name, captured_at)
+                        self.db_service.insert_anomaly(anomaly_record)
+                    
+                    # Marquer comme traité mais ne pas insérer dans fact_measures
+                    if weather_entry:
+                        self.data_lake_service.mark_as_processed(weather_entry['id'])
+                    if aqi_entry:
+                        self.data_lake_service.mark_as_processed(aqi_entry['id'])
+                    
+                    return False  # Mesure rejetée
+            
+            # Ajouter les flags d'anomalie dans la mesure
+            measure['is_anomaly'] = is_anomaly
+            measure['anomaly_score'] = anomaly_score if is_anomaly else None
+            
             # Insérer dans le modèle en étoile (fact_measures)
             success = self.db_service.insert_into_star_schema(measure)
             
@@ -273,10 +361,19 @@ class TransformToDB:
                 if aqi_entry:
                     self.data_lake_service.mark_as_processed(aqi_entry['id'])
                 
+                # Stocker les anomalies non-critiques (flagged)
+                if anomalies_detected:
+                    for anom in anomalies_detected:
+                        if anom.get('severity') != 'critical':  # Critiques déjà stockées
+                            anomaly_record = format_anomaly_for_db(anom, city_name, captured_at)
+                            self.db_service.insert_anomaly(anomaly_record)
+                
                 sources = []
                 if weather_entry: sources.append('weather')
                 if aqi_entry: sources.append('aqi')
-                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → fact_measures (⭐ modèle en étoile)")
+                
+                anomaly_flag = " 🚨" if is_anomaly else ""
+                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → fact_measures (⭐ modèle en étoile){anomaly_flag}")
                 return True
             else:
                 logger.error(f"✗ Échec insertion {city_name}")

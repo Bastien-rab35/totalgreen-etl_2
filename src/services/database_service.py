@@ -227,3 +227,93 @@ class DatabaseService:
         except Exception as e:
             logger.error(f"Erreur récupération mesures: {e}")
             return []
+    
+    def get_city_statistics(self, city_name: str, days: int = 30) -> Optional[Dict]:
+        """
+        Calcule les statistiques historiques pour une ville.
+        Utilisé pour la détection d'anomalies statistiques.
+        
+        Args:
+            city_name: Nom de la ville
+            days: Nombre de jours d'historique
+            
+        Returns:
+            Dictionnaire avec mean/std par champ
+        """
+        try:
+            # Requête RPC pour calculer les stats côté Supabase
+            # Plus performant que récupérer toutes les données
+            response = self.client.rpc(
+                'get_city_stats',
+                {'p_city_name': city_name, 'p_days': days}
+            ).execute()
+            
+            if response.data and len(response.data) > 0:
+                return response.data[0]
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Erreur calcul statistiques pour {city_name}: {e}")
+            return None
+    
+    def get_historical_data_for_ml(self, limit: int = 5000) -> Optional[List[List]]:
+        """
+        Récupère les données historiques pour entraîner le modèle ML.
+        
+        Args:
+            limit: Nombre maximum de mesures à récupérer
+            
+        Returns:
+            Liste de listes [temperature, humidity, pressure, aqi, pm2_5, pm10]
+        """
+        try:
+            response = (self.client.table('fact_measures')
+                       .select('temperature, humidity, pressure, aqi, pm2_5, pm10')
+                       .is_('is_anomaly', 'false')  # Seulement les mesures normales
+                       .order('captured_at', desc=True)
+                       .limit(limit)
+                       .execute())
+            
+            if not response.data:
+                return None
+            
+            # Convertir en array numpy-compatible
+            data = []
+            for row in response.data:
+                if all(row.get(k) is not None for k in ['temperature', 'humidity', 'pressure', 'aqi']):
+                    data.append([
+                        row.get('temperature', 0),
+                        row.get('humidity', 0),
+                        row.get('pressure', 0),
+                        row.get('aqi', 0),
+                        row.get('pm2_5', 0),
+                        row.get('pm10', 0)
+                    ])
+            
+            logger.info(f"✓ {len(data)} mesures historiques récupérées pour ML")
+            return data if len(data) >= 100 else None
+            
+        except Exception as e:
+            logger.error(f"Erreur récupération données ML: {e}")
+            return None
+    
+    def insert_anomaly(self, anomaly: Dict) -> bool:
+        """
+        Insère une anomalie détectée dans la table anomalies.
+        
+        Args:
+            anomaly: Dictionnaire avec les infos de l'anomalie
+            
+        Returns:
+            True si insertion réussie
+        """
+        try:
+            response = self.client.table('anomalies').insert(anomaly).execute()
+            logger.debug(f"✓ Anomalie enregistrée: {anomaly.get('anomaly_type')} - {anomaly.get('field_name')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur insertion anomalie: {e}")
+            return False
+
