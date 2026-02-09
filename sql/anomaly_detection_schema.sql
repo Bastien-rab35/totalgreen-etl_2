@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS anomalies (
     anomaly_id SERIAL PRIMARY KEY,
     
     -- Référence à la mesure
+    city_id INTEGER NOT NULL,
     city_name VARCHAR(100) NOT NULL,
     captured_at TIMESTAMP NOT NULL,
     
@@ -32,11 +33,12 @@ CREATE TABLE IF NOT EXISTS anomalies (
     detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Index pour les recherches
-    CONSTRAINT fk_city FOREIGN KEY (city_name) REFERENCES dim_city(city_name)
+    CONSTRAINT fk_city FOREIGN KEY (city_id) REFERENCES dim_city(city_id)
 );
 
 -- Index pour performances
-CREATE INDEX idx_anomalies_city ON anomalies(city_name);
+CREATE INDEX idx_anomalies_city_id ON anomalies(city_id);
+CREATE INDEX idx_anomalies_city_name ON anomalies(city_name);
 CREATE INDEX idx_anomalies_captured_at ON anomalies(captured_at);
 CREATE INDEX idx_anomalies_type ON anomalies(anomaly_type);
 CREATE INDEX idx_anomalies_severity ON anomalies(severity);

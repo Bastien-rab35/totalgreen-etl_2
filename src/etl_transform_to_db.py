@@ -336,7 +336,7 @@ class TransformToDB:
                     
                     # Stocker les anomalies critiques
                     for anom in critical_anomalies:
-                        anomaly_record = format_anomaly_for_db(anom, city_name, captured_at)
+                        anomaly_record = format_anomaly_for_db(anom, city_id, city_name, captured_at)
                         self.db_service.insert_anomaly(anomaly_record)
                     
                     # Marquer comme traité mais ne pas insérer dans fact_measures
@@ -365,7 +365,7 @@ class TransformToDB:
                 if anomalies_detected:
                     for anom in anomalies_detected:
                         if anom.get('severity') != 'critical':  # Critiques déjà stockées
-                            anomaly_record = format_anomaly_for_db(anom, city_name, captured_at)
+                            anomaly_record = format_anomaly_for_db(anom, city_id, city_name, captured_at)
                             self.db_service.insert_anomaly(anomaly_record)
                 
                 sources = []

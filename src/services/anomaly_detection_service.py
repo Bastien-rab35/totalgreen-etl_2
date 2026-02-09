@@ -302,12 +302,13 @@ class AnomalyDetectionService:
         return is_anomaly, all_anomalies, max_score
 
 
-def format_anomaly_for_db(anomaly: Dict, city_name: str, captured_at: datetime) -> Dict:
+def format_anomaly_for_db(anomaly: Dict, city_id: int, city_name: str, captured_at: datetime) -> Dict:
     """
     Formate une anomalie pour insertion dans la table anomalies.
     
     Args:
         anomaly: Dictionnaire d'anomalie détectée
+        city_id: ID de la ville
         city_name: Nom de la ville
         captured_at: Timestamp de la mesure
         
@@ -315,6 +316,7 @@ def format_anomaly_for_db(anomaly: Dict, city_name: str, captured_at: datetime) 
         Dictionnaire formaté pour insertion
     """
     return {
+        'city_id': city_id,
         'city_name': city_name,
         'captured_at': captured_at,
         'anomaly_type': anomaly.get('anomaly_type'),
