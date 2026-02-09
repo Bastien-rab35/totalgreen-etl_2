@@ -311,7 +311,7 @@ class TransformToDB:
         success_count = 0
         processed_entries = 0
         
-        for (city_id, timestamp), data in grouped.items():
+        for key, data in grouped.items():
             weather = data['weather']
             aqi = data['aqi']
             
