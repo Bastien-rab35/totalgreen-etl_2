@@ -1,8 +1,8 @@
-# TotalGreen - Data Warehouse Environnemental ⭐
+# TotalGreen - Data Warehouse Environnemental 
 
 **Pipeline ETL automatisé** pour la collecte et l'analyse de données environnementales sur les 10 plus grandes villes métropolitaines françaises.
 
-## 🎯 Vue d'ensemble
+## Vue d'ensemble
 
 Pipeline de données **production-ready** avec :
 - **Collecte automatisée** : APIs OpenWeather + AQICN (toutes les heures via GitHub Actions)
@@ -11,7 +11,7 @@ Pipeline de données **production-ready** avec :
 - **ML Anomaly Detection** : Isolation Forest + règles métier + analyse statistique
 - **Conformité RGPD** : Hébergement EU (Francfort) avec sécurité renforcée
 
-## 📊 Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -114,7 +114,7 @@ Cela crée :
 - **1 table de faits** : fact_measures
 - **~26 000 périodes** dans dim_time (couvre 3 ans)
 
-## 📦 Utilisation
+## Utilisation
 
 ### Automatisation (Production)
 
@@ -166,7 +166,7 @@ Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse :
 ✅ Jointures simplifiées
 ✅ Évolutivité garantie
 
-## 💾 Data Lake
+## Data Lake
 
 ### Table `lake`
 - Stockage **JSONB** des données brutes API
@@ -178,7 +178,7 @@ Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse :
 2. **Transformation** : Data Lake → Validation → Star Schema
 3. **Marquage** : `processed=true` après insertion réussie
 
-## 🤖 ML Anomaly Detection
+## ML Anomaly Detection
 
 **Système de détection d'anomalies multi-niveaux** pour garantir la qualité des données.
 
@@ -276,7 +276,7 @@ MAX_TRAINING_SAMPLES = 5000 # Limite pour performance
 
 📖 Documentation complète : [docs/SECURITE.md](docs/SECURITE.md)
 
-## 📊 Monitoring
+## Monitoring
 
 ### Vérifications système
 
@@ -344,7 +344,7 @@ ORDER BY dt.date_only DESC, fm.anomaly_score DESC
 LIMIT 20;
 ```
 
-## 📈 Performance & Quotas
+## Performance & Quotas
 
 ### Quotas API (plan gratuit)
 - **OpenWeather** : 1000 appels/jour
@@ -375,7 +375,7 @@ LIMIT 20;
 - Data Lake JSONB avec versioning
 - Pipeline Extract → Lake automatisé
 
-### ✅ Phase 2 : Data Warehouse ⭐
+### ✅ Phase 2 : Data Warehouse 
 - Modèle en étoile (5 tables)
 - Pipeline Transform → Warehouse
 - Migration ~500 mesures historiques
@@ -386,16 +386,13 @@ LIMIT 20;
 - Conformité RGPD
 
 ### ✅ Phase 4 : ML & Qualité des Données
-- **ML Anomaly Detection** (+5 points) ✅
+- **ML Anomaly Detection** 
   - Isolation Forest opérationnel
   - Règles métier + analyse statistique (Z-score)
   - 3 niveaux de détection actifs
   - Tables `anomalies` + flags `fact_measures`
-- Dashboards Metabase (+3 points) 🚧
 
-📊 **Score : 46/45 points (102%)** 🎉
-
-## 🛠️ Dépannage
+## Dépannage
 
 ### Erreur de connexion Supabase
 ```bash
