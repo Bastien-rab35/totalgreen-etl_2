@@ -103,16 +103,24 @@ SUPABASE_KEY=votre_service_key
 
 ### 3. Déploiement Data Warehouse
 
-Dans l'éditeur SQL Supabase, exécutez :
+Dans l'éditeur SQL Supabase, exécutez **dans cet ordre** :
+
 ```sql
--- Créer le schéma en étoile (⭐ Data Warehouse)
+-- 1. Créer le schéma en étoile (⭐ Data Warehouse)
 \i sql/star_schema.sql
+
+-- 2. Créer la table dim_date (architecture simplifiée)
+\i sql/create_dim_date.sql
+
+-- 3. ⚠️ IMPORTANT : Nettoyer l'ancienne architecture dim_time
+--    (si vous migrez depuis une ancienne version)
+\i sql/cleanup_dim_time.sql
 ```
 
 Cela crée :
-- **4 tables de dimensions** : dim_time, dim_city, dim_weather_condition, dim_air_quality_level
-- **1 table de faits** : fact_measures
-- **~26 000 périodes** dans dim_time (couvre 3 ans)
+- **4 tables de dimensions** : dim_date, dim_city, dim_weather_condition, dim_air_quality_level
+- **1 table de faits** : fact_measures (avec `captured_at` et `capture_date`)
+- **~1 460 jours** dans dim_date (couvre 4 ans : 2024-2027)
 
 ## Utilisation
 
@@ -138,18 +146,21 @@ python scripts/check_bdd_status.py
 python scripts/check_data_lake.py
 ```## 🗄️ Modèle de données (Star Schema ⭐)
 
-Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse :
+Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse avec une architecture temporelle simplifiée :
 
 ### Table de faits
 - **`fact_measures`** : Mesures environnementales horaires
   - Métriques météo : température, pression, humidité, vent, UV, visibilité
   - Métriques qualité de l'air : AQI, PM2.5, PM10, NO2, O3, SO2, CO
-  - Clés étrangères : `time_id`, `city_id`, `weather_condition_id`, `aqi_level_id`
+  - **Timestamp natif** : `captured_at` (TIMESTAMP exact de la mesure)
+  - Clés étrangères : `capture_date`, `city_id`, `weather_condition_id`, `aqi_level_id`
 
 ### Tables de dimensions
-- **`dim_time`** : Dimension temporelle
-  - ~26 000 périodes (date, heure, jour semaine, mois, trimestre, année, saison)
-  - Pré-remplie pour 3 ans
+- **`dim_date`** : Dimension temporelle **simplifiée** ✨
+  - Clé naturelle : `date_value` (DATE - format YYYY-MM-DD)
+  - Attributs : jour, jour_semaine, semaine, mois, trimestre, année, saison, weekend
+  - ~1 460 jours (4 ans : 2024-2027)
+  - **Avantage** : Pas de lookup complexe, jointures directes avec `DATE(captured_at)`
   
 - **`dim_city`** : Dimension géographique
   - 10 villes françaises avec coordonnées GPS
@@ -161,9 +172,10 @@ Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse :
   - 6 niveaux (Good, Fair, Moderate, Poor, Very Poor, Severe)
 
 ### Avantages
-✅ Requêtes optimisées pour l'analyse
-✅ Agrégations temporelles rapides
-✅ Jointures simplifiées
+✅ **Architecture temporelle simplifiée** : `captured_at` + `dim_date` au lieu de `time_id` artificiel
+✅ Requêtes optimisées pour l'analyse (pas de conversion date/heure)
+✅ Agrégations temporelles rapides et intuitives
+✅ Jointures simplifiées : `fact_measures.capture_date = dim_date.date_value`
 ✅ Évolutivité garantie
 
 ## Data Lake
@@ -291,22 +303,22 @@ python scripts/check_data_lake.py
 ### Requêtes utiles
 
 ```sql
--- Dernières mesures
+-- Dernières mesures (avec timestamp exact)
 SELECT 
-  dt.date_full,
-  dt.hour_24,
+  fm.captured_at,
+  dd.date_value,
   dc.city_name,
   fm.temperature,
   fm.aqi,
   aq.level_name as air_quality
 FROM fact_measures fm
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dd ON fm.capture_date = dd.date_value
 JOIN dim_city dc ON fm.city_id = dc.city_id
 LEFT JOIN dim_air_quality_level aq ON fm.aqi_level_id = aq.aqi_level_id
-ORDER BY dt.date_full DESC, dt.hour_24 DESC
+ORDER BY fm.captured_at DESC
 LIMIT 10;
 
--- Statistiques par ville
+-- Statistiques par ville (agrégation par jour)
 SELECT 
   dc.city_name,
   COUNT(*) as nb_mesures,
@@ -314,8 +326,20 @@ SELECT
   ROUND(AVG(fm.aqi), 0) as aqi_moyen
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
+JOIN dim_date dd ON fm.capture_date = dd.date_value
+WHERE dd.date_value >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY dc.city_name
 ORDER BY dc.city_name;
+
+-- Agrégation par jour de la semaine
+SELECT 
+  dd.day_name,
+  ROUND(AVG(fm.temperature), 1) as temp_moyenne
+FROM fact_measures fm
+JOIN dim_date dd ON fm.capture_date = dd.date_value
+WHERE dd.date_value >= CURRENT_DATE - INTERVAL '90 days'
+GROUP BY dd.day_name, dd.day_of_week
+ORDER BY dd.day_of_week;
 
 -- Monitoring des anomalies (7 derniers jours)
 SELECT * FROM get_anomaly_summary(7);
@@ -329,7 +353,8 @@ SELECT * FROM v_critical_anomalies;
 -- Mesures flaggées comme anomalies
 SELECT 
   dc.name AS city,
-  dt.date_only,
+  fm.captured_at,
+  dd.date_value,
   fm.temperature,
   fm.aqi_index,
   fm.anomaly_score,
@@ -337,10 +362,10 @@ SELECT
   a.severity
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dd ON fm.capture_date = dd.date_value
 LEFT JOIN anomalies a ON fm.measure_id = a.measure_id
 WHERE fm.is_anomaly = TRUE
-ORDER BY dt.date_only DESC, fm.anomaly_score DESC
+ORDER BY fm.captured_at DESC, fm.anomaly_score DESC
 LIMIT 20;
 ```
 
@@ -355,11 +380,11 @@ LIMIT 20;
   - Utilisation : 240 appels/jour
 
 ### Métriques du Data Warehouse
-- **dim_time** : ~26 000 périodes (3 ans)
+- **dim_date** : ~1 460 jours (4 ans : 2024-2027)
 - **dim_city** : 10 villes
 - **dim_weather_condition** : 40+ conditions
 - **dim_air_quality_level** : 6 niveaux
-- **fact_measures** : Croissance ~240 mesures/jour
+- **fact_measures** : Croissance ~240 mesures/jour (avec timestamps natifs)
 
 ## 📚 Documentation
 
