@@ -25,9 +25,9 @@ BEGIN
             fm.aqi_index
         FROM fact_measures fm
         JOIN dim_city dc ON fm.city_id = dc.city_id
-        JOIN dim_time dt ON fm.time_id = dt.time_id
+        JOIN dim_date dd ON fm.capture_date = dd.date_value
         WHERE dc.city_name = p_city_name
-          AND dt.date_only >= CURRENT_DATE - p_days
+          AND dd.date_value >= CURRENT_DATE - p_days
           AND fm.is_anomaly IS NOT TRUE  -- Exclure les anomalies connues
     )
     SELECT 
