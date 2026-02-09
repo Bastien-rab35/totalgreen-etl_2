@@ -269,7 +269,7 @@ class DatabaseService:
         """
         try:
             response = (self.client.table('fact_measures')
-                       .select('temperature, humidity, pressure, aqi_index, pm2_5, pm10')
+                       .select('temperature, humidity, pressure, aqi_index, pm25, pm10')
                        .is_('is_anomaly', 'false')  # Seulement les mesures normales
                        .order('captured_at', desc=True)
                        .limit(limit)
@@ -287,7 +287,7 @@ class DatabaseService:
                         row.get('humidity', 0),
                         row.get('pressure', 0),
                         row.get('aqi_index', 0),
-                        row.get('pm2_5', 0),
+                        row.get('pm25', 0),
                         row.get('pm10', 0)
                     ])
             
