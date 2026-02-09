@@ -22,7 +22,7 @@ BEGIN
             fm.temperature,
             fm.humidity,
             fm.pressure,
-            fm.aqi
+            fm.aqi_index
         FROM fact_measures fm
         JOIN dim_city dc ON fm.city_id = dc.city_id
         JOIN dim_time dt ON fm.time_id = dt.time_id
@@ -62,13 +62,13 @@ BEGIN
     UNION ALL
     SELECT 
         'aqi'::TEXT,
-        AVG(aqi),
-        STDDEV(aqi),
-        MIN(aqi),
-        MAX(aqi),
-        COUNT(aqi)
+        AVG(aqi_index),
+        STDDEV(aqi_index),
+        MIN(aqi_index),
+        MAX(aqi_index),
+        COUNT(aqi_index)
     FROM city_measures
-    WHERE aqi IS NOT NULL;
+    WHERE aqi_index IS NOT NULL;
 END;
 $$ LANGUAGE plpgsql;
 

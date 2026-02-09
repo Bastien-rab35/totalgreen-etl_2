@@ -269,7 +269,7 @@ class DatabaseService:
         """
         try:
             response = (self.client.table('fact_measures')
-                       .select('temperature, humidity, pressure, aqi, pm2_5, pm10')
+                       .select('temperature, humidity, pressure, aqi_index, pm2_5, pm10')
                        .is_('is_anomaly', 'false')  # Seulement les mesures normales
                        .order('captured_at', desc=True)
                        .limit(limit)
@@ -281,12 +281,12 @@ class DatabaseService:
             # Convertir en array numpy-compatible
             data = []
             for row in response.data:
-                if all(row.get(k) is not None for k in ['temperature', 'humidity', 'pressure', 'aqi']):
+                if all(row.get(k) is not None for k in ['temperature', 'humidity', 'pressure', 'aqi_index']):
                     data.append([
                         row.get('temperature', 0),
                         row.get('humidity', 0),
                         row.get('pressure', 0),
-                        row.get('aqi', 0),
+                        row.get('aqi_index', 0),
                         row.get('pm2_5', 0),
                         row.get('pm10', 0)
                     ])
