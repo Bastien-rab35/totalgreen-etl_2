@@ -295,13 +295,6 @@ Z_SCORE_THRESHOLD = {
 }
 ```
 
-## 🎓 Valeur ajoutée pour le projet
-
-✅ **+5 points** : Détection d'anomalies ML (Isolation Forest)
-✅ **Qualité des données** : Filtrage automatique des valeurs aberrantes
-✅ **Traçabilité** : Historique complet des anomalies détectées
-✅ **Analyse** : Vues SQL pour diagnostiquer les problèmes de capteurs
-
 ## 📚 Documentation technique
 
 - **Isolation Forest** : [scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html)
