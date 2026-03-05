@@ -1,0 +1,248 @@
+<mxfile host="65bd71144e">
+    <diagram name="Star Schema" id="star-schema">
+        <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                
+                <!-- FACT TABLE (CENTER) -->
+                <mxCell id="fact_measures" value="&lt;b&gt;fact_measures&lt;/b&gt;&lt;br&gt;(Table de Faits)" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="300" width="280" height="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_pk" value="measure_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="40" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk_title" value="─── Clés Étrangères ───" style="text;strokeColor=none;fillColor=#E3F2FD;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=2;fontSize=10;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="65" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk1" value="city_id (FK → dim_city)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="85" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk2" value="time_id (FK → dim_time)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="110" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk3" value="weather_condition_id (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="135" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk4" value="aqi_level_id (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="160" width="280" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_metrics_title" value="─── Métriques (Mesures) ───" style="text;strokeColor=none;fillColor=#FFF3E0;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=2;fontSize=10;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="185" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m1" value="temperature, feels_like" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="205" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m2" value="pressure, humidity" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="225" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m3" value="wind_speed, wind_deg, wind_gust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="245" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m4" value="aqi_index, pm25, pm10" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="265" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m5" value="no2, o3, so2, co" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="285" width="280" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m6" value="captured_at, created_at" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="305" width="280" height="25" as="geometry"/>
+                </mxCell>
+
+                <!-- DIMENSION: dim_city (TOP LEFT) -->
+                <mxCell id="dim_city" value="&lt;b&gt;dim_city&lt;/b&gt;" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="100" width="220" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_pk" value="city_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="30" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_1" value="city_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="55" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_2" value="latitude, longitude" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="80" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_3" value="country, region" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="105" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_4" value="timezone" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="130" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_5" value="population, altitude" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="155" width="220" height="25" as="geometry"/>
+                </mxCell>
+
+                <!-- DIMENSION: dim_time (TOP RIGHT) -->
+                <mxCell id="dim_time" value="&lt;b&gt;dim_time&lt;/b&gt;" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="940" y="100" width="220" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_pk" value="time_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="30" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_1" value="full_date (timestamp)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="55" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_2" value="hour (0-23)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="80" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_3" value="day, day_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="105" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_4" value="week, month, month_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="130" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_5" value="quarter, year" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="155" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_6" value="is_weekend (boolean)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="180" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_7" value="season (printemps, été...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="205" width="220" height="25" as="geometry"/>
+                </mxCell>
+
+                <!-- DIMENSION: dim_weather_condition (BOTTOM LEFT) -->
+                <mxCell id="dim_weather" value="&lt;b&gt;dim_weather_condition&lt;/b&gt;" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="480" width="240" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_pk" value="weather_condition_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="30" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_1" value="weather_id (OpenWeather code)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="55" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_2" value="main (Clear, Clouds, Rain...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="80" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_3" value="description" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="105" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_4" value="category (sunny, cloudy...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="130" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_5" value="icon" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="155" width="240" height="25" as="geometry"/>
+                </mxCell>
+
+                <!-- DIMENSION: dim_air_quality_level (BOTTOM RIGHT) -->
+                <mxCell id="dim_aqi" value="&lt;b&gt;dim_air_quality_level&lt;/b&gt;" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="480" width="260" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_pk" value="aqi_level_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="30" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_1" value="aqi_min, aqi_max (range)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="55" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_2" value="level_name (Good, Moderate...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="80" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_3" value="health_concern" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="105" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_4" value="color_code (green, yellow...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="130" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_5" value="health_advice" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="155" width="260" height="25" as="geometry"/>
+                </mxCell>
+
+                <!-- RELATIONSHIPS (EDGES) -->
+                <!-- dim_city to fact_measures -->
+                <mxCell id="rel_city" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_city" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_city_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_city" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_city_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_city" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- dim_time to fact_measures -->
+                <mxCell id="rel_time" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_time" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_time_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_time" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_time_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_time" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- dim_weather to fact_measures -->
+                <mxCell id="rel_weather" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_weather" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_weather_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_weather" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_weather_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_weather" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- dim_aqi to fact_measures -->
+                <mxCell id="rel_aqi" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_aqi" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_aqi_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_aqi" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_aqi_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_aqi" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+
+                <!-- TITLE -->
+                <mxCell id="title" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;STAR SCHEMA - Data Warehouse&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 12px;&quot;&gt;Modèle en Étoile pour analyses OLAP&lt;/font&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="420" y="20" width="440" height="50" as="geometry"/>
+                </mxCell>
+
+                <!-- LEGEND -->
+                <mxCell id="legend_box" value="&lt;b&gt;LÉGENDE&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=2;fontSize=12;fontStyle=1;align=center" parent="1" vertex="1">
+                    <mxGeometry x="120" y="720" width="1040" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_fact" value="Table de Faits" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=2;fontSize=10;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="130" y="760" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_dim" value="Dimensions" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=10;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="270" y="760" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_rel" value="Relations 1:N" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;fontSize=10;fontStyle=1" parent="1" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="410" y="775" as="sourcePoint"/>
+                        <mxPoint x="510" y="775" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="leg_note1" value="• 1 table de faits centrale (fact_measures)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="755" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_note2" value="• 4 dimensions (city, time, weather, aqi)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="540" y="775" width="250" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_note3" value="• Relations 1:N (une dimension → plusieurs mesures)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="755" width="330" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg_note4" value="• PK = Primary Key, FK = Foreign Key" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="820" y="775" width="330" height="20" as="geometry"/>
+                </mxCell>
+
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
