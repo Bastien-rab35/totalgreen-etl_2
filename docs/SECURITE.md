@@ -12,15 +12,15 @@ Documentation de conformité pour le projet TotalGreen ETL.
 **Provider** : Supabase (AWS)  
 **Zone géographique** : eu-central-1 (Francfort, Allemagne)
 
-✅ **100% conforme RGPD** - Aucune donnée ne quitte l'UE
+**100% conforme RGPD** - Aucune donnée ne quitte l'UE
 
 ### Nature des Données
 
 | Type | Classification | Données personnelles |
 |------|----------------|---------------------|
-| Température, pression, vent | Environnementales | ❌ NON |
-| Qualité de l'air (PM2.5, AQI) | Environnementales | ❌ NON |
-| Coordonnées GPS villes | Géographiques publiques | ❌ NON |
+| Température, pression, vent | Environnementales | NON |
+| Qualité de l'air (PM2.5, AQI) | Environnementales | NON |
+| Coordonnées GPS villes | Géographiques publiques | NON |
 
 **Conclusion** : Aucune donnée personnelle collectée (pas de nom, email, IP, tracking utilisateur).
 
@@ -48,9 +48,9 @@ SUPABASE_KEY=***
 
 | Service | Méthode | Sécurité |
 |---------|---------|----------|
-| Supabase | Service Key | 🟢 Haute |
-| OpenWeather | API Key | 🟢 Haute |
-| AQICN | Token API | 🟢 Haute |
+| Supabase | Service Key | Haute |
+| OpenWeather | API Key | Haute |
+| AQICN | Token API | Haute |
 
 **Recommandation** : Rotation des clés tous les 6 mois.
 
@@ -105,7 +105,7 @@ Pour phase future (dashboard/API) :
 
 ---
 
-## ✅ Checklist de Sécurité
+## Checklist de Sécurité
 
 - [x] Hébergement UE (RGPD)
 - [x] Aucune donnée personnelle
@@ -120,7 +120,7 @@ Pour phase future (dashboard/API) :
 
 ---
 
-## 📞 Contact Sécurité
+## Contact Sécurité
 
 **RSSI** : À définir  
 **DPO** : À définir

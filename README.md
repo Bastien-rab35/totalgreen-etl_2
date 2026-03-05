@@ -18,7 +18,7 @@ Pipeline ETL automatisé pour la collecte et l'analyse de données environnement
 
 ---
 
-## 🚀 Quick Start (5 minutes)
+## Quick Start (5 minutes)
 
 ### 1. Prérequis
 - Python 3.12+
@@ -76,11 +76,11 @@ python src/etl_transform_to_db.py
 python scripts/validate_data_quality.py --hours 24
 ```
 
-✅ **Installation terminée** ! Le système collecte maintenant les données.
+**Installation terminée** ! Le système collecte maintenant les données.
 
 ---
 
-## 📋 Guide complet du processus
+## Guide complet du processus
 
 ### Étape 1 : Comprendre l'architecture
 
@@ -135,7 +135,7 @@ SUPABASE_URL=https://xxxxx.supabase.co
 SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-⚠️ **Important** : Utiliser la Service Role Key, pas l'anon key
+**Important** : Utiliser la Service Role Key, pas l'anon key
 
 ### Étape 3 : Déployer le schéma de base de données
 
@@ -429,7 +429,7 @@ python scripts/temp/audit_fact_measures.py
 **OpenWeather** :
 - Plan gratuit : 1000 appels/jour
 - Utilisation : 240 appels/jour (10 villes × 24h)
-- Taux : **24%** ✅
+- Taux : **24%**
 
 **AQICN** :
 - Varie selon le plan
@@ -544,7 +544,7 @@ ORDER BY count DESC;
 
 ---
 
-## 📁 Structure du projet
+## Structure du projet
 
 ```
 MSPR 1/
@@ -593,7 +593,7 @@ MSPR 1/
 
 ---
 
-## 🔐 Sécurité et RGPD
+## Sécurité et RGPD
 
 **Conformité RGPD** :
 - Hébergement Supabase : **eu-central-1** (Francfort, Allemagne)
@@ -607,11 +607,11 @@ MSPR 1/
 - GitHub Secrets pour CI/CD
 - Service Key Supabase avec RLS
 
-📖 **Documentation complète** : [docs/SECURITE.md](docs/SECURITE.md)
+**Documentation complète** : [docs/SECURITE.md](docs/SECURITE.md)
 
 ---
 
-## 📊 Modèle de données
+## Modèle de données
 
 ### Star Schema (Data Warehouse)
 
@@ -643,11 +643,11 @@ MSPR 1/
 - `get_city_stats(city_name, days)` : Statistiques par ville
 - `get_anomaly_summary(days)` : Résumé des anomalies
 
-📖 **Guide complet** : [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)
+**Guide complet** : [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)
 
 ---
 
-## 🛠️ Dépannage
+## Dépannage
 
 ### Erreur : "Connection to Supabase failed"
 
@@ -660,7 +660,7 @@ python -c "
 from src.services.database_service import DatabaseService
 from src.config import Config
 db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
-print('✅ Connexion réussie')
+print('Connexion réussie')
 "
 ```
 
@@ -695,7 +695,7 @@ print(f'Mesures : {count.count} (minimum 100 pour ML)')
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - [docs/README.md](docs/README.md) - Index de la documentation
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Architecture technique
@@ -707,7 +707,7 @@ print(f'Mesures : {count.count} (minimum 100 pour ML)')
 
 ---
 
-## 🔗 Liens utiles
+## Liens utiles
 
 - **GitHub** : [Bastien-rab35/totalgreen-etl](https://github.com/Bastien-rab35/totalgreen-etl)
 - **Supabase** : [uqntmecpgswkdchcfwxe.supabase.co](https://uqntmecpgswkdchcfwxe.supabase.co)

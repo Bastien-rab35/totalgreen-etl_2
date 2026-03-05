@@ -114,7 +114,7 @@ MSPR 1/
 
 ---
 
-## 🔗 Liens Utiles
+## Liens Utiles
 
 - **Dépôt GitHub** : https://github.com/Bastien-rab35/totalgreen-etl
 - **Supabase Dashboard** : https://supabase.com/dashboard
@@ -123,19 +123,19 @@ MSPR 1/
 
 ---
 
-## 📝 Changelog
+## Changelog
 
 ### Version 2.0 (2026-02-09)
-- ✨ Implémentation Data Warehouse en étoile
-- 🔄 Pipeline ETL mis à jour (insertion directe fact_measures)
-- 📊 20+ requêtes OLAP
-- 🧹 Nettoyage et organisation projet
+- Implémentation Data Warehouse en étoile
+- Pipeline ETL mis à jour (insertion directe fact_measures)
+- 20+ requêtes OLAP
+- Nettoyage et organisation projet
 
 ### Version 1.0 (2024-01-12)
-- 🎉 Version initiale avec modèle normalisé
-- ⚙️ Pipeline ETL double (extract + transform)
-- 🌍 Data Lake JSONB
-- 🔐 Conformité RGPD
+- Version initiale avec modèle normalisé
+- Pipeline ETL double (extract + transform)
+- Data Lake JSONB
+- Conformité RGPD
 
 ---
 

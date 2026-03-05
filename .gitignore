@@ -29,12 +29,12 @@ Thumbs.db
 # PDF (critères évaluation)
 *.pdf
 
+# CSV (données brutes)
+*.csv
+
 # Data
 data/lake/*.json
 !data/cities_reference.json
-
-# Fichiers CSV volumineux (> 100MB limite GitHub)
-docs/waqi-covid19-airqualitydata-2026.csv
 
 # Temporary
 *.tmp

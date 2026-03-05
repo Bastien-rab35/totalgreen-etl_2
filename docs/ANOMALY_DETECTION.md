@@ -254,16 +254,16 @@ SELECT * FROM get_city_stats('Paris', 30);  -- 30 derniers jours
 - Ex: température 15°C + humidité 90% + AQI 200 peut être anormal même si chaque valeur est OK individuellement
 - Score d'anomalie : -1.0 (très anormal) à 0.0 (normal)
 
-**Action** : 🚨 FLAGGED ou ❌ REJET selon le score
+**Action** : FLAGGED ou REJET selon le score
 
-## 📈 Métriques de performance
+## Métriques de performance
 
 Le modèle ML s'adapte automatiquement :
 - **Entraînement** : Sur les 5000 dernières mesures normales (`is_anomaly=false`)
 - **Contamination** : 5% (taux d'anomalies attendu)
 - **Ré-entraînement** : À chaque exécution du pipeline Transform
 
-## 🔧 Configuration avancée
+## Configuration avancée
 
 ### Modifier le seuil de contamination
 
@@ -295,13 +295,13 @@ Z_SCORE_THRESHOLD = {
 }
 ```
 
-## 📚 Documentation technique
+## Documentation technique
 
 - **Isolation Forest** : [scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.IsolationForest.html)
 - **Z-score** : Mesure statistique de l'écart d'une valeur par rapport à la moyenne
 - **Contamination** : Proportion estimée d'anomalies dans les données
 
-## 🚨 Dépannage
+## Dépannage
 
 ### Le modèle ML ne s'entraîne pas
 

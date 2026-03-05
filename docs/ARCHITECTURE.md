@@ -109,25 +109,25 @@ Data Lake → Data Warehouse (Star Schema)
 
 ---
 
-## 🔐 Sécurité et Conformité
+## Sécurité et Conformité
 
 ### RGPD
 
-- ✅ Hébergement UE (Supabase eu-central-1)
-- ✅ Aucune donnée personnelle collectée
-- ✅ Données agrégées par ville (pas de géolocalisation précise)
-- ✅ Conservation limitée (30 jours data lake, 1 an warehouse)
+- Hébergement UE (Supabase eu-central-1)
+- Aucune donnée personnelle collectée
+- Données agrégées par ville (pas de géolocalisation précise)
+- Conservation limitée (30 jours data lake, 1 an warehouse)
 
 ### Sécurité
 
-- ✅ Variables d'environnement (.env non versionné)
-- ✅ Connexions HTTPS/TLS
-- ✅ Clés API rotatives
-- ✅ Logs de traçabilité (etl_logs)
+- Variables d'environnement (.env non versionné)
+- Connexions HTTPS/TLS
+- Clés API rotatives
+- Logs de traçabilité (etl_logs)
 
 ---
 
-## 📈 Performances
+## Performances
 
 ### Optimisations
 
@@ -149,7 +149,7 @@ Data Lake → Data Warehouse (Star Schema)
 
 ---
 
-## 🛠️ Technologies
+## Technologies
 
 - **Base de données** : PostgreSQL 15 (Supabase)
 - **Langage** : Python 3.12
@@ -159,7 +159,7 @@ Data Lake → Data Warehouse (Star Schema)
 
 ---
 
-## 📚 Références
+## Références
 
 - [Schema SQL complet](../sql/star_schema.sql)
 - [Requêtes OLAP](../sql/queries_olap.sql)
