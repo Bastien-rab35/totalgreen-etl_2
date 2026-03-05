@@ -42,3 +42,8 @@ docs/waqi-covid19-airqualitydata-2026.csv
 
 # Scripts temporaires/diagnostic
 scripts/temp/
+
+# Dossiers archive (historique non versionné)
+docs/archive/
+scripts/archive/
+sql/archive/
