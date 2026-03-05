@@ -22,6 +22,12 @@ Scripts Python pour les pipelines de données du projet.
   - Couverture des données (10 villes)
   - Détection outliers statistiques (>3σ)
   - Conçu pour GitHub Actions (exit codes 0/1/2)
+
+- **`cleanup_data_quality_issues.py`** - Nettoyage automatique des problèmes de qualité
+  - Supprime les doublons (garde le plus récent)
+  - Supprime les mesures avec dates futures
+  - Support mode dry-run pour simulation
+  - Traitement par lots (batch_size=50)
 ## Dossiers
 
 ### `archive/`
@@ -48,6 +54,12 @@ python scripts/validate_data_quality.py
 
 # Valider avec période spécifique
 python scripts/validate_data_quality.py --hours 48 --strict
+
+# Nettoyer les problèmes de qualité (dry-run)
+python scripts/cleanup_data_quality_issues.py --dry-run
+
+# Nettoyer les problèmes de qualité (réel)
+python scripts/cleanup_data_quality_issues.py
 ```
 
 ## Organisation

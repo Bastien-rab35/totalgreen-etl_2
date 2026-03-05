@@ -335,7 +335,7 @@ Le projet inclut 3 workflows GitHub Actions :
 - **Dépendance** : Attend fin d'extraction
 
 #### C. Validation qualité (`.github/workflows/data-quality-validation.yml`)
-- **Déclenchement** : Cron toutes les heures (à :15)
+- **Déclenchement** : Cron toutes les 12h (à 00:15 et 12:15)
 - **Action** : Valide données des dernières 24h
 - **Report** : GitHub Actions Summary avec détails
 
