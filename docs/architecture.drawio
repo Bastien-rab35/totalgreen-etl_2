@@ -1,0 +1,172 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Architecture MSPR 1" id="architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- APIs Externes -->
+        <mxCell id="api1" value="OpenWeather API&#xa;Données Météo" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#01579B;strokeWidth=2;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="80" y="40" width="140" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="api2" value="AQICN API&#xa;Qualité de l'Air" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#01579B;strokeWidth=2;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="270" y="40" width="140" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Services -->
+        <mxCell id="ws" value="WeatherService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="80" y="140" width="140" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="aqs" value="AirQualityService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="270" y="140" width="140" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- ETL Extract -->
+        <mxCell id="etl_e" value="etl_extract_to_lake.py&#xa;Collecte données brutes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="120" y="220" width="240" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Data Lake Service -->
+        <mxCell id="dls" value="DataLakeService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="170" y="320" width="140" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Data Lake -->
+        <mxCell id="dl" value="raw_data_lake&#xa;(20,706 records)&#xa;Supabase Table" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=2;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="160" y="400" width="160" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- ETL Transform -->
+        <mxCell id="etl_t" value="etl_transform_to_db.py&#xa;Transformation &amp; Load" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="120" y="520" width="240" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- Database Service -->
+        <mxCell id="dbs" value="DatabaseService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="170" y="620" width="140" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Data Warehouse -->
+        <mxCell id="dw" value="Data Warehouse&#xa;Supabase PostgreSQL" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=3;fontSize=13;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="480" y="200" width="180" height="80" as="geometry"/>
+        </mxCell>
+        
+        <!-- Dimensions -->
+        <mxCell id="dim_city" value="dim_city&#xa;(10 villes)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="720" y="120" width="120" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="dim_weather" value="dim_weather_condition&#xa;(36 conditions)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="720" y="190" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="dim_aqi" value="dim_air_quality_level&#xa;(6 niveaux)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="720" y="260" width="180" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="dim_date" value="dim_date&#xa;(1,461 jours)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="720" y="330" width="120" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Fact Table -->
+        <mxCell id="fact" value="fact_measures&#xa;(14,904 mesures)&#xa;&#xa;Métriques:&#xa;• Température, Humidité&#xa;• AQI, PM2.5, PM10&#xa;• NO2, O3, SO2, CO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=11;fontStyle=1;align=left" vertex="1" parent="1">
+          <mxGeometry x="480" y="320" width="180" height="140" as="geometry"/>
+        </mxCell>
+        
+        <!-- Anomaly Detection -->
+        <mxCell id="ads" value="AnomalyDetectionService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="500" y="500" width="160" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="func" value="anomaly_functions.sql" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#424242;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="500" y="560" width="160" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Scripts -->
+        <mxCell id="scripts" value="Scripts de Vérification&#xa;• check_database_complete.py&#xa;• verify_star_schema.py&#xa;• check_lyon_aqi.py&#xa;• diagnostic_lyon_aqi.py" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#424242;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="720" y="420" width="200" height="100" as="geometry"/>
+        </mxCell>
+        
+        <!-- Configuration -->
+        <mxCell id="config" value="Configuration&#xa;• config.py&#xa;• cities_reference.json" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#424242;fontSize=10;align=left" vertex="1" parent="1">
+          <mxGeometry x="40" y="600" width="160" height="70" as="geometry"/>
+        </mxCell>
+        
+        <!-- Flèches -->
+        <mxCell id="arr1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;" edge="1" parent="1" source="api1" target="ws">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;" edge="1" parent="1" source="api2" target="aqs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#E65100;" edge="1" parent="1" source="ws" target="etl_e">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#E65100;" edge="1" parent="1" source="aqs" target="etl_e">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" edge="1" parent="1" source="etl_e" target="dls">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#4A148C;" edge="1" parent="1" source="dls" target="dl">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#E65100;" edge="1" parent="1" source="dl" target="etl_t">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" edge="1" parent="1" source="etl_t" target="dbs">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#4A148C;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="dbs" target="dw">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" edge="1" parent="1" source="dw" target="dim_city">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" edge="1" parent="1" source="dw" target="dim_weather">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr12" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" edge="1" parent="1" source="dw" target="dim_aqi">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" edge="1" parent="1" source="dw" target="dim_date">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr14" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#BF360C;" edge="1" parent="1" source="dw" target="fact">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr15" value="Jointures" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;fontSize=9;" edge="1" parent="1" source="fact" target="dim_city">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#1B5E20;dashed=1;" edge="1" parent="1" source="fact" target="ads">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#424242;dashed=1;" edge="1" parent="1" source="dw" target="scripts">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="arr18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#424242;dashed=1;" edge="1" parent="1" source="config" target="etl_e">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Légende -->
+        <mxCell id="legend" value="LÉGENDE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=2;fontSize=12;fontStyle=1;align=center" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="600" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg1" value="APIs Externes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#01579B;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="50" y="80" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2" value="ETL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="150" y="80" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3" value="Stockage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="250" y="80" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg4" value="Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="350" y="80" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg5" value="Dimensions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="450" y="80" width="90" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg6" value="Faits" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="550" y="80" width="80" height="30" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

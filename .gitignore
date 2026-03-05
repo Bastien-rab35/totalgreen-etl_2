@@ -33,6 +33,12 @@ Thumbs.db
 data/lake/*.json
 !data/cities_reference.json
 
+# Fichiers CSV volumineux (> 100MB limite GitHub)
+docs/waqi-covid19-airqualitydata-2026.csv
+
 # Temporary
 *.tmp
 *.bak
+
+# Scripts temporaires/diagnostic
+scripts/temp/

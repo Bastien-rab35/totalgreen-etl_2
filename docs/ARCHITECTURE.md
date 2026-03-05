@@ -4,7 +4,7 @@ Documentation technique du projet de surveillance environnementale.
 
 ---
 
-## 📊 Architecture Globale
+## Architecture Globale
 
 ### Modèle en Étoile (Star Schema)
 
@@ -32,7 +32,7 @@ Data Warehouse (Star Schema - fact_measures)
 
 ---
 
-## 🏗️ Composants
+## Composants
 
 ### 1. Data Lake (Couche Bronze)
 
@@ -70,7 +70,7 @@ CREATE TABLE raw_data_lake (
 
 ---
 
-## 🔄 Pipeline ETL
+## Pipeline ETL
 
 ### Extract (etl_extract_to_lake.py)
 

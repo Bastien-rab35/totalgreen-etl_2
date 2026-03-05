@@ -2,7 +2,7 @@
 
 Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
 
-## 📊 Scripts principaux (Modèle en Étoile)
+## Scripts principaux (Modèle en Étoile)
 
 ### Création et Migration
 - **`star_schema.sql`** - Schéma complet du modèle en étoile (Data Warehouse)
@@ -29,12 +29,12 @@ Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
   - Supprime `cities` (remplacée par `dim_city`)
   - Vérifications de sécurité avant suppression
 
-## 🗄️ Ancien modèle (Archive)
+## Ancien modèle (Archive)
 
 - **`schema.sql`** - Schéma du modèle normalisé (ancien)
 - **`archive/`** - Anciens scripts d'analyse et d'insertion
 
-## 📖 Ordre d'exécution (Déploiement)
+## Ordre d'exécution (Déploiement)
 
 Pour déployer le Data Warehouse depuis zéro :
 
@@ -52,7 +52,7 @@ Pour déployer le Data Warehouse depuis zéro :
 \i queries_olap.sql
 ```
 
-## 🔗 Liens
+## Liens
 
 - Modèle normalisé → Modèle en étoile : Migration complétée le 2026-02-09
-- Documentation complète : voir `/docs/DATA_LAKE_ARCHITECTURE.md`
+- Documentation complète : voir `docs/ARCHITECTURE.md`

@@ -1,99 +1,44 @@
-# TotalGreen - Data Warehouse Environnemental 
+# TotalGreen - Data Warehouse Environnemental
 
-**Pipeline ETL automatisé** pour la collecte et l'analyse de données environnementales sur les 10 plus grandes villes métropolitaines françaises.
+Pipeline ETL automatisé pour la collecte et l'analyse de données environnementales (météo + qualité de l'air) sur 10 villes françaises.
 
-## Vue d'ensemble
+## À propos
 
-Pipeline de données **production-ready** avec :
-- **Collecte automatisée** : APIs OpenWeather + AQICN (toutes les heures via GitHub Actions)
-- **Data Lake JSONB** : Stockage brut des données avec versioning
-- **Data Warehouse** : Modèle en **étoile** optimisé pour l'analyse
-- **ML Anomaly Detection** : Isolation Forest + règles métier + analyse statistique
-- **Conformité RGPD** : Hébergement EU (Francfort) avec sécurité renforcée
+**Objectif** : Collecte automatisée de données environnementales (météo OpenWeather + qualité de l'air AQICN) avec stockage dans un Data Warehouse optimisé pour l'analyse.
 
-## Architecture
+**Villes surveillées** : Paris, Marseille, Lyon, Toulouse, Nice, Nantes, Montpellier, Strasbourg, Bordeaux, Lille
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              PIPELINE 1 : EXTRACTION (toutes les heures)     │
-│  APIs (OpenWeather + AQICN) → Data Lake (JSONB) → Lake      │
-└─────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│         PIPELINE 2 : TRANSFORMATION (toutes les heures)      │
-│  Data Lake → ML Anomaly Detection ⚡ → Star Schema ⭐        │
-└─────────────────────────────────────────────────────────────┘
-```
+**Fonctionnalités** :
+- Collecte horaire automatisée (GitHub Actions)
+- Data Lake JSONB pour versioning des données brutes
+- Data Warehouse en étoile (Star Schema) pour analyses OLAP
+- Détection d'anomalies ML (Isolation Forest + règles métier)
+- Validation qualité des données
+- Conformité RGPD (hébergement EU Francfort)
 
-### Structure du projet
+---
 
-```
-MSPR 1/
-├── data/
-│   └── cities_reference.json     # Référentiel des 10 villes
-├── docs/                         # 📚 Documentation
-│   ├── README.md                       # Index de la documentation
-│   ├── ARCHITECTURE.md                 # Architecture technique détaillée
-│   ├── ANOMALY_DETECTION.md            # 🤖 Guide ML Anomaly Detection
-│   ├── SECURITE.md                     # RGPD et sécurité
-│   └── archive/                        # Anciens documents techniques
-├── logs/                         # Logs d'exécution
-├── sql/
-│   ├── star_schema.sql                # ⭐ Schéma en étoile (Data Warehouse)
-│   ├── anomaly_detection_schema.sql   # Schéma détection d'anomalies ML
-│   ├── anomaly_functions.sql          # Fonctions SQL (get_city_stats, get_anomaly_summary)
-│   └── archive/                       # Anciens scripts SQL
-├── scripts/
-│   ├── check_bdd_status.py      # Vérification BDD
-│   ├── check_data_lake.py       # Vérification Data Lake
-│   └── archive/                 # Scripts de migration
-├── src/
-│   ├── services/
-│   │   ├── weather_service.py            # API OpenWeather
-│   │   ├── air_quality_service.py        # API AQICN
-│   │   ├── data_lake_service.py          # Gestion Data Lake
-│   │   ├── database_service.py           # Supabase + Star Schema
-│   │   └── anomaly_detection_service.py  # ML Anomaly Detection (Isolation Forest)
-│   ├── config.py                     # Configuration centralisée
-│   ├── etl_extract_to_lake.py       # Pipeline Extract → Lake
-│   └── etl_transform_to_db.py       # Pipeline Lake → Warehouse
-├── .github/workflows/
-│   ├── etl-extract.yml          # Automatisation extraction
-│   └── etl-transform.yml        # Automatisation transformation
-├── requirements.txt             # Dépendances Python
-└── README.md                    # Ce fichier
-```
+## 🚀 Quick Start (5 minutes)
 
-## 🚀 Installation rapide
+### 1. Prérequis
+- Python 3.12+
+- Compte Supabase (région EU)
+- Clés API : OpenWeather + AQICN
 
-### Prérequis
-- **Python 3.12+**
-- **Compte Supabase** (région EU : `eu-central-1` Francfort)
-- **Clés API** : OpenWeather + AQICN
-
-### 1. Installation
+### 2. Installation
 
 ```bash
-# Cloner le projet
+# Cloner et installer
 git clone https://github.com/Bastien-rab35/totalgreen-etl.git
 cd totalgreen-etl
-
-# Créer l'environnement virtuel
 python3 -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Installer les dépendances
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Configuration
+### 3. Configuration
 
-```bash
-# Créer le fichier .env avec vos clés
-cp .env.example .env
-```
-
-Éditez `.env` :
+Créer le fichier `.env` :
 ```env
 OPENWEATHER_API_KEY=votre_clé
 AQICN_API_KEY=votre_clé
@@ -101,350 +46,666 @@ SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_KEY=votre_service_key
 ```
 
-### 3. Déploiement Data Warehouse
+### 4. Déployer le Data Warehouse
 
-Dans l'éditeur SQL Supabase, exécutez **dans cet ordre** :
-
+Dans l'éditeur SQL Supabase, exécuter dans cet ordre :
 ```sql
--- 1. Créer le schéma en étoile (⭐ Data Warehouse)
+-- 1. Schéma en étoile (tables dimensions + faits)
 \i sql/star_schema.sql
 
--- 2. Créer la table dim_date (architecture simplifiée)
+-- 2. Table temporelle dim_date (2024-2027)
 \i sql/create_dim_date.sql
 
--- 3. ⚠️ IMPORTANT : Nettoyer l'ancienne architecture dim_time
---    (si vous migrez depuis une ancienne version)
-\i sql/cleanup_dim_time.sql
+-- 3. Schéma détection d'anomalies ML
+\i sql/anomaly_detection_schema.sql
+
+-- 4. Fonctions SQL analytiques
+\i sql/anomaly_functions.sql
 ```
 
-Cela crée :
-- **4 tables de dimensions** : dim_date, dim_city, dim_weather_condition, dim_air_quality_level
-- **1 table de faits** : fact_measures (avec `captured_at` et `capture_date`)
-- **~1 460 jours** dans dim_date (couvre 4 ans : 2024-2027)
-
-## Utilisation
-
-### Automatisation (Production)
-
-Le projet utilise **GitHub Actions** :
-- **Extract Pipeline** : Toutes les heures → Data Lake JSONB
-- **Transform Pipeline** : Toutes les heures → Star Schema
-
-Voir [.github/workflows/](.github/workflows/)
-
-### Tests manuels
+### 5. Tester le pipeline
 
 ```bash
-# Pipeline 1 : Extraction vers Data Lake
+# Pipeline 1 : APIs → Data Lake
 python src/etl_extract_to_lake.py
 
-# Pipeline 2 : Transformation vers Data Warehouse
+# Pipeline 2 : Data Lake → Data Warehouse
 python src/etl_transform_to_db.py
 
-# Vérifier le statut
-python scripts/check_bdd_status.py
-python scripts/check_data_lake.py
-```## 🗄️ Modèle de données (Star Schema ⭐)
+# Vérifier les résultats
+python scripts/validate_data_quality.py --hours 24
+```
 
-Le Data Warehouse utilise un **schéma en étoile** optimisé pour l'analyse avec une architecture temporelle simplifiée :
+✅ **Installation terminée** ! Le système collecte maintenant les données.
 
-### Table de faits
-- **`fact_measures`** : Mesures environnementales horaires
-  - Métriques météo : température, pression, humidité, vent, UV, visibilité
-  - Métriques qualité de l'air : AQI, PM2.5, PM10, NO2, O3, SO2, CO
-  - **Timestamp natif** : `captured_at` (TIMESTAMP exact de la mesure)
-  - Clés étrangères : `capture_date`, `city_id`, `weather_condition_id`, `aqi_level_id`
+---
 
-### Tables de dimensions
-- **`dim_date`** : Dimension temporelle **simplifiée** ✨
-  - Clé naturelle : `date_value` (DATE - format YYYY-MM-DD)
-  - Attributs : jour, jour_semaine, semaine, mois, trimestre, année, saison, weekend
-  - ~1 460 jours (4 ans : 2024-2027)
-  - **Avantage** : Pas de lookup complexe, jointures directes avec `DATE(captured_at)`
-  
-- **`dim_city`** : Dimension géographique
-  - 10 villes françaises avec coordonnées GPS
-  
-- **`dim_weather_condition`** : Conditions météo
-  - 40+ conditions (Clear, Clouds, Rain, Snow, etc.)
-  
-- **`dim_air_quality_level`** : Niveaux de qualité de l'air
-  - 6 niveaux (Good, Fair, Moderate, Poor, Very Poor, Severe)
+## 📋 Guide complet du processus
 
-### Avantages
-✅ **Architecture temporelle simplifiée** : `captured_at` + `dim_date` au lieu de `time_id` artificiel
-✅ Requêtes optimisées pour l'analyse (pas de conversion date/heure)
-✅ Agrégations temporelles rapides et intuitives
-✅ Jointures simplifiées : `fact_measures.capture_date = dim_date.date_value`
-✅ Évolutivité garantie
+### Étape 1 : Comprendre l'architecture
 
-## Data Lake
+Le projet utilise 2 pipelines ETL automatisés :
 
-### Table `lake`
-- Stockage **JSONB** des données brutes API
+```
+PIPELINE 1 (Extraction - toutes les heures)
+APIs → Data Lake JSONB → Fichiers JSON locaux
+
+PIPELINE 2 (Transformation - toutes les heures)  
+Data Lake → Validation + ML → Star Schema
+```
+
+**Data Lake** (`raw_data_lake`) :
+- Stockage JSONB des réponses API brutes
 - Colonnes : `city_name`, `source`, `data_type`, `raw_data`, `captured_at`, `processed`
-- Permet : audit, retraitement, versioning des données
+- Permet audit, retraitement et versioning
 
-### Workflow
-1. **Extraction** : API → Data Lake (`processed=false`)
-2. **Transformation** : Data Lake → Validation → Star Schema
-3. **Marquage** : `processed=true` après insertion réussie
+**Data Warehouse** (Star Schema) :
+- `fact_measures` : Mesures environnementales horaires
+- `dim_date` : Dimension temporelle (1460 jours)
+- `dim_city` : 10 villes françaises
+- `dim_weather_condition` : ~40 conditions météo
+- `dim_air_quality_level` : 6 niveaux qualité air
 
-## ML Anomaly Detection
+### Étape 2 : Configuration initiale
 
-**Système de détection d'anomalies multi-niveaux** pour garantir la qualité des données.
+#### A. Créer les comptes API
 
-### 3 niveaux de détection
+1. **OpenWeather** : [openweathermap.org/api](https://openweathermap.org/api)
+   - Plan gratuit : 1000 appels/jour
+   - Récupérer votre API Key
 
-1. **Règles métier** (Business Rules)
-   - Limites physiques : température -50°C à 60°C, humidité 0-100%, pression 870-1084 hPa
-   - AQI 0-500, PM2.5/PM10 0-1000 µg/m³
-   - Validation immédiate avant insertion
+2. **AQICN** : [aqicn.org/data-platform/token](https://aqicn.org/data-platform/token)
+   - Plan gratuit disponible
+   - Récupérer votre Token
 
-2. **Analyse statistique** (Z-score)
-   - Calcul sur historique 30 jours par ville
-   - Seuils : low (2σ), medium (2.5σ), high (3σ), critical (4σ)
-   - Détection des valeurs aberrantes univariées
+3. **Supabase** : [supabase.com](https://supabase.com)
+   - Créer un projet en région `eu-central-1` (Francfort)
+   - Récupérer : URL + Service Key (anon key insuffisante)
 
-3. **ML Isolation Forest** (Multivarié)
-   - Entraînement automatique sur 5000 mesures historiques (minimum 100)
-   - Contamination : 5% (détecte top 5% anomalies)
-   - Analyse multivariée sur [temp, humidity, pressure, aqi_index, pm25, pm10]
+#### B. Configurer le fichier .env
 
-### Tables & Colonnes
+Créer `.env` à la racine du projet :
+```env
+# APIs externes
+OPENWEATHER_API_KEY=votre_clé_openweather
+AQICN_API_KEY=votre_token_aqicn
 
-**Table `anomalies`** : Stockage des anomalies détectées
+# Supabase (région EU obligatoire)
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+⚠️ **Important** : Utiliser la Service Role Key, pas l'anon key
+
+### Étape 3 : Déployer le schéma de base de données
+
+#### Ordre d'exécution des scripts SQL
+
+Dans l'éditeur SQL Supabase, exécuter dans cet ordre précis :
+
+**1. Star Schema** (`sql/star_schema.sql`)
 ```sql
-id, city_id, measure_id, detected_at, anomaly_type, severity, 
-field_name, actual_value, expected_range, anomaly_score
+-- Crée les tables :
+-- - dim_city (10 villes avec coordonnées GPS)
+-- - dim_weather_condition (~40 conditions)
+-- - dim_air_quality_level (6 niveaux)
+-- - fact_measures (mesures environnementales)
+-- - raw_data_lake (stockage JSONB)
 ```
 
-**Table `fact_measures`** : Flags ML
-- `is_anomaly` : BOOLEAN (TRUE si anomalie détectée)
-- `anomaly_score` : NUMERIC (score ML entre 0 et 1)
-
-**Vues** :
-- `v_anomalies_summary` : Résumé par ville/type/sévérité
-- `v_critical_anomalies` : Anomalies critiques des 7 derniers jours
-
-### Workflow automatique
-
-1. **Entraînement** : Modèle ML entraîné sur mesures historiques propres (non-anomalies)
-2. **Détection** : 3 niveaux appliqués avant insertion dans `fact_measures`
-3. **Action** :
-   - Anomalies **critiques** (>4σ ou hors limites) → Rejetées (non insérées)
-   - Anomalies **low/medium/high** → Flaggées (`is_anomaly=TRUE`) et stockées dans `anomalies`
-4. **Traçabilité** : Toutes les anomalies loggées avec détails (champ, valeur, seuil)
-
-### Fonctions SQL
-
-**`get_city_stats(p_city_name TEXT, p_days INTEGER)`** : Statistiques par ville
+**2. Dimension temporelle** (`sql/create_dim_date.sql`)
 ```sql
-SELECT * FROM get_city_stats('Paris', 30);
--- Retourne : mean/std/min/max pour temperature, humidity, pressure, aqi_index
+-- Génère ~1460 jours (2024-2027)
+-- Attributs : jour, mois, année, saison, weekend, etc.
 ```
 
-**`get_anomaly_summary(p_days INTEGER)`** : Agrégation des anomalies
+**3. Schéma détection d'anomalies** (`sql/anomaly_detection_schema.sql`)
 ```sql
-SELECT * FROM get_anomaly_summary(7);
--- Retourne : count par ville/type/severity sur les 7 derniers jours
+-- Crée les tables :
+-- - anomalies (stockage des anomalies détectées)
+-- - ml_model_metadata (métadonnées des modèles ML)
+-- - Ajoute colonnes is_anomaly + anomaly_score à fact_measures
 ```
 
-### Configuration
-
-**Fichier** : `src/services/anomaly_detection_service.py`
-
-```python
-# Seuils Z-score
-Z_SCORE_THRESHOLD = {
-    'low': 2.0, 'medium': 2.5, 'high': 3.0, 'critical': 4.0
-}
-
-# ML Isolation Forest
-IsolationForest(contamination=0.05, random_state=42)
-
-# Données historiques pour entraînement
-MIN_TRAINING_SAMPLES = 100  # Minimum pour activer ML
-MAX_TRAINING_SAMPLES = 5000 # Limite pour performance
+**4. Fonctions SQL** (`sql/anomaly_functions.sql`)
+```sql
+-- Crée les fonctions :
+-- - get_city_stats(city_name, days) : statistiques par ville
+-- - get_anomaly_summary(days) : résumé des anomalies
+-- - Vues : v_anomalies_summary, v_critical_anomalies
 ```
 
-📖 **Guide complet** : [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)
+#### Vérifier le déploiement
 
-## 🔒 Sécurité et RGPD
+```sql
+-- Compter les tables
+SELECT COUNT(*) FROM information_schema.tables 
+WHERE table_schema = 'public';
+-- Attendu : 9 tables
 
-✅ **Conformité RGPD garantie**
-- Hébergement Supabase : **eu-central-1** (Francfort, Allemagne)
-- Pas de données personnelles collectées
-- Retention policy : 3 ans (dim_time)
+-- Vérifier dim_date
+SELECT COUNT(*) FROM dim_date;
+-- Attendu : ~1460 jours
 
-✅ **Sécurité des secrets**
-- Clés API dans `.env` (jamais commitées)
-- `.gitignore` configuré
-- GitHub Secrets pour CI/CD
+-- Vérifier dim_city
+SELECT COUNT(*) FROM dim_city;
+-- Attendu : 10 villes
+```
 
-✅ **Contrôle d'accès**
-- Service Key Supabase avec RLS
-- API rate limiting activé
+### Étape 4 : Premier test du pipeline
 
-📖 Documentation complète : [docs/SECURITE.md](docs/SECURITE.md)
-
-## Monitoring
-
-### Vérifications système
+#### A. Collecte de données (Pipeline 1)
 
 ```bash
-# Statut de la base de données
-python scripts/check_bdd_status.py
+# Activer l'environnement virtuel
+source venv/bin/activate
 
-# Statut du data lake
-python scripts/check_data_lake.py
+# Lancer l'extraction
+python src/etl_extract_to_lake.py
 ```
 
-### Requêtes utiles
+**Ce script va** :
+1. Charger les 10 villes depuis la BDD
+2. Appeler OpenWeather API (10 villes = 10 appels)
+3. Appeler AQICN API (10 villes = 10 appels)
+4. Stocker les réponses JSON dans `raw_data_lake` avec `processed=false`
+5. Sauvegarder les JSON localement dans `src/data/lake/`
 
+**Vérifier les résultats** :
+```bash
+# Compter les enregistrements dans le Data Lake
+python -c "
+from src.services.database_service import DatabaseService
+from src.config import Config
+db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+count = db.client.table('raw_data_lake').select('*', count='exact').execute()
+print(f'Enregistrements dans raw_data_lake : {count.count}')
+"
+```
+
+Attendu : 20 enregistrements (10 villes × 2 sources)
+
+#### B. Transformation des données (Pipeline 2)
+
+```bash
+# Lancer la transformation
+python src/etl_transform_to_db.py
+```
+
+**Ce script va** :
+1. Charger les enregistrements `processed=false` du Data Lake
+2. Parser les données JSON
+3. Appliquer les 3 niveaux de détection d'anomalies :
+   - Règles métier (limites physiques)
+   - Analyse statistique (Z-score)
+   - ML Isolation Forest (si ≥100 données historiques)
+4. Insérer dans `fact_measures` (avec flags anomalies)
+5. Marquer `processed=true` dans `raw_data_lake`
+
+**Vérifier les résultats** :
+```bash
+# Compter les mesures insérées
+python -c "
+from src.services.database_service import DatabaseService
+from src.config import Config
+db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+count = db.client.table('fact_measures').select('*', count='exact').execute()
+print(f'Mesures dans fact_measures : {count.count}')
+"
+```
+
+Attendu : ~10 mesures (1 par ville si données valides)
+
+### Étape 5 : Import de données historiques (optionnel)
+
+Pour analyser des données passées, vous pouvez importer des fichiers CSV historiques AQICN.
+
+**Configurer le script pour vos villes** :
+Éditer `scripts/import_aqicn_historical.py` lignes 145-161 :
+```python
+cities = [
+    {
+        'city_id': 3,
+        'city_name': 'Lyon',
+        'station_uid': '@3028',
+        'csv_file': 'path/to/lyon-air-quality.csv'
+    },
+    {
+        'city_id': 10,
+        'city_name': 'Lille',
+        'station_uid': '@8613',
+        'csv_file': 'path/to/lille-air-quality.csv'
+    }
+]
+```
+
+**Lancer l'import** :
+```bash
+# Mode dry-run (vérifier avant import)
+python scripts/import_aqicn_historical.py
+
+# Mode import réel
+python scripts/import_aqicn_historical.py --insert
+```
+
+**Traiter les données importées** :
+```bash
+# Traite TOUTES les données non-traitées (processed=false)
+python scripts/process_all_remaining.py
+```
+
+Ce script boucle jusqu'à ce que toutes les données soient traitées.
+
+### Étape 6 : Validation de la qualité des données
+
+Le projet inclut un script de validation multi-niveaux.
+
+```bash
+# Valider les données des dernières 24h
+python scripts/validate_data_quality.py --hours 24
+
+# Mode strict (exit code 1 si WARNING)
+python scripts/validate_data_quality.py --hours 24 --strict
+```
+
+**5 niveaux de validation** :
+1. **Structural Integrity** : Détecte NULL, duplicates
+2. **Temporal Coherence** : Détecte gaps, future dates, incohérences timestamps
+3. **Business Rules** : Vérifie limites physiques (temp, pression, AQI, etc.)
+4. **Data Coverage** : Vérifie présence des 10 villes (ou seuil personnalisé)
+5. **Statistical Outliers** : Détecte valeurs aberrantes (Z-score > 3σ)
+
+**Exit codes** :
+- `0` : Validation réussie (pas d'erreurs)
+- `1` : Warnings détectés
+- `2` : Erreurs critiques détectées
+
+### Étape 7 : Automatisation avec GitHub Actions
+
+Le projet inclut 3 workflows GitHub Actions :
+
+#### A. Pipeline d'extraction (`.github/workflows/etl-extract.yml`)
+- **Déclenchement** : Cron toutes les heures
+- **Action** : Collecte données APIs → Data Lake
+- **Quota** : 240 appels/jour (10 villes × 24h × 2 APIs)
+
+#### B. Pipeline de transformation (`.github/workflows/etl-transform.yml`)
+- **Déclenchement** : Cron toutes les heures
+- **Action** : Data Lake → Validation + ML → Data Warehouse
+- **Dépendance** : Attend fin d'extraction
+
+#### C. Validation qualité (`.github/workflows/data-quality-validation.yml`)
+- **Déclenchement** : Cron toutes les heures (à :15)
+- **Action** : Valide données des dernières 24h
+- **Report** : GitHub Actions Summary avec détails
+
+**Configuration GitHub Secrets** :
+1. Aller dans Settings → Secrets → Actions
+2. Créer les secrets :
+   - `OPENWEATHER_API_KEY`
+   - `AQICN_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_KEY`
+
+**Activer les workflows** :
+1. Pusher le code sur GitHub
+2. Aller dans Actions tab
+3. Activer les workflows
+
+### Étape 8 : Monitoring et maintenance
+
+#### A. Requêtes SQL utiles
+
+**Dernières mesures** :
 ```sql
--- Dernières mesures (avec timestamp exact)
 SELECT 
   fm.captured_at,
-  dd.date_value,
   dc.city_name,
   fm.temperature,
+  fm.humidity,
   fm.aqi,
   aq.level_name as air_quality
 FROM fact_measures fm
-JOIN dim_date dd ON fm.capture_date = dd.date_value
 JOIN dim_city dc ON fm.city_id = dc.city_id
+JOIN dim_date dd ON fm.capture_date = dd.date_value
 LEFT JOIN dim_air_quality_level aq ON fm.aqi_level_id = aq.aqi_level_id
 ORDER BY fm.captured_at DESC
 LIMIT 10;
+```
 
--- Statistiques par ville (agrégation par jour)
+**Statistiques par ville (30 jours)** :
+```sql
 SELECT 
   dc.city_name,
   COUNT(*) as nb_mesures,
   ROUND(AVG(fm.temperature), 1) as temp_moyenne,
-  ROUND(AVG(fm.aqi), 0) as aqi_moyen
+  ROUND(AVG(fm.aqi), 0) as aqi_moyen,
+  ROUND(AVG(fm.pm25), 1) as pm25_moyen
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
 JOIN dim_date dd ON fm.capture_date = dd.date_value
 WHERE dd.date_value >= CURRENT_DATE - INTERVAL '30 days'
 GROUP BY dc.city_name
 ORDER BY dc.city_name;
+```
 
--- Agrégation par jour de la semaine
-SELECT 
-  dd.day_name,
-  ROUND(AVG(fm.temperature), 1) as temp_moyenne
-FROM fact_measures fm
-JOIN dim_date dd ON fm.capture_date = dd.date_value
-WHERE dd.date_value >= CURRENT_DATE - INTERVAL '90 days'
-GROUP BY dd.day_name, dd.day_of_week
-ORDER BY dd.day_of_week;
-
--- Monitoring des anomalies (7 derniers jours)
-SELECT * FROM get_anomaly_summary(7);
-
--- Statistiques par ville (30 derniers jours)
-SELECT * FROM get_city_stats('Paris', 30);
-
--- Anomalies critiques récentes
-SELECT * FROM v_critical_anomalies;
-
--- Mesures flaggées comme anomalies
-SELECT 
-  dc.name AS city,
-  fm.captured_at,
-  dd.date_value,
-  fm.temperature,
-  fm.aqi_index,
-  fm.anomaly_score,
-  a.anomaly_type,
-  a.severity
-FROM fact_measures fm
-JOIN dim_city dc ON fm.city_id = dc.city_id
-JOIN dim_date dd ON fm.capture_date = dd.date_value
-LEFT JOIN anomalies a ON fm.measure_id = a.measure_id
-WHERE fm.is_anomaly = TRUE
-ORDER BY fm.captured_at DESC, fm.anomaly_score DESC
+**Anomalies critiques récentes** :
+```sql
+SELECT * FROM v_critical_anomalies
+ORDER BY detected_at DESC
 LIMIT 20;
 ```
 
-## Performance & Quotas
+**Statistiques ML par ville** :
+```sql
+SELECT * FROM get_city_stats('Paris', 30);
+```
 
-### Quotas API (plan gratuit)
-- **OpenWeather** : 1000 appels/jour
-  - Utilisation : 240 appels/jour (10 villes × 24h)
-  - Taux : **24%** ✅
-  
-- **AQICN** : Varie selon le plan
-  - Utilisation : 240 appels/jour
+**Résumé anomalies (7 derniers jours)** :
+```sql
+SELECT * FROM get_anomaly_summary(7);
+```
 
-### Métriques du Data Warehouse
-- **dim_date** : ~1 460 jours (4 ans : 2024-2027)
-- **dim_city** : 10 villes
-- **dim_weather_condition** : 40+ conditions
-- **dim_air_quality_level** : 6 niveaux
-- **fact_measures** : Croissance ~240 mesures/jour (avec timestamps natifs)
+#### B. Scripts de diagnostic
 
-## 📚 Documentation
+Le dossier `scripts/temp/` contient des scripts de diagnostic (non versionnés Git) :
 
-- **[docs/README.md](docs/README.md)** - Index de la documentation
-- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Architecture technique détaillée
-- **[docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)** - 🤖 Guide ML Anomaly Detection
-- **[docs/SECURITE.md](docs/SECURITE.md)** - Sécurité et RGPD
-- **[docs/archive/](docs/archive/)** - Anciens documents techniques
+```bash
+# Statut global de la BDD
+python scripts/temp/check_bdd_status.py
 
-## 🎓 Livrables du projet
+# Vérification du schéma en étoile
+python scripts/temp/verify_star_schema.py
 
-### ✅ Phase 1 : Architecture & Data Lake
-- Data Lake JSONB avec versioning
-- Pipeline Extract → Lake automatisé
+# Statut du Data Lake
+python scripts/temp/check_data_lake.py
 
-### ✅ Phase 2 : Data Warehouse 
-- Modèle en étoile (5 tables)
-- Pipeline Transform → Warehouse
-- Migration ~500 mesures historiques
+# Audit complet fact_measures
+python scripts/temp/audit_fact_measures.py
+```
 
-### ✅ Phase 3 : Automatisation & Production
-- GitHub Actions (2 workflows)
-- Monitoring et logs
-- Conformité RGPD
+#### C. Quotas API
 
-### ✅ Phase 4 : ML & Qualité des Données
-- **ML Anomaly Detection** 
-  - Isolation Forest opérationnel
-  - Règles métier + analyse statistique (Z-score)
-  - 3 niveaux de détection actifs
-  - Tables `anomalies` + flags `fact_measures`
+**OpenWeather** :
+- Plan gratuit : 1000 appels/jour
+- Utilisation : 240 appels/jour (10 villes × 24h)
+- Taux : **24%** ✅
 
-## Dépannage
+**AQICN** :
+- Varie selon le plan
+- Utilisation : 240 appels/jour
 
-### Erreur de connexion Supabase
+#### D. Maintenance régulière
+
+**Hebdomadaire** :
+```bash
+# Valider la qualité sur 7 jours
+python scripts/validate_data_quality.py --hours 168
+```
+
+**Mensuelle** :
+```sql
+-- Vérifier la couverture sur 30 jours
+SELECT 
+  dc.city_name,
+  COUNT(*) as nb_mesures,
+  MIN(fm.captured_at) as premiere_mesure,
+  MAX(fm.captured_at) as derniere_mesure
+FROM fact_measures fm
+JOIN dim_city dc ON fm.city_id = dc.city_id
+WHERE fm.captured_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY dc.city_name
+ORDER BY nb_mesures DESC;
+```
+
+### Étape 9 : Analyse des données
+
+#### A. Requêtes OLAP
+
+**Agrégation par saison** :
+```sql
+SELECT 
+  dd.season,
+  ROUND(AVG(fm.temperature), 1) as temp_moyenne,
+  ROUND(AVG(fm.aqi), 0) as aqi_moyen
+FROM fact_measures fm
+JOIN dim_date dd ON fm.capture_date = dd.date_value
+WHERE dd.year = 2026
+GROUP BY dd.season
+ORDER BY dd.season;
+```
+
+**Top 10 jours les plus pollués** :
+```sql
+SELECT 
+  dd.date_value,
+  dc.city_name,
+  fm.aqi,
+  aq.level_name
+FROM fact_measures fm
+JOIN dim_date dd ON fm.capture_date = dd.date_value
+JOIN dim_city dc ON fm.city_id = dc.city_id
+LEFT JOIN dim_air_quality_level aq ON fm.aqi_level_id = aq.aqi_level_id
+WHERE fm.aqi IS NOT NULL
+ORDER BY fm.aqi DESC
+LIMIT 10;
+```
+
+**Comparaison villes (moyennes annuelles)** :
+```sql
+SELECT 
+  dc.city_name,
+  ROUND(AVG(fm.temperature), 1) as temp_moy,
+  ROUND(AVG(fm.humidity), 0) as humidity_moy,
+  ROUND(AVG(fm.aqi), 0) as aqi_moy,
+  ROUND(AVG(fm.pm25), 1) as pm25_moy
+FROM fact_measures fm
+JOIN dim_city dc ON fm.city_id = dc.city_id
+JOIN dim_date dd ON fm.capture_date = dd.date_value
+WHERE dd.year = 2026
+GROUP BY dc.city_name
+ORDER BY aqi_moy DESC;
+```
+
+#### B. Détection d'anomalies ML
+
+**Mesures flaggées avec scores** :
+```sql
+SELECT 
+  dc.city_name AS ville,
+  fm.captured_at,
+  fm.temperature,
+  fm.aqi,
+  fm.anomaly_score,
+  a.anomaly_type,
+  a.severity,
+  a.field_name,
+  a.actual_value
+FROM fact_measures fm
+JOIN dim_city dc ON fm.city_id = dc.city_id
+LEFT JOIN anomalies a ON fm.measure_id = a.measure_id
+WHERE fm.is_anomaly = TRUE
+  AND fm.captured_at >= CURRENT_DATE - INTERVAL '7 days'
+ORDER BY fm.anomaly_score DESC, fm.captured_at DESC
+LIMIT 20;
+```
+
+**Anomalies par type et sévérité** :
+```sql
+SELECT 
+  anomaly_type,
+  severity,
+  COUNT(*) as count
+FROM anomalies
+WHERE detected_at >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY anomaly_type, severity
+ORDER BY count DESC;
+```
+
+---
+
+## 📁 Structure du projet
+
+```
+MSPR 1/
+├── .github/workflows/          # GitHub Actions
+│   ├── etl-extract.yml
+│   ├── etl-transform.yml
+│   └── data-quality-validation.yml
+├── data/
+│   └── cities_reference.json   # 10 villes (id, name, lat, lon)
+├── docs/                       # Documentation technique
+│   ├── README.md                     # Index
+│   ├── ARCHITECTURE.md               # Architecture détaillée
+│   ├── ANOMALY_DETECTION.md          # Guide ML
+│   ├── SECURITE.md                   # RGPD et sécurité
+│   └── archive/                      # Anciens docs
+├── logs/                       # Logs d'exécution
+├── scripts/
+│   ├── import_aqicn_historical.py    # Import CSV historique
+│   ├── process_all_remaining.py      # Traitement batch
+│   ├── validate_data_quality.py      # Validation 5 niveaux
+│   ├── README.md                     # Guide des scripts
+│   └── temp/                         # Scripts diagnostic (Git-excluded)
+├── sql/
+│   ├── star_schema.sql               # Schéma en étoile
+│   ├── create_dim_date.sql           # Dimension temporelle
+│   ├── anomaly_detection_schema.sql  # Schéma ML
+│   ├── anomaly_functions.sql         # Fonctions analytiques
+│   ├── queries_olap.sql              # Requêtes d'analyse
+│   └── README.md                     # Guide SQL
+├── src/
+│   ├── services/
+│   │   ├── weather_service.py            # API OpenWeather
+│   │   ├── air_quality_service.py        # API AQICN
+│   │   ├── data_lake_service.py          # Gestion Data Lake
+│   │   ├── database_service.py           # Supabase + Star Schema
+│   │   └── anomaly_detection_service.py  # ML Isolation Forest
+│   ├── config.py                     # Configuration centralisée
+│   ├── etl_extract_to_lake.py       # Pipeline 1 (APIs → Lake)
+│   └── etl_transform_to_db.py       # Pipeline 2 (Lake → Warehouse)
+├── .env                        # Configuration (NON versionné)
+├── .gitignore
+├── requirements.txt            # Dépendances Python
+├── CHANGELOG.md                # Historique des versions
+└── README.md                   # Ce fichier
+```
+
+---
+
+## 🔐 Sécurité et RGPD
+
+**Conformité RGPD** :
+- Hébergement Supabase : **eu-central-1** (Francfort, Allemagne)
+- Pas de données personnelles collectées
+- Données publiques uniquement (météo + qualité air)
+- Retention : 4 ans (dim_date 2024-2027)
+
+**Gestion des secrets** :
+- Clés API dans `.env` (jamais commitées)
+- `.gitignore` configuré
+- GitHub Secrets pour CI/CD
+- Service Key Supabase avec RLS
+
+📖 **Documentation complète** : [docs/SECURITE.md](docs/SECURITE.md)
+
+---
+
+## 📊 Modèle de données
+
+### Star Schema (Data Warehouse)
+
+**Table de faits** :
+- `fact_measures` : Mesures environnementales horaires
+  - Métriques météo : temperature, pressure, humidity, wind_speed, uv_index, visibility
+  - Métriques air : aqi, pm25, pm10, no2, o3, so2, co
+  - Timestamp : `captured_at` (TIMESTAMP exact)
+  - Flags ML : `is_anomaly`, `anomaly_score`
+
+**Tables de dimensions** :
+- `dim_date` : ~1460 jours (2024-2027) avec attributs calendaires
+- `dim_city` : 10 villes avec coordonnées GPS
+- `dim_weather_condition` : ~40 conditions météo
+- `dim_air_quality_level` : 6 niveaux (Good → Severe)
+
+### ML Anomaly Detection
+
+**3 niveaux de détection** :
+1. **Règles métier** : Limites physiques (temp -50 à 60°C, AQI 0-500, etc.)
+2. **Analyse statistique** : Z-score sur 30 jours (seuils 2σ, 2.5σ, 3σ, 4σ)
+3. **ML Isolation Forest** : Détection multivariée (5% contamination)
+
+**Tables** :
+- `anomalies` : Stockage des anomalies détectées
+- `ml_model_metadata` : Métadonnées des modèles
+
+**Fonctions SQL** :
+- `get_city_stats(city_name, days)` : Statistiques par ville
+- `get_anomaly_summary(days)` : Résumé des anomalies
+
+📖 **Guide complet** : [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)
+
+---
+
+## 🛠️ Dépannage
+
+### Erreur : "Connection to Supabase failed"
+
 ```bash
 # Vérifier les variables d'environnement
 cat .env | grep SUPABASE
 
 # Tester la connexion
-python scripts/check_bdd_status.py
+python -c "
+from src.services.database_service import DatabaseService
+from src.config import Config
+db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+print('✅ Connexion réussie')
+"
 ```
 
-### Erreur API
-```bash
-# Vérifier les clés API
-cat .env | grep API_KEY
+### Erreur : "API rate limit exceeded"
 
-# Tester manuellement
+- OpenWeather : 1000 appels/jour max
+- Utilisation normale : 240 appels/jour
+- Solution : Vérifier si plusieurs instances tournent
+
+### Data Lake vide après extraction
+
+```bash
+# Vérifier les logs
+cat logs/etl_extract_*.log
+
+# Relancer l'extraction
 python src/etl_extract_to_lake.py
 ```
 
-### Data Lake vide
-```bash
-# Vérifier le contenu
-python scripts/check_data_lake.py
+### Anomalies non détectées
 
-# Lancer l'extraction
-python src/etl_extract_to_lake.py
+```bash
+# Vérifier qu'il y a assez de données historiques
+python -c "
+from src.services.database_service import DatabaseService
+from src.config import Config
+db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+count = db.client.table('fact_measures').select('*', count='exact').execute()
+print(f'Mesures : {count.count} (minimum 100 pour ML)')
+"
 ```
+
+---
+
+## 📚 Documentation
+
+- [docs/README.md](docs/README.md) - Index de la documentation
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Architecture technique
+- [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md) - Guide ML
+- [docs/SECURITE.md](docs/SECURITE.md) - Sécurité et RGPD
+- [CHANGELOG.md](CHANGELOG.md) - Historique des versions
+- [scripts/README.md](scripts/README.md) - Guide des scripts
+- [sql/README.md](sql/README.md) - Guide SQL
+
+---
 
 ## 🔗 Liens utiles
 
@@ -455,7 +716,7 @@ python src/etl_extract_to_lake.py
 
 ---
 
-**📅 Créé** : Janvier 2026  
-**🏷️ Version** : 2.0.0 (Star Schema + ML)  
-**✅ Conformité** : RGPD (hébergement EU)  
-**⚡ Automatisation** : GitHub Actions  
+**Version** : 2.1.0 (Import CSV historique + Validation qualité)  
+**Créé** : Janvier 2026  
+**Conformité** : RGPD (hébergement EU)  
+**Automatisation** : GitHub Actions (collecte horaire)

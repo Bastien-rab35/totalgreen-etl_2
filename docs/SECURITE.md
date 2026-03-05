@@ -4,7 +4,7 @@ Documentation de conformité pour le projet TotalGreen ETL.
 
 ---
 
-## 🔐 Conformité RGPD
+## Conformité RGPD
 
 ### Hébergement et Souveraineté des Données
 
@@ -26,7 +26,7 @@ Documentation de conformité pour le projet TotalGreen ETL.
 
 ---
 
-## 🔒 Sécurité
+## Sécurité
 
 ### Gestion des Secrets
 
@@ -39,10 +39,10 @@ SUPABASE_KEY=***
 ```
 
 **Protections** :
-- ✅ `.env` exclu de Git (.gitignore)
-- ✅ `.env.example` fourni (sans valeurs réelles)
-- ✅ Validation au démarrage (config.validate())
-- ✅ Aucune clé en dur dans le code
+- .env exclu de Git (.gitignore)
+- .env.example fourni (sans valeurs réelles)
+- Validation au démarrage (config.validate())
+- Aucune clé en dur dans le code
 
 ### Authentification
 
@@ -57,9 +57,9 @@ SUPABASE_KEY=***
 ### Base de Données
 
 **Connexions** :
-- ✅ HTTPS/TLS uniquement
-- ✅ Service Key (non exposée publiquement)
-- ✅ Row Level Security (RLS) disponible
+- HTTPS/TLS uniquement
+- Service Key (non exposée publiquement)
+- Row Level Security (RLS) disponible
 
 **Politiques RLS** :
 ```sql
@@ -70,7 +70,7 @@ ALTER TABLE etl_logs ENABLE ROW LEVEL SECURITY;
 
 ---
 
-## 🛡️ Contrôle d'Accès
+## Contrôle d'Accès
 
 ### Accès Pipeline ETL
 
@@ -92,7 +92,7 @@ Pour phase future (dashboard/API) :
 
 ---
 
-## 📊 Conservation des Données
+## Conservation des Données
 
 | Table | Durée de rétention | Justification |
 |-------|-------------------|---------------|

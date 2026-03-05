@@ -1,6 +1,6 @@
 # Guide de mise en place de la détection d'anomalies ML
 
-## 📋 Prérequis
+## Prérequis
 
 1. **Installation des dépendances ML**
    ```bash
@@ -10,7 +10,7 @@
    - `scikit-learn==1.5.2` (Isolation Forest)
    - `numpy==1.26.4` (calculs matriciels)
 
-## 🚀 Déploiement
+## Déploiement
 
 ### Étape 1 : Déployer le schéma sur Supabase
 
@@ -33,15 +33,165 @@ python etl_transform_to_db.py
 ```
 
 Le système :
-1. ⚡ Entraîne automatiquement le modèle Isolation Forest sur 5000 mesures historiques
-2. 🔍 Analyse chaque nouvelle mesure avec 3 niveaux :
+1. Entraîne automatiquement le modèle Isolation Forest sur 5000 mesures historiques
+2. Analyse chaque nouvelle mesure avec 3 niveaux :
    - **Règles métier** : température < -50°C ou > 60°C
    - **Statistiques** : Z-score > 3σ (écart-type)
    - **ML** : Isolation Forest (anomalies multivariées)
-3. 🚨 Rejette les anomalies critiques
-4. ✅ Flagge les anomalies low/medium/high (insérées avec `is_anomaly=true`)
+3. Rejette les anomalies critiques
+4. Flagge les anomalies low/medium/high (insérées avec `is_anomaly=true`)
 
-## 📊 Analyse des anomalies
+## Validation de la qualité des données
+
+### Script de validation automatique
+
+Un script de validation est disponible pour vérifier l'intégrité et la qualité des données après import :
+
+```bash
+# Valider les données des dernières 24h
+python scripts/validate_data_quality.py
+
+# Valider une période spécifique (48h)
+python scripts/validate_data_quality.py --hours 48
+
+# Mode strict (échoue si warnings)
+python scripts/validate_data_quality.py --strict
+```
+
+### Vérifications effectuées
+
+**1. Intégrité structurelle**
+- Clés étrangères NULL (city_id, capture_date, captured_at)
+- Doublons (même city_id + captured_at)
+- Cohérence des FK avec dim_city
+
+**2. Cohérence temporelle**
+- created_at < captured_at (incohérences)
+- Dates dans le futur
+- Gaps temporels (>2h sans données par ville)
+
+**3. Limites physiques (business rules)**
+- Température : -50°C à 60°C
+- Humidité : 0% à 100%
+- Pression : 870 à 1084 hPa
+- AQI : 0 à 500
+- PM2.5/PM10 : 0 à 1000/2000 µg/m³
+
+**4. Couverture des données**
+- Toutes les 10 villes présentes
+- Volume de données par ville (détection villes sous-représentées)
+
+**5. Outliers statistiques**
+- Détection valeurs aberrantes (>3σ) par champ
+- Calcul Z-score pour température, humidité, pression, AQI, PM2.5, PM10
+
+### Intégration GitHub Actions
+
+Le script est conçu pour être exécuté après chaque import de données :
+
+**Exit codes** :
+- `0` : Validation OK (aucun problème critique)
+- `1` : Problèmes critiques détectés (échec)
+- `2` : Erreur d'exécution
+
+**Exemple workflow GitHub Actions** :
+
+```yaml
+name: Validate Data Quality
+
+on:
+  schedule:
+    - cron: '15 * * * *'  # 15 minutes après chaque heure
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      
+      - name: Validate data quality
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python scripts/validate_data_quality.py --hours 2
+      
+      - name: Notify on failure
+        if: failure()
+        run: echo "Data quality issues detected!"
+        # Ajouter notification Slack/Email ici
+```
+
+### Rapport de validation
+
+Le script génère un rapport détaillé :
+
+```
+======================================================================
+VALIDATION QUALITÉ DES DONNÉES
+======================================================================
+
+Période analysée: 24h (depuis 2026-03-04T10:30:00)
+
+Chargement des données...
+
+1. Vérification intégrité structurelle...
+   Total mesures: 240
+   Doublons: 0
+   Valeurs NULL: 0
+
+2. Vérification cohérence temporelle...
+   Incohérences temporelles: 5
+   Dates futures: 0
+   Gaps temporels: 2
+
+3. Vérification limites physiques...
+   Violations: 0 types différents
+
+4. Vérification couverture des données...
+   Villes avec données: 10/10
+   Villes manquantes: 0
+      - Paris: 24 mesures
+      - Marseille: 24 mesures
+      - Lyon: 24 mesures
+      ...
+
+5. Détection outliers statistiques...
+   Outliers détectés: 1 champs
+      - pm25: 3 (1.2%) - max Z=3.2
+
+======================================================================
+RAPPORT DE VALIDATION
+======================================================================
+
+Total problèmes: 8
+   CRITICAL: 0
+   WARNING:  5
+   INFO:     3
+
+WARNING:
+
+   [temporal_coherence] 5 mesures avec created_at < captured_at
+
+INFO:
+
+   [statistical_outliers] 3 outliers statistiques détectés (>3σ)
+      outliers: {'pm25': {...}}
+
+======================================================================
+STATUT: validation OK
+======================================================================
+```
+
+## Analyse des anomalies
 
 ### Requête : Résumé des anomalies par ville
 
@@ -82,7 +232,7 @@ LIMIT 20;
 SELECT * FROM get_city_stats('Paris', 30);  -- 30 derniers jours
 ```
 
-## 🎯 Types d'anomalies détectées
+## Types d'anomalies détectées
 
 ### 1. Règles métier (business_rule)
 - **Température** : < -50°C ou > 60°C
@@ -90,14 +240,14 @@ SELECT * FROM get_city_stats('Paris', 30);  -- 30 derniers jours
 - **AQI** : < 0 ou > 500
 - **PM2.5** : < 0 ou > 1000 µg/m³
 
-**Action** : ❌ REJET automatique
+**Action** : REJET automatique
 
 ### 2. Anomalies statistiques (statistical)
 - **Z-score** : écart de 2σ à 4σ de la moyenne historique
 - Calculé sur température, humidité, pression, AQI
 - Basé sur 30 jours d'historique
 
-**Action** : 🚨 FLAGGED (low/medium/high) ou ❌ REJET (critical si >4σ)
+**Action** : FLAGGED (low/medium/high) ou REJET (critical si >4σ)
 
 ### 3. Anomalies ML (ml_isolation_forest)
 - **Isolation Forest** : détecte les combinaisons anormales de valeurs

@@ -4,9 +4,9 @@ Documentation complète du projet de surveillance environnementale.
 
 ---
 
-## 📚 Documents Principaux
+## Documents Principaux
 
-### [ARCHITECTURE.md](ARCHITECTURE.md)
+### ARCHITECTURE.md
 Architecture technique complète du système :
 - Modèle en étoile (Star Schema)
 - Pipeline ETL 3 couches
@@ -14,16 +14,24 @@ Architecture technique complète du système :
 - Stratégies de transformation
 - Technologies utilisées
 
-### [SECURITE.md](SECURITE.md)
+### SECURITE.md
 Sécurité et conformité RGPD :
 - Hébergement UE et souveraineté des données
 - Gestion des secrets et authentification
 - Contrôle d'accès et RLS
 - Conservation et purge des données
 
+### ANOMALY_DETECTION.md
+
+Detection d'anomalies ML :
+- Guide de mise en place
+- Isolation Forest + règles métier
+- Analyse statistique (Z-score)
+- Fonctions SQL analytics
+
 ---
 
-## 🗂️ Documents Archivés
+## Documents Archivés
 
 Documents techniques de développement et diagnostics (conservés pour historique) :
 
@@ -36,7 +44,7 @@ Documents techniques de développement et diagnostics (conservés pour historiqu
 
 ---
 
-## 🚀 Démarrage Rapide
+## Démarrage Rapide
 
 ### Installation
 ```bash
@@ -78,12 +86,12 @@ python src/etl_extract_to_lake.py
 python src/etl_transform_to_db.py
 
 # Vérification
-python scripts/verify_star_schema.py
+python scripts/temp/verify_star_schema.py
 ```
 
 ---
 
-## 📊 Structure du Projet
+## Structure du Projet
 
 ```
 MSPR 1/
