@@ -43,7 +43,7 @@
                 <mxCell id="dim_aqi" value="dim_air_quality_level&#xa;(6 niveaux)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" parent="1" vertex="1">
                     <mxGeometry x="720" y="310" width="180" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="dim_date" value="dim_date&#xa;(1,461 jours)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" parent="1" vertex="1">
+                <mxCell id="dim_time" value="dim_time&#xa;Dimension temporelle" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=11" vertex="1" parent="1">
                     <mxGeometry x="830" y="230" width="120" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="fact" value="fact_measures&#xa;Table de faits&#xa;&#xa;Métriques:&#xa;• Température, Humidité&#xa;• AQI, PM2.5, PM10&#xa;• NO2, O3, SO2, CO" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=11;fontStyle=1;align=left" parent="1" vertex="1">
@@ -52,8 +52,29 @@
                 <mxCell id="ads" value="AnomalyDetectionService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" parent="1" vertex="1">
                     <mxGeometry x="500" y="490" width="160" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="func" value="anomaly_functions.sql" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E0E0E0;strokeColor=#424242;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="500" y="550" width="160" height="30" as="geometry"/>
+                <mxCell id="validate_script" value="validate_data_quality.py&#xa;Validation qualité" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="720" y="390" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="cleanup_script" value="cleanup_data_quality_issues.py&#xa;Nettoyage automatique" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="720" y="460" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="github_actions" value="GitHub Actions&#xa;Workflows CRON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="720" y="530" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_table" value="anomalies&#xa;Historique anomalies" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="500" y="560" width="160" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_fact_validate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;dashed=1;" parent="1" source="fact" target="validate_script" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_validate_cleanup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;" parent="1" source="validate_script" target="cleanup_script" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_github_validate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;dashed=1;" parent="1" source="github_actions" target="validate_script" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="arr_ads_anomalies" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#C62828;" parent="1" source="ads" target="anomalies_table" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="arr1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;" parent="1" target="ws" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -99,7 +120,7 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="arr13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" parent="1" source="dw" edge="1">
+                <mxCell id="arr13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#F57F17;dashed=1;" parent="1" source="dw" target="dim_time" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
                             <mxPoint x="770" y="230"/>
@@ -114,25 +135,34 @@
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
                 <mxCell id="legend" value="LÉGENDE" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#000000;strokeWidth=2;fontSize=12;fontStyle=1;align=center" parent="1" vertex="1">
-                    <mxGeometry x="180" y="720" width="600" height="30" as="geometry"/>
+                    <mxGeometry x="150" y="729" width="820" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg1" value="APIs Externes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1F5FF;strokeColor=#01579B;strokeWidth=2;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="190" y="760" width="90" height="30" as="geometry"/>
+                    <mxGeometry x="160" y="769" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg2" value="ETL" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="290" y="760" width="90" height="30" as="geometry"/>
+                    <mxGeometry x="260" y="769" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg3" value="Stockage" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=2;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="390" y="760" width="90" height="30" as="geometry"/>
+                    <mxGeometry x="360" y="769" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg4" value="Services" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;strokeWidth=2;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="490" y="760" width="90" height="30" as="geometry"/>
+                    <mxGeometry x="460" y="769" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg5" value="Dimensions" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="590" y="760" width="90" height="30" as="geometry"/>
+                    <mxGeometry x="560" y="769" width="90" height="30" as="geometry"/>
                 </mxCell>
                 <mxCell id="leg6" value="Faits" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=10" parent="1" vertex="1">
-                    <mxGeometry x="690" y="760" width="80" height="30" as="geometry"/>
+                    <mxGeometry x="660" y="769" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg7" value="Scripts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="750" y="769" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg8" value="Automation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="840" y="769" width="80" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="leg9" value="Anomalies" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="930" y="769" width="80" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
