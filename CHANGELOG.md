@@ -4,6 +4,28 @@ Ce document retrace les principales évolutions techniques du projet.
 
 ---
 
+## Version 2.3 - Stockage des anomalies en BDD (6 Mars 2026)
+
+### Table anomalies
+- **Création** : Nouvelle table `anomalies` pour tracer les problèmes de qualité des données
+  - Colonnes : validation_run_id (UUID), severity, category, message, details (JSONB), detected_at
+  - Index sur run_id, severity, category, detected_at pour optimiser les requêtes
+  - Vue `anomalies_daily_stats` pour statistiques quotidiennes
+
+### Script validate_data_quality.py
+- **Sauvegarde automatique** des anomalies détectées dans la table BDD
+  - Génération d'un UUID unique par run de validation
+  - Stockage de toutes les anomalies (critical, warning, info)
+  - Conservation des détails en JSONB (exemples, statistiques, villes impactées)
+- **Traçabilité** : Historique complet des problèmes de qualité
+
+### Fichiers
+- **Nouveau** : `sql/anomalies_table.sql` (schéma table + vue stats)
+- **Modifié** : `scripts/validate_data_quality.py` (méthode save_anomalies_to_db)
+- **Mis à jour** : `sql/README.md` (documentation table anomalies)
+
+---
+
 ## Version 2.2 - Optimisation stations AQI et simplification ML (6 Mars 2026)
 
 ### Optimisation des stations AQICN
@@ -36,7 +58,6 @@ Ce document retrace les principales évolutions techniques du projet.
 - Mise à jour README.md (focus validation qualité Python)
 - Mise à jour SLIDE_DEVELOPPEMENT.md
 - Mise à jour docs/README.md, docs/ARCHITECTURE.md, sql/README.md
-- Suppression références ML SQL dans toute la documentation
 
 ### Fichiers modifiés
 - `data/cities_reference.json`

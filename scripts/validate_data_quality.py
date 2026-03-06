@@ -33,6 +33,8 @@ from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Tuple
 import argparse
+import uuid
+import json
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -80,6 +82,7 @@ class DataQualityValidator:
         self.db = db
         self.hours = hours
         self.start_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+        self.validation_run_id = str(uuid.uuid4())  # ID unique pour ce run
         self.issues = {
             'critical': [],
             'warning': [],
@@ -248,6 +251,37 @@ class DataQualityValidator:
                 gaps[city_id] = city_gaps
         
         return gaps
+    
+    def save_anomalies_to_db(self) -> None:
+        """
+        Sauvegarde toutes les anomalies détectées dans la table anomalies
+        """
+        try:
+            anomalies_to_insert = []
+            
+            for severity in ['critical', 'warning', 'info']:
+                for issue in self.issues[severity]:
+                    anomaly = {
+                        'validation_run_id': self.validation_run_id,
+                        'severity': severity,
+                        'category': issue['category'],
+                        'message': issue['message'],
+                        'detected_at': issue['timestamp'],
+                        'validation_period_hours': self.hours,
+                        'details': json.dumps(issue['details']) if issue['details'] else None
+                    }
+                    anomalies_to_insert.append(anomaly)
+            
+            if anomalies_to_insert:
+                # Insérer toutes les anomalies en une seule requête
+                self.db.client.table('anomalies').insert(anomalies_to_insert).execute()
+                print(f"\n✓ {len(anomalies_to_insert)} anomalie(s) sauvegardée(s) en BDD (run_id: {self.validation_run_id[:8]}...)")
+            else:
+                print(f"\n✓ Aucune anomalie détectée - rien à sauvegarder (run_id: {self.validation_run_id[:8]}...)")
+                
+        except Exception as e:
+            print(f"\n⚠ Erreur lors de la sauvegarde des anomalies en BDD: {e}")
+            # On ne bloque pas la validation si la sauvegarde échoue
         
     def validate_business_rules(self, measures: List[Dict]) -> None:
         """Vérifie les limites physiques (business rules)"""
@@ -411,6 +445,9 @@ class DataQualityValidator:
         
         # Rapport final
         self.print_report()
+        
+        # Sauvegarder les anomalies en BDD
+        self.save_anomalies_to_db()
         
         # Retourner True si pas de problèmes critiques
         return len(self.issues['critical']) == 0

@@ -18,6 +18,11 @@ Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
   - Stations optimisées pour Lyon et Lille
   - Amélioration qualité des données
 
+- **`anomalies_table.sql`** - Table de stockage des anomalies de qualité des données
+  - Stocke les anomalies détectées par `validate_data_quality.py`
+  - Index pour requêtes sur run_id, severity, category
+  - Vue `anomalies_daily_stats` pour statistiques quotidiennes
+
 ### Analyses
 - **`queries_olap.sql`** - 20+ requêtes d'analyses multidimensionnelles
   - Analyses temporelles (tendances, patterns)
