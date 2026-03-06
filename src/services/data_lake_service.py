@@ -4,7 +4,7 @@ Stockage des données brutes avant transformation
 """
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Optional
 from supabase import create_client, Client
 
@@ -33,7 +33,7 @@ class DataLakeService:
         """Stocke les données brutes JSON dans le data lake"""
         try:
             # Utilise le timestamp de l'API si fourni, sinon le moment actuel
-            timestamp = collected_at if collected_at else datetime.utcnow()
+            timestamp = collected_at if collected_at else datetime.now(timezone.utc)
             
             entry = {
                 'city_id': city_id,
@@ -61,7 +61,7 @@ class DataLakeService:
         try:
             update_data = {
                 'processed': True,
-                'processed_at': datetime.utcnow().isoformat()
+                'processed_at': datetime.now(timezone.utc).isoformat()
             }
             self.client.table('raw_data_lake').update(update_data).eq('id', lake_id).execute()
             logger.info(f"Data lake {lake_id} marqué comme traité")

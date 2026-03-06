@@ -7,7 +7,7 @@ import logging
 import time
 import os
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 
 from config import config
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService
@@ -115,7 +115,7 @@ class TransformToDB:
             # Utiliser le timestamp du data lake (celui de l'API)
             measure = {
                 'city_id': city_id,
-                'captured_at': raw_entry.get('collected_at', datetime.utcnow().isoformat())
+                'captured_at': raw_entry.get('collected_at', datetime.now(timezone.utc).isoformat())
             }
             
             if source == 'openweather':

@@ -63,7 +63,7 @@ class DatabaseService:
                 'city_id': city_id,
                 'raw_weather_id': raw_weather_id,
                 'raw_aqi_id': raw_aqi_id,
-                'captured_at': datetime.utcnow().isoformat(),
+                'captured_at': datetime.now(timezone.utc).isoformat(),
                 **weather_data,
                 **aqi_data
             }
@@ -85,7 +85,7 @@ class DatabaseService:
         """Enregistre l'exécution d'un job ETL"""
         try:
             log_entry = {
-                'execution_time': datetime.utcnow().isoformat(),
+                'execution_time': datetime.now(timezone.utc).isoformat(),
                 'status': status,
                 'source': source,
                 'city_id': city_id,
