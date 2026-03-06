@@ -94,13 +94,13 @@ Fréquence : **2× par jour**
 
 **Nettoyage Auto**
 Script : `cleanup_data_quality_issues.py`
-- **125 doublons** supprimés
+- **26 doublons** historiques détectés
 - Batch 50 items
 - Dry-run mode
 
 **Stations AQI Optimisées**
 - Lyon : Station Lyon Centre (idx 3028)
-- Lille : Station @8613
+- Lille : Station Roubaix (métropole)
 - Données fiables et précises
 
 ---
@@ -113,8 +113,8 @@ Script : `cleanup_data_quality_issues.py`
 | Composant | Tech | Version |
 |-----------|------|---------|
 | Langage | Python | 3.12 |
-| BDD | PostgreSQL | 15 |
-| ML | scikit-learn | 1.5.2 |
+| BDD | PostgreSQL (EU) | 15 |
+| Calcul | numpy | 1.26+ |
 | Hébergement | Supabase | UE |
 | CI/CD | GitHub Actions | - |
 
@@ -134,20 +134,21 @@ Script : `cleanup_data_quality_issues.py`
 
 ```
 📊 DONNÉES
-11 453 mesures collectées
-339 mesures/jour
+11 878 mesures collectées
+371 mesures/jour
 10 villes × 24h
 
 ⚡ PERFORMANCES
 Collecte    : 20s (10 villes)
 Transform   : 3s (100 entrées)
-ML Training : 2-3s
-ML Predict  : <100ms
-Stockage    : 500 Ko/jour
+Requêtes   : 40ms (100 mesures)
+Stockage    : 737 KB/jour
+Total       : 37 MB (DL + DW)
 
 ✅ QUALITÉ
-0 doublons
-0 erreurs critiques
+Validation 5 niveaux
+26 doublons détectés
+Cleanup disponible
 100% disponibilité
 ```
 
@@ -163,7 +164,7 @@ Index créés :
 ---
 
 ## [FOOTER]
-**Pipeline opérationnel | 11 453 mesures | 0 doublons | ML temps réel**
+**Pipeline opérationnel | 11 878 mesures | Validation 5 niveaux | 371 mesures/jour**
 
 ---
 
@@ -175,11 +176,11 @@ Index créés :
 ### [1 min] Pipeline ETL
 "Pipeline en 2 étapes : Extract collecte 10 villes toutes les heures via 2 APIs en 20 secondes. Transform normalise et insère dans le Star Schema en 3 secondes. Architecture modulaire avec 5 services Python et gestion d'erreurs complète."
 
-### [1.5 min] Qualité & ML
-"Validation automatisée 2×/jour : 0 doublons, 100% conforme. Machine Learning avec Isolation Forest : 3 approches combinées - règles métier, statistiques Z-score, et ML multivariée sur 6 métriques. Classification NORMAL/FLAGGED/REJET. Entraînement sur 5000 mesures, prédiction en moins de 100ms. Script de nettoyage a supprimé 125 doublons."
+### [1.5 min] Qualité & Validation
+"Validation automatisée 5 niveaux exécutée 2×/jour : intégrité structurelle, cohérence temporelle, limites physiques, couverture, et détection outliers statistiques. 26 doublons historiques identifiés avec script cleanup disponible. Validation enregistrée en BDD pour traçabilité complète. Exit codes pour intégration CI/CD."
 
 ### [1 min] Stack & Performances
-"Stack moderne : Python 3.12, PostgreSQL 15, scikit-learn. 4 workflows GitHub Actions orchestrés. En production : 11 453 mesures, 339/jour, 0 erreur critique, disponibilité 100%. Performances optimales avec index GIN et B-Tree."
+"Stack moderne : Python 3.12, PostgreSQL 15, numpy. 3 workflows GitHub Actions orchestrés. En production : 11 878 mesures, 371/jour, validation 5 niveaux active, disponibilité 100%. Performances optimales : 40ms requêtes, 737 KB/jour stockage, index GIN et B-Tree."
 
 ### [30s] Conclusion
 "Pipeline automatisé, qualité garantie par ML, performances optimales en production."
@@ -213,14 +214,15 @@ Déjà présent ci-dessus ✓
 
 - **2** étapes ETL
 - **5** services modulaires
-- **3** niveaux ML
-- **11 453** mesures
-- **339** mesures/jour
+- **5** niveaux validation
+- **11 878** mesures
+- **371** mesures/jour
 - **20s** collecte
 - **3s** transform
-- **0** doublons
+- **40ms** requêtes
+- **37 MB** stockage total
+- **737 KB/jour** croissance
 - **100%** disponibilité
-- **<100ms** ML predict
 
 ---
 

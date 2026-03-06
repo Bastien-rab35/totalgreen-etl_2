@@ -159,11 +159,13 @@ Script Python `validate_data_quality.py` :
 
 ## Technologies
 
-- **Base de données** : PostgreSQL 15 (Supabase)
+- **Base de données** : PostgreSQL 15 (Supabase EU Francfort)
 - **Langage** : Python 3.12
-- **Librairies** : requests, supabase-py, python-dotenv
-- **Orchestration** : GitHub Actions (CRON)
-- **Hébergement** : Supabase (UE)
+- **Librairies** : requests, supabase-py, numpy, python-dotenv
+- **APIs externes** : OpenWeather (météo) + AQICN (qualité air)
+- **Orchestration** : GitHub Actions (CRON 3 workflows)
+- **Hébergement** : Supabase eu-central-1 (conformité RGPD)
+- **Validation** : Script Python 5 niveaux (détection anomalies)
 
 ---
 

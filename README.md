@@ -55,11 +55,8 @@ Dans l'éditeur SQL Supabase, exécuter dans cet ordre :
 -- 2. Table temporelle dim_date (2024-2027)
 \i sql/create_dim_date.sql
 
--- 3. Schéma détection d'anomalies ML
-\i sql/anomaly_detection_schema.sql
-
--- 4. Fonctions SQL analytiques
-\i sql/anomaly_functions.sql
+-- 3. Table de tracking des anomalies (validation qualité)
+\i sql/anomalies_table.sql
 ```
 
 ### 5. Tester le pipeline
@@ -158,10 +155,10 @@ Dans l'éditeur SQL Supabase, exécuter dans cet ordre précis :
 -- Attributs : jour, mois, année, saison, weekend, etc.
 ```
 
-**3. Stations AQI spécifiques** (`sql/update_cities_aqi_stations.sql`)
+**3. Stations AQI spécifiques** (`data/cities_reference.json`)
 ```sql
 -- Configure les stations AQICN optimales pour chaque ville
--- Notamment Lyon Centre et Lille @8613
+-- Notamment Lyon Centre et Lille via Roubaix (métropole)
 ```
 
 #### Vérifier le déploiement
@@ -259,7 +256,7 @@ cities = [
     {
         'city_id': 10,
         'city_name': 'Lille',
-        'station_uid': '@8613',
+        'station_uid': 'roubaix',  # Métropole lilloise
         'csv_file': 'path/to/lille-air-quality.csv'
     }
 ]

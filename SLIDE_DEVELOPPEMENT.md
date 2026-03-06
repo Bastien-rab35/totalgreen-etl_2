@@ -109,8 +109,8 @@ src/services/
 - **Résultat** : 125 doublons supprimés
 
 **Stations AQI Optimisées**
-- Lyon : Station "Lyon Centre" (idx 3028)
-- Lille : Station @8613
+- Lyon : Station "Lyon Centre" (idx 3028, france/rhonealpes/rhone/lyon-centre)
+- Lille : Station Roubaix (métropole lilloise, données actuelles 2026)
 - Données fiables et précises
 
 ---
@@ -122,10 +122,10 @@ src/services/
 | Composant | Technologie | Version |
 |-----------|-------------|---------|
 | Langage | Python | 3.12 |
-| Base de données | PostgreSQL (Supabase) | 15 |
-| ML | scikit-learn | 1.5.2 |
+| Base de données | PostgreSQL (Supabase EU) | 15 |
 | HTTP | requests | 2.31+ |
 | Client DB | supabase-py | 2.0+ |
+| Calcul | numpy | 1.26+ |
 | Env | python-dotenv | 1.0+ |
 | CI/CD | GitHub Actions | - |
 
@@ -152,8 +152,9 @@ src/services/
 │ • Normalisation : 1s       │
 │ • Insertion : 1.5s         │
 │                            │
-│ Stockage quotidien : 500Ko │
+│ Stockage quotidien : 737Ko │
 │ Validation qualité : ~30s  │
+│ Requêtes OLAP : 40ms       │
 └────────────────────────────┘
 ```
 
@@ -166,16 +167,16 @@ Index créés :
 - Index AQI, température
 
 **Production**
-- **11 453 mesures** collectées
-- **339 mesures/jour** (10 villes × 24h)
-- **0 erreur critique** actuellement
-- **100% disponibilité** depuis déploiement
+- **11 878 mesures** collectées
+- **371 mesures/jour** (moyenne 7 jours)
+- **Validation active** : 5 niveaux automatisés
+- **Stockage** : 37 MB (32.5 Data Lake + 4.5 DW)
 
 ---
 
 ## FOOTER DE LA SLIDE
 
-**"Pipeline opérationnel | 11 453 mesures en production | Qualité garantie (0 doublons) | Validation temps réel"**
+**"Pipeline opérationnel | 11 878 mesures | Validation 5 niveaux | 371 mesures/jour | 37 MB stockage"**
 
 ---
 
@@ -210,8 +211,9 @@ Index créés :
 
 **Validation automatisée**
 - *"Script validate_data_quality.py exécuté 2 fois par jour"*
-- *"5 types de vérifications : doublons, dates futures, limites physiques, complétude, outliers"*
-- *"Résultat actuel : 0 doublons, 0 dates futures, 100% conforme"*
+- *"5 types de vérifications : doublons, dates, limites physiques, couverture, outliers"*
+- *"Détection active : 26 doublons historiques identifiés, script cleanup disponible"*
+- *"Traçabilité complète : table anomalies (v2.3) avec sauvegarde automatique"*
 
 **Contrôles de Qualité**
 - *"5 niveaux de validation automatique :"*
@@ -227,7 +229,7 @@ Index créés :
 
 **Stations AQI Optimisées**
 - *"Lyon : Station Lyon Centre (idx 3028) pour données fiables"*
-- *"Lille : Station @8613 spécifique"*
+- *"Lille : Station Roubaix (métropole lilloise, données actuelles)"*
 - *"Amélioration de la qualité et précision des données"*
 
 ### Partie 3 : Stack & Performances (1 minute)
@@ -247,23 +249,24 @@ Index créés :
   - *"Validation 2 fois par jour pour optimiser les coûts"*
 
 **Performances**
-- *"Collecte : 20 secondes pour 10 villes"*
-- *"Transform : 3 secondes pour 100 entrées"*
-- *"Stockage optimisé : 500 Ko par jour"*
+- *"Collecte : ~20 secondes pour 10 villes"*
+- *"Transform : ~3 secondes par batch"*
+- *"Stockage : 737 KB par jour (37 MB total)"*
 - *"Validation qualité : ~30 secondes"*
+- *"Requêtes : 40ms pour 100 mesures"*
 
 **Optimisations**
 - *"Index GIN sur JSONB pour requêtes JSON rapides"*
 - *"Index B-Tree et composites pour jointures optimisées"*
 
 **En production**
-- *"11 453 mesures collectées depuis le déploiement"*
-- *"339 mesures par jour en moyenne"*
-- *"0 erreur critique actuellement"*
-- *"Disponibilité 100%"*
+- *"11 878 mesures collectées"*
+- *"371 mesures par jour (moyenne 7j)"*
+- *"Validation active : 26 doublons historiques détectés"*
+- *"Traçabilité : table anomalies v2.3"*
 
 ### Conclusion (30 secondes)
-*"En résumé : pipeline ETL robuste et automatisé, architecture modulaire maintenable, système de validation qualité multi-niveaux, stations AQI optimisées, et performances optimales en production. Le tout avec une disponibilité de 100% et 0 erreur critique."*
+*"En résumé : pipeline ETL robuste et automatisé, architecture modulaire maintenable, système de validation qualité 5 niveaux avec traçabilité, stations AQI optimisées, et performances optimales en production avec 11 878 mesures collectées."*
 
 ---
 
@@ -326,7 +329,7 @@ R: "Validation automatisée 5 niveaux : intégrité structurelle, cohérence tem
 R: "Optimisation des coûts et ressources. Valider toutes les heures serait redondant. 2×/jour suffit pour détecter les problèmes rapidement tout en économisant 90% des exécutions."
 
 **Q: "Pourquoi des stations AQI spécifiques pour Lyon et Lille ?"**
-R: "Pour améliorer la fiabilité des données. Lyon utilise la station Lyon Centre (idx 3028) et Lille la station @8613 qui fournissent des mesures plus précises et cohérentes."
+R: "Pour améliorer la fiabilité des données. Lyon utilise la station Lyon Centre (idx 3028) et Lille la station Roubaix (métropole lilloise) qui fournissent des mesures actuelles 2026 plus précises et cohérentes."
 
 **Q: "Scalabilité pour 100 villes ?"**
 R: "Oui, l'architecture est prête : APIs parallélisées, batch processing, index optimisés. On estime ~3 minutes pour 100 villes en Extract, Transform reste à 3s grâce aux index."
@@ -339,14 +342,13 @@ R: "Oui, l'architecture est prête : APIs parallélisées, batch processing, ind
 - **4 services** Python modulaires
 - **5 niveaux** de validation qualité
 - **3 workflows** GitHub Actions automatisés
-- **11 453 mesures** en production
-- **339 mesures/jour** collectées
-- **20 secondes** temps de collecte
-- **3 secondes** temps de transformation
-- **0 doublons** actuellement
-- **0 erreur critique** en production
-- **2 stations AQI** optimisées (Lyon, Lille)
-- **100% disponibilité** depuis déploiement
-- **5000 mesures** pour entraînement ML
-- **<100ms** prédiction ML
-- **500 Ko/jour** stockage
+- **11 878 mesures** en production
+- **371 mesures/jour** (moyenne 7j)
+- **~20 secondes** temps de collecte
+- **~3 secondes** temps de transformation
+- **40 ms** requêtes (100 mesures)
+- **26 doublons** historiques détectés
+- **2 stations AQI** optimisées (Lyon Centre, Roubaix)
+- **37 MB** stockage total
+- **737 KB/jour** croissance
+- **Validation** : table anomalies v2.3
