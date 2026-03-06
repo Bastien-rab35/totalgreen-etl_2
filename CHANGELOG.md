@@ -4,6 +4,49 @@ Ce document retrace les principales évolutions techniques du projet.
 
 ---
 
+## Version 2.2 - Optimisation stations AQI et simplification ML (6 Mars 2026)
+
+### Optimisation des stations AQICN
+- **Lyon** : Passage à la station `france/rhonealpes/rhone/lyon-centre` (idx 3028)
+  - Données actualisées en temps réel
+  - Meilleure couverture des polluants (PM2.5, PM10, NO2, O3)
+- **Lille** : Remplacement @8613 (obsolète) par `roubaix`
+  - Station Roubaix Serres (métropole lilloise, ~16 km)
+  - Données actuelles et fiables
+  - AQI et polluants complets disponibles
+
+### Simplification architecture ML
+- **Suppression** des fichiers SQL ML :
+  - `sql/anomaly_detection_schema.sql` (table anomalies, ml_model_metadata)
+  - `sql/anomaly_functions.sql` (fonctions get_city_stats, get_anomaly_summary)
+  - `docs/ANOMALY_DETECTION.md`
+- **Conservation** du script Python de validation qualité :
+  - `scripts/validate_data_quality.py` (5 niveaux de validation)
+  - Exécution 2×/jour via GitHub Actions
+  - Détection doublons, incohérences, outliers statistiques
+
+### Mise à jour configuration
+- **Fichier** : `data/cities_reference.json`
+  - Ajout champ `aqi_station` pour chaque ville
+  - Configuration spécifique Lyon et Lille
+- **SQL** : `sql/update_cities_aqi_stations.sql`
+  - Script de mise à jour des stations dans dim_city
+
+### Documentation
+- Mise à jour README.md (focus validation qualité Python)
+- Mise à jour SLIDE_DEVELOPPEMENT.md
+- Mise à jour docs/README.md, docs/ARCHITECTURE.md, sql/README.md
+- Suppression références ML SQL dans toute la documentation
+
+### Fichiers modifiés
+- `data/cities_reference.json`
+- `src/services/air_quality_service.py` (paramètre aqi_station)
+- `src/etl_extract_to_lake.py`, `src/etl_pipeline.py`
+- `sql/UPDATE_FUNCTIONS.sql`
+- Tous les fichiers .md de documentation
+
+---
+
 ## Version 2.1 - Import données historiques (Mars 2026)
 
 ### Import CSV AQICN

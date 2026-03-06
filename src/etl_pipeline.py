@@ -60,21 +60,22 @@ class ETLPipeline:
             logger.error(f"Erreur d'initialisation: {e}")
             raise
     
-    def extract_data(self, city_name: str) -> Tuple[dict, dict]:
+    def extract_data(self, city_name: str, aqi_station: str = None) -> Tuple[dict, dict]:
         """Extrait les données météo et AQI (brutes + parsées)"""
         weather_data = self.weather_service.fetch_weather_data(city_name)
-        aqi_data = self.air_quality_service.fetch_air_quality_data(city_name)
+        aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
         return weather_data or {}, aqi_data or {}
     
     def process_city(self, city: dict) -> bool:
         """Traite une ville: Extract → Load (Data Lake) → Transform → Load (BDD)"""
         city_name = city.get('name')
         city_id = city.get('id')
+        aqi_station = city.get('aqi_station')  # Station AQICN spécifique
         logger.info(f"Traitement de {city_name}...")
         
         try:
             # 1. EXTRACT
-            weather_data, aqi_data = self.extract_data(city_name)
+            weather_data, aqi_data = self.extract_data(city_name, aqi_station)
             if not weather_data and not aqi_data:
                 logger.warning(f"Aucune donnée pour {city_name}")
                 return False

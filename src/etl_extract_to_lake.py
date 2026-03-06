@@ -63,6 +63,7 @@ class ExtractToLake:
         """Extrait et stocke les données d'une ville dans le Data Lake"""
         city_name = city.get('name')
         city_id = city.get('id')
+        aqi_station = city.get('aqi_station')  # Station AQICN spécifique
         logger.info(f"Extraction de {city_name}...")
         
         try:
@@ -80,8 +81,8 @@ class ExtractToLake:
                     logger.info(f"✓ Météo {city_name} → Data Lake (ID: {raw_weather_id})")
                     success = True
             
-            # 2. Extraction Qualité de l'air
-            aqi_data = self.air_quality_service.fetch_air_quality_data(city_name)
+            # 2. Extraction Qualité de l'air (avec station spécifique)
+            aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
             if aqi_data and aqi_data.get('raw'):
                 # Extraire le timestamp réel de l'API
                 aqi_timestamp = self.air_quality_service.get_timestamp(aqi_data['raw'])

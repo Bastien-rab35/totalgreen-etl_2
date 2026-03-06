@@ -43,8 +43,7 @@ src/services/
 ├── weather_service.py
 ├── air_quality_service.py
 ├── data_lake_service.py
-├── database_service.py
-└── anomaly_detection_service.py
+└── database_service.py
 ```
 
 **Gestion d'erreurs robuste**
@@ -55,7 +54,7 @@ src/services/
 
 ---
 
-### COLONNE 2 : QUALITÉ & ML
+### COLONNE 2 : QUALITÉ DES DONNÉES
 
 **Validation Qualité Automatisée**
 
@@ -72,39 +71,47 @@ src/services/
 - Exit codes (0/1/2)
 - Intégré GitHub Actions
 
-**Machine Learning - Détection Anomalies**
+**Contrôles de Qualité Multi-niveaux**
 
 ```
 ┌─────────────────────────────────┐
-│  Isolation Forest (scikit-learn) │
+│  Validation en 5 étapes     │
 ├─────────────────────────────────┤
-│ Entraînement : 5000 mesures     │
-│ Features : 6 métriques          │
-│ • temperature, humidity         │
-│ • pressure, aqi                 │
-│ • pm25, pm10                    │
+│ 1. Intégrité structurelle   │
+│    - Doublons                 │
+│    - Valeurs NULL             │
+│    - Clés étrangères         │
+│                               │
+│ 2. Cohérence temporelle     │
+│    - Dates futures            │
+│    - Gaps temporels           │
+│    - Timestamps                │
+│                               │
+│ 3. Limites physiques        │
+│    - Temp: -50°C à 60°C      │
+│    - AQI: 0 à 500             │
+│    - Pression: 870-1084 hPa   │
+│                               │
+│ 4. Couverture               │
+│    - 10 villes présentes      │
+│    - Volume par ville         │
+│                               │
+│ 5. Outliers statistiques    │
+│    - Z-score > 3σ            │
+│    - Par champ                │
 └─────────────────────────────────┘
 ```
-
-**3 Approches Combinées**
-1. **Règles métier** : Limites physiques
-   - Température : -50°C à 60°C
-   - AQI : 0 à 500
-   - Pression : 870 à 1084 hPa
-
-2. **Statistiques** : Z-score (écarts-types)
-   - Seuils : 2σ, 2.5σ, 3σ, 4σ
-   - Comparaison historique
-
-3. **ML** : Anomalies multivariées
-   - Score d'anomalie
-   - Classification : NORMAL / FLAGGED / REJET
 
 **Nettoyage Automatique**
 - Script : cleanup_data_quality_issues.py
 - Batch processing (50 items)
 - Dry-run mode
 - **Résultat** : 125 doublons supprimés
+
+**Stations AQI Optimisées**
+- Lyon : Station "Lyon Centre" (idx 3028)
+- Lille : Station @8613
+- Données fiables et précises
 
 ---
 
@@ -129,7 +136,6 @@ src/services/
 | ETL Extract | Toutes les heures (:00) | ~20s |
 | ETL Transform | Toutes les heures (:15) | ~3s |
 | Validation Qualité | 2×/jour (00:15, 12:15) | ~30s |
-| Détection Anomalies | Intégré Transform | ~1s |
 
 **Performances Mesurées**
 
@@ -147,8 +153,7 @@ src/services/
 │ • Insertion : 1.5s         │
 │                            │
 │ Stockage quotidien : 500Ko │
-│ ML Training : 2-3s         │
-│ ML Prediction : <100ms     │
+│ Validation qualité : ~30s  │
 └────────────────────────────┘
 ```
 
@@ -170,14 +175,14 @@ Index créés :
 
 ## FOOTER DE LA SLIDE
 
-**"Pipeline opérationnel | 11 453 mesures en production | Qualité garantie (0 doublons) | ML temps réel"**
+**"Pipeline opérationnel | 11 453 mesures en production | Qualité garantie (0 doublons) | Validation temps réel"**
 
 ---
 
 ## NOTES POUR L'ORAL (3-4 minutes)
 
 ### Introduction (30 secondes)
-*"Le développement s'articule autour de 3 piliers : un pipeline ETL robuste, une architecture modulaire Python, et un système de qualité avec machine learning."*
+*"Le développement s'articule autour de 3 piliers : un pipeline ETL robuste, une architecture modulaire Python, et un système de validation qualité avancé."*
 
 ### Partie 1 : Pipeline ETL (1 minute)
 **Montrer COLONNE 1**
@@ -195,10 +200,10 @@ Index créés :
    - *"Temps de traitement : 3 secondes pour 100 entrées"*
 
 **Architecture modulaire**
-- *"5 services Python séparés pour la maintenabilité"*
+- *"4 services Python séparés pour la maintenabilité"*
 - *"Gestion d'erreurs robuste à chaque niveau avec logging complet"*
 
-### Partie 2 : Qualité & ML (1.5 minutes)
+### Partie 2 : Qualité des Données (1.5 minutes)
 **Montrer COLONNE 2**
 
 *"La qualité des données est garantie par un système automatisé multi-niveaux :"*
@@ -208,19 +213,22 @@ Index créés :
 - *"5 types de vérifications : doublons, dates futures, limites physiques, complétude, outliers"*
 - *"Résultat actuel : 0 doublons, 0 dates futures, 100% conforme"*
 
-**Machine Learning**
-- *"On utilise Isolation Forest de scikit-learn pour détecter les anomalies"*
-- *"Le modèle s'entraîne sur 5000 mesures historiques en 2-3 secondes"*
-- *"3 approches combinées :"*
-  1. *"Règles métier : température entre -50 et 60°C, AQI entre 0 et 500"*
-  2. *"Statistiques : Z-score avec seuils à 2, 2.5, 3 et 4 écarts-types"*
-  3. *"ML : détection anomalies multivariées sur 6 métriques simultanément"*
-
-- *"Classification en 3 niveaux : NORMAL, FLAGGED (conservé avec flag), REJET (supprimé)"*
+**Contrôles de Qualité**
+- *"5 niveaux de validation automatique :"*
+  1. *"Intégrité structurelle : doublons, valeurs NULL, clés étrangères"*
+  2. *"Cohérence temporelle : dates futures, gaps temporels"*
+  3. *"Limites physiques : température entre -50 et 60°C, AQI entre 0 et 500, pression 870-1084 hPa"*
+  4. *"Couverture : vérification des 10 villes"*
+  5. *"Outliers statistiques : Z-score > 3σ"*
 
 **Nettoyage automatique**
 - *"Script cleanup_data_quality_issues.py"*
 - *"On a nettoyé 125 doublons lors de la mise en production"*
+
+**Stations AQI Optimisées**
+- *"Lyon : Station Lyon Centre (idx 3028) pour données fiables"*
+- *"Lille : Station @8613 spécifique"*
+- *"Amélioration de la qualité et précision des données"*
 
 ### Partie 3 : Stack & Performances (1 minute)
 **Montrer COLONNE 3**
@@ -228,22 +236,21 @@ Index créés :
 *"Notre stack technique est moderne et performant :"*
 
 **Technologies**
-- *"Python 3.12 avec scikit-learn pour le ML"*
+- *"Python 3.12 avec bibliothèques modernes"*
 - *"PostgreSQL 15 hébergé sur Supabase en UE"*
 - *"GitHub Actions pour l'orchestration automatique"*
 
 **Orchestration**
-- *"4 workflows automatisés :"*
+- *"3 workflows automatisés :"*
   - *"Extract toutes les heures"*
   - *"Transform 15 minutes après"*
   - *"Validation 2 fois par jour pour optimiser les coûts"*
-  - *"Détection anomalies intégrée au Transform"*
 
 **Performances**
 - *"Collecte : 20 secondes pour 10 villes"*
 - *"Transform : 3 secondes pour 100 entrées"*
 - *"Stockage optimisé : 500 Ko par jour"*
-- *"Prédiction ML : moins de 100 millisecondes"*
+- *"Validation qualité : ~30 secondes"*
 
 **Optimisations**
 - *"Index GIN sur JSONB pour requêtes JSON rapides"*
@@ -256,7 +263,7 @@ Index créés :
 - *"Disponibilité 100%"*
 
 ### Conclusion (30 secondes)
-*"En résumé : pipeline ETL robuste et automatisé, architecture modulaire maintenable, système de qualité avec ML temps réel, et performances optimales en production. Le tout avec une disponibilité de 100% et 0 erreur critique."*
+*"En résumé : pipeline ETL robuste et automatisé, architecture modulaire maintenable, système de validation qualité multi-niveaux, stations AQI optimisées, et performances optimales en production. Le tout avec une disponibilité de 100% et 0 erreur critique."*
 
 ---
 
@@ -269,7 +276,7 @@ APIs → Extract (20s) → Data Lake → Transform (3s) → Star Schema
     Logging                    ML Detection
 ```
 
-### Schéma 2 : ML Detection (à afficher en COLONNE 2)
+### Schéma 2 : Validation Qualité (à afficher en COLONNE 2)
 ```
        ┌─────────────────┐
        │  Measure Input  │
@@ -278,14 +285,14 @@ APIs → Extract (20s) → Data Lake → Transform (3s) → Star Schema
         ┌───────┴───────┐
         │               │
     ┌───▼───┐     ┌────▼────┐     ┌───────▼────┐
-    │Business│     │Statistical│   │ Isolation  │
-    │ Rules  │     │  Z-score  │   │   Forest   │
+    │Business│     │Structural│    │ Statistical│
+    │ Rules  │     │Integrity │    │  Outliers  │
     └───┬───┘     └────┬────┘     └───────┬────┘
         │              │                   │
         └──────────────┴───────────────────┘
                        │
               ┌────────▼────────┐
-              │ NORMAL / FLAG / │
+              │  VALID / WARN / │
               │     REJECT      │
               └─────────────────┘
 ```
@@ -312,14 +319,14 @@ R: "Séparation des responsabilités : si Transform échoue, les données brutes
 **Q: "Comment gérez-vous les pannes API ?"**
 R: "Try/catch dans chaque service, retry automatique avec backoff exponentiel, logging détaillé. Les données non traitées restent marquées processed=false et seront reprises au prochain cycle."
 
-**Q: "Le ML ne ralentit-il pas le pipeline ?"**
-R: "Non, la prédiction ML prend moins de 100ms. L'entraînement (2-3s) se fait une seule fois au démarrage du Transform. Le gain en qualité compense largement."
+**Q: "Comment garantissez-vous la qualité des données ?"**
+R: "Validation automatisée 5 niveaux : intégrité structurelle, cohérence temporelle, limites physiques, couverture, et outliers statistiques. Script Python exécuté 2 fois par jour avec exit codes pour intégration CI/CD."
 
 **Q: "Pourquoi validation seulement 2×/jour et pas après chaque import ?"**
 R: "Optimisation des coûts et ressources. Valider toutes les heures serait redondant. 2×/jour suffit pour détecter les problèmes rapidement tout en économisant 90% des exécutions."
 
-**Q: "Quel est le taux d'anomalies détecté ?"**
-R: "Actuellement 0 anomalie sur 11 453 mesures, ce qui indique que nos données sources sont très propres. Le système est prêt à détecter si des anomalies apparaissent."
+**Q: "Pourquoi des stations AQI spécifiques pour Lyon et Lille ?"**
+R: "Pour améliorer la fiabilité des données. Lyon utilise la station Lyon Centre (idx 3028) et Lille la station @8613 qui fournissent des mesures plus précises et cohérentes."
 
 **Q: "Scalabilité pour 100 villes ?"**
 R: "Oui, l'architecture est prête : APIs parallélisées, batch processing, index optimisés. On estime ~3 minutes pour 100 villes en Extract, Transform reste à 3s grâce aux index."
@@ -329,15 +336,16 @@ R: "Oui, l'architecture est prête : APIs parallélisées, batch processing, ind
 ## CHIFFRES CLÉS À RETENIR
 
 - **2 étapes** ETL (Extract + Transform)
-- **5 services** Python modulaires
-- **3 approches** de détection anomalies (règles + stats + ML)
-- **4 workflows** GitHub Actions automatisés
+- **4 services** Python modulaires
+- **5 niveaux** de validation qualité
+- **3 workflows** GitHub Actions automatisés
 - **11 453 mesures** en production
 - **339 mesures/jour** collectées
 - **20 secondes** temps de collecte
 - **3 secondes** temps de transformation
 - **0 doublons** actuellement
 - **0 erreur critique** en production
+- **2 stations AQI** optimisées (Lyon, Lille)
 - **100% disponibilité** depuis déploiement
 - **5000 mesures** pour entraînement ML
 - **<100ms** prédiction ML

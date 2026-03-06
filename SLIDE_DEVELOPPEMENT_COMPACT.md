@@ -32,12 +32,11 @@
 
 **Architecture Modulaire**
 ```
-5 Services Python
+4 Services Python
 ├─ weather_service.py
 ├─ air_quality_service.py
 ├─ data_lake_service.py
-├─ database_service.py
-└─ anomaly_detection_service.py
+└─ database_service.py
 ```
 
 **Robustesse**
@@ -49,7 +48,7 @@
 ---
 
 ### COLONNE CENTRALE
-## Qualité & Machine Learning
+## Qualité des Données
 
 **Validation Automatisée**
 Script : `validate_data_quality.py`
@@ -66,28 +65,30 @@ Fréquence : **2× par jour**
 
 ---
 
-**ML - Isolation Forest**
+**Validation 5 Niveaux**
 
-**3 Niveaux de Détection**
+1️⃣ **Intégrité Structurelle**
+   - Doublons
+   - Valeurs NULL
+   - Clés étrangères
 
-1️⃣ **Règles Métier**
-   - Température : -50°C à 60°C
-   - AQI : 0 à 500
-   - Pression : 870-1084 hPa
+2️⃣ **Cohérence Temporelle**
+   - Dates futures
+   - Gaps temporels
+   - Timestamps
 
-2️⃣ **Statistiques**
-   - Z-score : 2σ, 2.5σ, 3σ, 4σ
-   - Comparaison historique
+3️⃣ **Limites Physiques**
+   - Temp: -50°C à 60°C
+   - AQI: 0 à 500
+   - Pression: 870-1084 hPa
 
-3️⃣ **ML Multivariée**
-   - 6 métriques (temp, humidity, pressure, aqi, pm25, pm10)
-   - Entraînement : **5000 mesures**
-   - Prédiction : **<100ms**
+4️⃣ **Couverture**
+   - 10 villes présentes
+   - Volume par ville
 
-**Classification**
-- NORMAL → Insertion
-- FLAGGED → Insertion avec flag
-- REJET → Suppression
+5️⃣ **Outliers Statistiques**
+   - Z-score > 3σ
+   - Par champ
 
 ---
 
@@ -96,6 +97,11 @@ Script : `cleanup_data_quality_issues.py`
 - **125 doublons** supprimés
 - Batch 50 items
 - Dry-run mode
+
+**Stations AQI Optimisées**
+- Lyon : Station Lyon Centre (idx 3028)
+- Lille : Station @8613
+- Données fiables et précises
 
 ---
 

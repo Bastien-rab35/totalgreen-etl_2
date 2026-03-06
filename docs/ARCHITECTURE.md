@@ -125,6 +125,14 @@ Data Lake → Data Warehouse (Star Schema)
 - Clés API rotatives
 - Logs de traçabilité (etl_logs)
 
+### Validation Qualité
+
+Script Python `validate_data_quality.py` :
+- 5 niveaux de validation
+- Exécution automatisée (2×/jour via GitHub Actions)
+- Détection doublons, incohérences, outliers
+- Exit codes pour intégration CI/CD
+
 ---
 
 ## Performances

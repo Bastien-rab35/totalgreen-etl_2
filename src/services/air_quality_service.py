@@ -15,19 +15,27 @@ class AirQualityService:
         self.api_key = api_key
         self.base_url = base_url
     
-    def fetch_air_quality_data(self, city_name: str) -> Optional[Dict]:
-        """Récupère les données AQI (brutes + parsées)"""
+    def fetch_air_quality_data(self, city_name: str, aqi_station: str = None) -> Optional[Dict]:
+        """Récupère les données AQI (brutes + parsées)
+        
+        Args:
+            city_name: Nom de la ville (pour les logs)
+            aqi_station: Station AQICN spécifique (ex: "@8613", "france/rhonealpes/rhone/lyon-centre")
+                        Si None, utilise city_name par défaut
+        """
         try:
-            url = f"{self.base_url}/{city_name}/"
+            # Utiliser la station spécifique si fournie, sinon le nom de ville
+            endpoint = aqi_station if aqi_station else city_name
+            url = f"{self.base_url}/{endpoint}/"
             response = requests.get(url, params={'token': self.api_key}, timeout=10)
             response.raise_for_status()
             data = response.json()
             
             if data.get('status') != 'ok':
-                logger.warning(f"API AQI status non-OK pour {city_name}")
+                logger.warning(f"API AQI status non-OK pour {city_name} (station: {endpoint})")
                 return None
             
-            logger.info(f"Données AQI récupérées pour {city_name}")
+            logger.info(f"Données AQI récupérées pour {city_name} (station: {endpoint})")
             return {'raw': data, 'parsed': self._parse_aqi_data(data)}
             
         except requests.exceptions.RequestException as e:

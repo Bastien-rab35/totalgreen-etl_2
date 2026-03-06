@@ -9,11 +9,14 @@ Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
   - 4 tables de dimensions : `dim_time`, `dim_city`, `dim_weather_condition`, `dim_air_quality_level`
   - 1 table de faits : `fact_measures`
   - Fonctions utilitaires : `populate_dim_time()`, `get_aqi_level_id()`
+
+- **`create_dim_date.sql`** - Création de la dimension temporelle
+  - Remplace dim_time par dim_date
+  - ~1460 jours (2024-2027)
   
-- **`migrate_to_star_schema.sql`** - Migration des données depuis le modèle normalisé
-  - Remplissage des dimensions
-  - Migration zéro-perte vers `fact_measures`
-  - Vérifications post-migration
+- **`update_cities_aqi_stations.sql`** - Configuration des stations AQI spécifiques
+  - Stations optimisées pour Lyon et Lille
+  - Amélioration qualité des données
 
 ### Analyses
 - **`queries_olap.sql`** - 20+ requêtes d'analyses multidimensionnelles
@@ -42,11 +45,11 @@ Pour déployer le Data Warehouse depuis zéro :
 -- 1. Créer le schéma en étoile
 \i star_schema.sql
 
--- 2. Migrer les données existantes
-\i migrate_to_star_schema.sql
+-- 2. Créer la dimension temporelle
+\i create_dim_date.sql
 
--- 3. (Optionnel) Nettoyer les anciennes tables
-\i cleanup_old_tables.sql
+-- 3. Configurer les stations AQI
+\i update_cities_aqi_stations.sql
 
 -- 4. Tester avec les requêtes OLAP
 \i queries_olap.sql

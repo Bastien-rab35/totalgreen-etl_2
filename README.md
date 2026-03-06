@@ -12,8 +12,7 @@ Pipeline ETL automatisé pour la collecte et l'analyse de données environnement
 - Collecte horaire automatisée (GitHub Actions)
 - Data Lake JSONB pour versioning des données brutes
 - Data Warehouse en étoile (Star Schema) pour analyses OLAP
-- Détection d'anomalies ML (Isolation Forest + règles métier)
-- Validation qualité des données
+- Validation qualité des données avec script Python avancé
 - Conformité RGPD (hébergement EU Francfort)
 
 ---
@@ -102,7 +101,7 @@ Data Lake → Validation + ML → Star Schema
 **Data Warehouse** (Star Schema) :
 - `fact_measures` : Mesures environnementales horaires
 - `dim_date` : Dimension temporelle (1460 jours)
-- `dim_city` : 10 villes françaises
+- `dim_city` : 10 villes françaises (avec stations AQI spécifiques)
 - `dim_weather_condition` : ~40 conditions météo
 - `dim_air_quality_level` : 6 niveaux qualité air
 
@@ -159,20 +158,10 @@ Dans l'éditeur SQL Supabase, exécuter dans cet ordre précis :
 -- Attributs : jour, mois, année, saison, weekend, etc.
 ```
 
-**3. Schéma détection d'anomalies** (`sql/anomaly_detection_schema.sql`)
+**3. Stations AQI spécifiques** (`sql/update_cities_aqi_stations.sql`)
 ```sql
--- Crée les tables :
--- - anomalies (stockage des anomalies détectées)
--- - ml_model_metadata (métadonnées des modèles ML)
--- - Ajoute colonnes is_anomaly + anomaly_score à fact_measures
-```
-
-**4. Fonctions SQL** (`sql/anomaly_functions.sql`)
-```sql
--- Crée les fonctions :
--- - get_city_stats(city_name, days) : statistiques par ville
--- - get_anomaly_summary(days) : résumé des anomalies
--- - Vues : v_anomalies_summary, v_critical_anomalies
+-- Configure les stations AQICN optimales pour chaque ville
+-- Notamment Lyon Centre et Lille @8613
 ```
 
 #### Vérifier le déploiement
@@ -181,15 +170,15 @@ Dans l'éditeur SQL Supabase, exécuter dans cet ordre précis :
 -- Compter les tables
 SELECT COUNT(*) FROM information_schema.tables 
 WHERE table_schema = 'public';
--- Attendu : 9 tables
+-- Attendu : 6-7 tables
 
 -- Vérifier dim_date
 SELECT COUNT(*) FROM dim_date;
 -- Attendu : ~1460 jours
 
--- Vérifier dim_city
-SELECT COUNT(*) FROM dim_city;
--- Attendu : 10 villes
+-- Vérifier dim_city avec stations AQI
+SELECT city_name, aqi_station FROM dim_city;
+-- Attendu : 10 villes avec leurs stations AQI
 ```
 
 ### Étape 4 : Premier test du pipeline
@@ -235,11 +224,8 @@ python src/etl_transform_to_db.py
 **Ce script va** :
 1. Charger les enregistrements `processed=false` du Data Lake
 2. Parser les données JSON
-3. Appliquer les 3 niveaux de détection d'anomalies :
-   - Règles métier (limites physiques)
-   - Analyse statistique (Z-score)
-   - ML Isolation Forest (si ≥100 données historiques)
-4. Insérer dans `fact_measures` (avec flags anomalies)
+3. Valider et transformer les données
+4. Insérer dans `fact_measures`
 5. Marquer `processed=true` dans `raw_data_lake`
 
 **Vérifier les résultats** :
@@ -391,19 +377,23 @@ ORDER BY dc.city_name;
 
 **Anomalies critiques récentes** :
 ```sql
-SELECT * FROM v_critical_anomalies
-ORDER BY detected_at DESC
+SELECT 
+    fm.captured_at,
+    dc.city_name,
+    fm.temperature,
+    fm.aqi_index,
+    aq.level_name
+FROM fact_measures fm
+JOIN dim_city dc ON fm.city_id = dc.city_id
+LEFT JOIN dim_air_quality_level aq ON fm.aqi_level_id = aq.aqi_level_id
+WHERE fm.aqi_index > 200  -- Qualité très mauvaise
+ORDER BY fm.captured_at DESC
 LIMIT 20;
 ```
 
-**Statistiques ML par ville** :
-```sql
-SELECT * FROM get_city_stats('Paris', 30);
-```
-
-**Résumé anomalies (7 derniers jours)** :
-```sql
-SELECT * FROM get_anomaly_summary(7);
+**Validation qualité Python** :
+```bash
+python scripts/validate_data_quality.py --hours 24
 ```
 
 #### B. Scripts de diagnostic
@@ -434,6 +424,7 @@ python scripts/temp/audit_fact_measures.py
 **AQICN** :
 - Varie selon le plan
 - Utilisation : 240 appels/jour
+- Stations optimisées pour Lyon et Lille
 
 #### D. Maintenance régulière
 
@@ -507,39 +498,23 @@ GROUP BY dc.city_name
 ORDER BY aqi_moy DESC;
 ```
 
-#### B. Détection d'anomalies ML
+#### B. Détection de valeurs aberrantes
 
-**Mesures flaggées avec scores** :
+**Pollution exceptionnelle** :
 ```sql
 SELECT 
-  dc.city_name AS ville,
-  fm.captured_at,
-  fm.temperature,
-  fm.aqi,
-  fm.anomaly_score,
-  a.anomaly_type,
-  a.severity,
-  a.field_name,
-  a.actual_value
+  dd.date_value,
+  dc.city_name,
+  fm.aqi_index,
+  aq.level_name
 FROM fact_measures fm
+JOIN dim_date dd ON fm.capture_date = dd.date_value
 JOIN dim_city dc ON fm.city_id = dc.city_id
-LEFT JOIN anomalies a ON fm.measure_id = a.measure_id
-WHERE fm.is_anomaly = TRUE
-  AND fm.captured_at >= CURRENT_DATE - INTERVAL '7 days'
-ORDER BY fm.anomaly_score DESC, fm.captured_at DESC
+LEFT JOIN dim_air_quality_level aq ON fm.aqi_level_id = aq.aqi_level_id
+WHERE fm.aqi_index IS NOT NULL
+  AND fm.aqi_index > 150  -- Seuil malsain
+ORDER BY fm.aqi_index DESC
 LIMIT 20;
-```
-
-**Anomalies par type et sévérité** :
-```sql
-SELECT 
-  anomaly_type,
-  severity,
-  COUNT(*) as count
-FROM anomalies
-WHERE detected_at >= CURRENT_DATE - INTERVAL '30 days'
-GROUP BY anomaly_type, severity
-ORDER BY count DESC;
 ```
 
 ---
@@ -579,8 +554,7 @@ MSPR 1/
 │   │   ├── weather_service.py            # API OpenWeather
 │   │   ├── air_quality_service.py        # API AQICN
 │   │   ├── data_lake_service.py          # Gestion Data Lake
-│   │   ├── database_service.py           # Supabase + Star Schema
-│   │   └── anomaly_detection_service.py  # ML Isolation Forest
+│   │   └── database_service.py           # Supabase + Star Schema
 │   ├── config.py                     # Configuration centralisée
 │   ├── etl_extract_to_lake.py       # Pipeline 1 (APIs → Lake)
 │   └── etl_transform_to_db.py       # Pipeline 2 (Lake → Warehouse)
@@ -620,30 +594,12 @@ MSPR 1/
   - Métriques météo : temperature, pressure, humidity, wind_speed, uv_index, visibility
   - Métriques air : aqi, pm25, pm10, no2, o3, so2, co
   - Timestamp : `captured_at` (TIMESTAMP exact)
-  - Flags ML : `is_anomaly`, `anomaly_score`
 
 **Tables de dimensions** :
 - `dim_date` : ~1460 jours (2024-2027) avec attributs calendaires
-- `dim_city` : 10 villes avec coordonnées GPS
+- `dim_city` : 10 villes avec coordonnées GPS et stations AQI spécifiques
 - `dim_weather_condition` : ~40 conditions météo
 - `dim_air_quality_level` : 6 niveaux (Good → Severe)
-
-### ML Anomaly Detection
-
-**3 niveaux de détection** :
-1. **Règles métier** : Limites physiques (temp -50 à 60°C, AQI 0-500, etc.)
-2. **Analyse statistique** : Z-score sur 30 jours (seuils 2σ, 2.5σ, 3σ, 4σ)
-3. **ML Isolation Forest** : Détection multivariée (5% contamination)
-
-**Tables** :
-- `anomalies` : Stockage des anomalies détectées
-- `ml_model_metadata` : Métadonnées des modèles
-
-**Fonctions SQL** :
-- `get_city_stats(city_name, days)` : Statistiques par ville
-- `get_anomaly_summary(days)` : Résumé des anomalies
-
-**Guide complet** : [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md)
 
 ---
 
@@ -682,15 +638,17 @@ python src/etl_extract_to_lake.py
 
 ### Anomalies non détectées
 
+Utilisez le script Python de validation :
+
 ```bash
-# Vérifier qu'il y a assez de données historiques
-python -c "
-from src.services.database_service import DatabaseService
-from src.config import Config
-db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
-count = db.client.table('fact_measures').select('*', count='exact').execute()
-print(f'Mesures : {count.count} (minimum 100 pour ML)')
-"
+python scripts/validate_data_quality.py --hours 24 --strict
+```
+
+Ce script détecte :
+- Doublons
+- Valeurs hors limites physiques
+- Incohérences temporelles
+- Outliers statistiques (Z-score > 3σ)
 ```
 
 ---
@@ -699,7 +657,6 @@ print(f'Mesures : {count.count} (minimum 100 pour ML)')
 
 - [docs/README.md](docs/README.md) - Index de la documentation
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Architecture technique
-- [docs/ANOMALY_DETECTION.md](docs/ANOMALY_DETECTION.md) - Guide ML
 - [docs/SECURITE.md](docs/SECURITE.md) - Sécurité et RGPD
 - [CHANGELOG.md](CHANGELOG.md) - Historique des versions
 - [scripts/README.md](scripts/README.md) - Guide des scripts
@@ -717,6 +674,6 @@ print(f'Mesures : {count.count} (minimum 100 pour ML)')
 ---
 
 **Version** : 2.1.0 (Import CSV historique + Validation qualité)  
-**Créé** : Janvier 2026  
+**Créé** : Janvi2.0 (Stations AQI optimisées + Validation qualité Python
 **Conformité** : RGPD (hébergement EU)  
 **Automatisation** : GitHub Actions (collecte horaire)

@@ -21,13 +21,18 @@ Sécurité et conformité RGPD :
 - Contrôle d'accès et RLS
 - Conservation et purge des données
 
-### ANOMALY_DETECTION.md
+---
 
-Detection d'anomalies ML :
-- Guide de mise en place
-- Isolation Forest + règles métier
-- Analyse statistique (Z-score)
-- Fonctions SQL analytics
+## Validation Qualité des Données
+
+La qualité des données est garantie par le script Python `validate_data_quality.py` qui effectue 5 niveaux de vérifications :
+- Intégrité structurelle
+- Cohérence temporelle
+- Limites physiques (business rules)
+- Couverture des données
+- Détection d'outliers statistiques
+
+Voir `/scripts/validate_data_quality.py` pour plus de détails.
 
 ---
 
