@@ -4,6 +4,30 @@ Ce document retrace les principales évolutions techniques du projet.
 
 ---
 
+## Version 2.3.2 - Correction timestamps UTC (6 Mars 2026)
+
+### Problème identifié
+- **55 mesures avec created_at < captured_at** (incohérence temporelle impossible)
+- Cause : `datetime.utcnow()` génère timestamp **sans fuseau horaire explicite**
+- Exemple : `2026-03-05T14:03:19.591448` au lieu de `2026-03-05T14:03:19.591448+00:00`
+
+### Solution appliquée
+- **Remplacement** `datetime.utcnow()` → `datetime.now(timezone.utc)`
+- **Import** `from datetime import datetime, timezone` ajouté
+- **Format ISO 8601 complet** : tous les timestamps incluent maintenant `+00:00`
+
+### Fichiers corrigés
+- `src/services/database_service.py` : `captured_at`, `execution_time`
+- `src/etl_transform_to_db.py` : `captured_at` dans transform
+- `src/services/data_lake_service.py` : `collected_at`, `processed_at`
+
+### Impact
+- ✅ Résout l'incohérence temporelle détectée par `validate_data_quality.py`
+- ✅ Conformité ISO 8601 stricte (timezone explicite)
+- ✅ Compatibilité PostgreSQL TIMESTAMPTZ améliorée
+
+---
+
 ## Version 2.3 - Stockage des anomalies en BDD (6 Mars 2026)
 
 ### Table anomalies
