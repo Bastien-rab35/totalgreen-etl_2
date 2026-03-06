@@ -19,8 +19,19 @@ Ce document retrace les principales évolutions techniques du projet.
   - Conservation des détails en JSONB (exemples, statistiques, villes impactées)
 - **Traçabilité** : Historique complet des problèmes de qualité
 
+### Correctif - Migration table anomalies
+- **Problème** : Table `anomalies` existe avec ancien schéma ML (colonnes incompatibles)
+- **Solution** : Script de migration `sql/migrate_anomalies_table.sql`
+  - Supprime l'ancienne table et recrée avec nouveau schéma
+  - ⚠️ **ACTION REQUISE** : Exécuter ce script dans Supabase SQL Editor
+- **Instructions détaillées** : Voir `MIGRATION_ANOMALIES.md`
+- **Test** : Script `scripts/test_anomalies_table.py` pour vérifier le bon fonctionnement
+
 ### Fichiers
 - **Nouveau** : `sql/anomalies_table.sql` (schéma table + vue stats)
+- **Nouveau** : `sql/migrate_anomalies_table.sql` (migration ancien → nouveau schéma)
+- **Nouveau** : `scripts/test_anomalies_table.py` (test de la table)
+- **Nouveau** : `MIGRATION_ANOMALIES.md` (guide de migration)
 - **Modifié** : `scripts/validate_data_quality.py` (méthode save_anomalies_to_db)
 - **Mis à jour** : `sql/README.md` (documentation table anomalies)
 

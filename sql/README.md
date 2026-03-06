@@ -23,6 +23,11 @@ Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
   - Index pour requêtes sur run_id, severity, category
   - Vue `anomalies_daily_stats` pour statistiques quotidiennes
 
+- **`migrate_anomalies_table.sql`** - Migration table anomalies (ancien schéma ML → nouveau)
+  - **⚠️ IMPORTANT** : À exécuter si vous aviez l'ancien schéma ML
+  - Supprime l'ancienne table et la recrée avec le nouveau schéma
+  - Utilisez `anomalies_table.sql` pour une nouvelle installation
+
 ### Analyses
 - **`queries_olap.sql`** - 20+ requêtes d'analyses multidimensionnelles
   - Analyses temporelles (tendances, patterns)
