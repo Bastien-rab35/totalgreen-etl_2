@@ -1,182 +1,114 @@
 # Architecture Technique - TotalGreen ETL
 
-Documentation technique du projet de surveillance environnementale.
+Ce document decrit l'architecture fonctionnelle et technique actuelle du projet.
 
----
+## Vue globale
 
-## Architecture Globale
+Le systeme suit un flux ETL en 3 etapes:
 
-### Modèle en Étoile (Star Schema)
-
-Le projet utilise un **Data Warehouse OLAP** avec modèle dimensionnel en étoile pour optimiser les analyses multidimensionnelles.
-
-```
-        dim_time
-            |
-            |
-dim_city -- fact_measures -- dim_weather_condition
-            |
-            |
-    dim_air_quality_level
-```
-
-### Pipeline ETL 3 Couches
-
-```
-APIs (OpenWeather + AQICN)
-    ↓ Extract
-Data Lake (JSONB - raw_data_lake)
-    ↓ Transform
-Data Warehouse (Star Schema - fact_measures)
+```text
+OpenWeather + AQICN
+        |
+        v
+Extract -> raw_data_lake (JSONB)
+        |
+        v
+Transform -> fact_measures + dimensions
+        |
+        v
+Validate -> controle qualite + table anomalies
 ```
 
----
+## Composants principaux
 
-## Composants
+### Data Lake
 
-### 1. Data Lake (Couche Bronze)
+- Table de stockage brut: `raw_data_lake`
+- Format: JSONB (payload API conserve)
+- Champs utilises par le pipeline:
+  - `city_id`, `city_name`, `source`, `raw_data`
+  - `collected_at`, `processed`, `processed_at`
 
-**Table : `raw_data_lake`**
-- Stockage JSONB des données brutes
-- Traçabilité complète (source, timestamp)
-- Pas de transformation
-- Index GIN pour requêtes JSON rapides
+### Data Warehouse
 
-```sql
-CREATE TABLE raw_data_lake (
-    id BIGSERIAL PRIMARY KEY,
-    city_id INTEGER,
-    source VARCHAR(50),        -- 'openweather' | 'aqicn'
-    raw_data JSONB,
-    collected_at TIMESTAMP WITH TIME ZONE,
-    processed BOOLEAN DEFAULT FALSE
-);
-```
+- Table de faits: `fact_measures`
+- Dimensions principales:
+  - `dim_city`
+  - `dim_weather_condition`
+  - `dim_air_quality_level`
+  - `dim_time` (historique)
+  - `dim_date` (architecture cible simplifiee)
 
-### 2. Data Warehouse (Couche Or)
+### Controle qualite
 
-**Dimensions :**
-- `dim_time` : ~26,000 périodes (2024-2027, granularité horaire)
-- `dim_city` : 10 villes françaises avec métadonnées géographiques
-- `dim_weather_condition` : 40+ conditions météo OpenWeather
-- `dim_air_quality_level` : 6 niveaux EPA (Good → Hazardous)
+- Script: `scripts/validate_data_quality.py`
+- Verifications:
+  - integrite structurelle
+  - coherence temporelle
+  - limites physiques
+  - couverture des villes
+  - outliers statistiques
+- Persistences des resultats: table `anomalies`
 
-**Table de faits :**
-- `fact_measures` : Mesures environnementales agrégées
-  - Métriques météo : température, humidité, pression, vent, nuages
-  - Métriques AQI : PM2.5, PM10, NO2, O3, SO2, CO
-  - Références dimensions via FK
-  - Traçabilité vers data lake (raw_weather_id, raw_aqi_id)
+## Pipelines
 
----
+### 1) Extract (`src/etl_extract_to_lake.py`)
 
-## Pipeline ETL
+- Lit le referentiel des villes depuis la base.
+- Interroge OpenWeather et AQICN.
+- Stocke les reponses brutes dans `raw_data_lake`.
+- Marque le statut des extractions via logs ETL.
 
-### Extract (etl_extract_to_lake.py)
+### 2) Transform (`src/etl_transform_to_db.py`)
 
-```python
-APIs → Data Lake (JSONB)
-```
+- Lit les enregistrements non traites (`processed = false`).
+- Groupe les donnees par ville et plage temporelle.
+- Fusionne meteo + qualite de l'air quand possible.
+- Charge dans le schema analytique (`fact_measures`).
+- Marque les lignes source en `processed = true`.
 
-- Collecte depuis OpenWeather API (météo)
-- Collecte depuis AQICN API (qualité air)
-- Stockage brut sans transformation
-- Exécution : Toutes les heures (Scaleway Serverless Job + Cron)
+### 3) Validate (`scripts/validate_data_quality.py`)
 
-### Transform (etl_transform_to_db.py)
+- Analyse une fenetre temporelle (`--hours`, defaut 24).
+- Retourne un code de sortie d'exploitation.
+- Sauvegarde les anomalies detectees (severity/category/details).
 
-```python
-Data Lake → Data Warehouse (Star Schema)
-```
+## Modele temporel: historique vs cible
 
-- Lecture données non traitées (processed=false)
-- Groupement par (city_id, timestamp arrondi à l'heure)
-- Fusion météo + AQI
-- **Lookup dimensions** :
-  - `time_id` depuis `dim_time`
-  - `weather_condition_id` depuis `dim_weather_condition`
-  - `aqi_level_id` via fonction `get_aqi_level_id()`
-- Insertion dans `fact_measures`
-- Marquage traité (processed=true)
-- Exécution : Toutes les heures (Scaleway Serverless Job + Cron)
+Le depot contient deux approches temporelles:
 
-### Stratégie Anti-Perte
+- Historique: `dim_time` + `time_id` (defini dans `sql/star_schema.sql`).
+- Cible: `dim_date` (defini dans `sql/create_dim_date.sql`) avec jointure par date de capture.
 
-- **Mesures complètes** : météo + AQI fusionnés
-- **Mesures partielles** : une seule source (stockées quand même)
-- **Mesures orphelines** : >2h d'âge traitées immédiatement
-- **Garantie 0% perte** : toutes les données collectées sont chargées
+La documentation privilegie `dim_date` pour les analyses courantes, tout en conservant la compatibilite historique des scripts SQL existants.
 
----
+## Orchestration
 
-## Sécurité et Conformité
+- Runtime serverless: image construite depuis `Dockerfile.serverless`.
+- Dispatcher des jobs: `scripts/scaleway/run_job.sh`.
+- Types de jobs:
+  - `extract`
+  - `transform`
+  - `validate`
 
-### RGPD
+Guide detaille: `docs/SCALEWAY_SERVERLESS.md`.
 
-- Hébergement UE (Supabase eu-central-1)
-- Aucune donnée personnelle collectée
-- Données agrégées par ville (pas de géolocalisation précise)
-- Conservation limitée (30 jours data lake, 1 an warehouse)
+## Securite et conformite
 
-### Sécurité
+- Aucune donnee personnelle exploitee.
+- Secrets portes par variables d'environnement.
+- Connexions API et base via TLS.
+- Hebergement cible en region UE.
 
-- Variables d'environnement (.env non versionné)
-- Connexions HTTPS/TLS
-- Clés API rotatives
-- Logs de traçabilité (etl_logs)
+Details: `docs/SECURITE.md`.
 
-### Validation Qualité
+## References
 
-Script Python `validate_data_quality.py` :
-- 5 niveaux de validation
-- Exécution automatisée (2×/jour via Scaleway Cron)
-- Détection doublons, incohérences, outliers
-- Exit codes pour intégration CI/CD
+- `sql/star_schema.sql`
+- `sql/create_dim_date.sql`
+- `sql/anomalies_table.sql`
+- `src/etl_extract_to_lake.py`
+- `src/etl_transform_to_db.py`
+- `scripts/validate_data_quality.py`
 
----
-
-## Performances
-
-### Optimisations
-
-- **Indexes** :
-  - GIN sur `raw_data.jsonb` (data lake)
-  - B-Tree sur FK dimensions (fact_measures)
-  - Composite sur (time_id, city_id)
-
-- **Requêtes OLAP** :
-  - Pré-agrégations via dimensions
-  - Vues matérialisées pour analyses fréquentes
-  - Partitionnement temporel possible
-
-### Métriques
-
-- Collecte : ~20s pour 10 villes (2 APIs × 10 villes)
-- Transform : ~3s pour 100 entrées
-- Stockage : ~500 Ko/jour
-
----
-
-## Technologies
-
-- **Base de données** : PostgreSQL 15 (Supabase EU Francfort)
-- **Langage** : Python 3.12
-- **Librairies** : requests, supabase-py, numpy, python-dotenv
-- **APIs externes** : OpenWeather (météo) + AQICN (qualité air)
-- **Orchestration** : Scaleway Serverless Jobs (3 jobs CRON)
-- **Hébergement** : Supabase eu-central-1 (conformité RGPD)
-- **Validation** : Script Python 5 niveaux (détection anomalies)
-
----
-
-## Références
-
-- [Schema SQL complet](../sql/star_schema.sql)
-- [Requêtes OLAP](../sql/queries_olap.sql)
-- [Pipeline Extract](../src/etl_extract_to_lake.py)
-- [Pipeline Transform](../src/etl_transform_to_db.py)
-
----
-
-**Version** : 2.0 (Data Warehouse en étoile)  
-**Dernière mise à jour** : 2026-02-09
+Derniere mise a jour: `26 mars 2026`

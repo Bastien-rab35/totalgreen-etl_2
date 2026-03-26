@@ -1,79 +1,58 @@
-# Scripts ETL - TotalGreen
+# Scripts - TotalGreen ETL
 
-Scripts Python pour les pipelines de données du projet.
+Ce dossier regroupe les scripts d'exploitation utilises autour des pipelines ETL.
 
-## Scripts de production
+## Scripts disponibles
 
-### Import et traitement ETL
-- **`import_aqicn_historical.py`** - Import de données historiques depuis CSV AQICN
-  - Parse le fichier CSV AQICN (format agrégats journaliers)
-  - Insertion dans raw_data_lake au format API AQICN
-  - Support Lyon Centre (UID 3028) et Lille
+- `import_aqicn_historical.py`
+  - Importe des donnees historiques AQICN depuis CSV.
+  - Alimente `raw_data_lake` pour traitement ensuite.
 
-- **`process_all_remaining.py`** - Traitement ETL de toutes les données non traitées
-  - Boucle sur le pipeline Transform (etl_transform_to_db)
-  - Traite itérativement jusqu'à processed=true
-  - Utilisé après imports CSV massifs
-### Validation et qualité des données
-- **`validate_data_quality.py`** - Validation intégrité et qualité des données
-  - Vérifie l'intégrité structurelle (NULL, doublons, FK)
-  - Cohérence temporelle (gaps, dates futures)
-  - Limites physiques (business rules)
-  - Couverture des données (10 villes)
-  - Détection outliers statistiques (>3σ)
-  - Conçu pour exécution planifiée serverless (exit codes 0/1/2)
+- `process_all_remaining.py`
+  - Traite toutes les entrees restantes du data lake (`processed = false`).
+  - Pratique apres un import massif.
 
-- **`cleanup_data_quality_issues.py`** - Nettoyage automatique des problèmes de qualité
-  - Supprime les doublons (garde le plus récent)
-  - Supprime les mesures avec dates futures
-  - Support mode dry-run pour simulation
-  - Traitement par lots (batch_size=50)
-## Dossiers
+- `validate_data_quality.py`
+  - Lance les controles qualite sur `fact_measures`.
+  - Ecrit les anomalies dans la table `anomalies`.
 
-### `archive/`
-Scripts de déploiement historiques (déjà exécutés).
+- `cleanup_data_quality_issues.py`
+  - Corrige/supprime certains problemes detectes (doublons, dates futures, etc.).
+  - Supporte un mode simulation (`--dry-run`).
 
-### `temp/` (non versionné)
-Scripts de vérification, diagnostic et maintenance.
-Non pushés sur GitHub (voir `.gitignore`).
+- `test_performance.py`
+  - Script de test de performance ETL.
 
-## Utilisation
+- `scaleway/run_job.sh`
+  - Dispatcher shell utilise en serverless.
+  - Route vers `extract`, `transform` ou `validate` selon `JOB_TYPE`.
+
+## Exemples d'utilisation
 
 ```bash
-# Activer l'environnement virtuel
 source venv/bin/activate
 
-# Import de données historiques CSV
+# Import historique
 python scripts/import_aqicn_historical.py --insert
 
-# Traiter les données non traitées
+# Traitement backlog
 python scripts/process_all_remaining.py
 
-# Valider la qualité des données (24h)
-python scripts/validate_data_quality.py
+# Validation 24h
+python scripts/validate_data_quality.py --hours 24
 
-# Valider avec période spécifique
+# Validation stricte 48h
 python scripts/validate_data_quality.py --hours 48 --strict
 
-# Nettoyer les problèmes de qualité (dry-run)
+# Nettoyage en simulation
 python scripts/cleanup_data_quality_issues.py --dry-run
-
-# Nettoyer les problèmes de qualité (réel)
-python scripts/cleanup_data_quality_issues.py
 ```
 
-## Organisation
+## Bonnes pratiques
 
-Les scripts sont organisés pour ne versioner que le code de production :
-- **scripts/** : Scripts ETL de production uniquement
-- **scripts/archive/** : Scripts de déploiement exécutés une fois
-- **scripts/temp/** : Scripts temporaires (exclus Git)
+- Lancer `validate_data_quality.py` apres les runs ETL importants.
+- Conserver les scripts ad hoc de diagnostic hors versionnage si temporaires.
+- Executer les operations de nettoyage en `--dry-run` avant mode reel.
 
-Pour les vérifications/diagnostics, utiliser les scripts dans `temp/` :
-- check_bdd_status.py - Vérification état BDD
-- verify_star_schema.py - Vérification modèle en étoile
-- audit_fact_measures.py - Audit complet intégrité
-- etc.
-
-Note : `validate_data_quality.py` est dans scripts/ car utilisé en production (jobs planifiés).
+Derniere mise a jour: `26 mars 2026`
 

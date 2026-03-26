@@ -1,118 +1,41 @@
-# Migration GitHub Actions -> Scaleway Serverless
+# Scaleway Serverless
 
-Ce guide remplace l'orchestration GitHub Actions par Scaleway Serverless Jobs + Cron Triggers.
+Guide d'exploitation du projet ETL avec Scaleway Serverless Jobs.
 
 ## Objectif
 
-- Exécuter les pipelines ETL en region UE via Scaleway.
-- Centraliser les secrets dans Scaleway Secret Manager.
-- Conserver les mêmes scripts Python et les mêmes crons fonctionnels.
+Executer les 3 taches (`extract`, `transform`, `validate`) sur une image Docker unique, planifiees par cron et alimentees en secrets via Scaleway Secret Manager.
 
 ## Prerequis
 
-- Un compte Scaleway.
-- Une organisation et un projet Scaleway.
-- Docker local (build image).
-- Variables sensibles disponibles:
+- Compte Scaleway avec projet actif.
+- CLI `scw` configuree (`scw init`).
+- `docker`, `jq` et `bash` disponibles.
+- Variables sensibles:
   - `OPENWEATHER_API_KEY`
   - `AQICN_API_KEY`
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
 
-## 1. Construire l'image
+## Provisioning recommandé
 
-L'image est definie dans `Dockerfile.serverless`.
+Script: `deploy/scaleway/scw_provision_jobs.sh`
 
-```bash
-docker build -f Dockerfile.serverless -t totalgreen-etl:serverless .
-```
+Ce script realise:
 
-## 2. Publier l'image sur Scaleway Container Registry
-
-Publiez l'image dans un namespace registry Scaleway (UI ou CLI `scw`).
-
-Image a utiliser ensuite dans les jobs:
-- `rg.fr-par.scw.cloud/<namespace>/totalgreen-etl:serverless`
-
-## 3. Creer les secrets dans Scaleway
-
-Creer 4 secrets (meme noms que les variables d'environnement):
-- `OPENWEATHER_API_KEY`
-- `AQICN_API_KEY`
-- `SUPABASE_URL`
-- `SUPABASE_KEY`
-
-Puis injecter ces secrets en variables d'environnement dans chaque job.
-
-## 4. Creer les 3 jobs serverless
-
-Tous les jobs reutilisent la meme image et le meme `CMD`.
-Le comportement est pilote par la variable `JOB_TYPE`.
-
-### Job 1 - Extract
-
-- `JOB_TYPE=extract`
-- Cron: `0 * * * *`
-
-### Job 2 - Transform
-
-- `JOB_TYPE=transform`
-- Cron recommande: `5 * * * *`
-- Pourquoi +5 min: evite d'executer transform avant la fin d'extract.
-
-### Job 3 - Data Quality
-
-- `JOB_TYPE=validate`
-- `VALIDATION_HOURS=24`
-- `VALIDATION_STRICT=false`
-- Cron: `15 0,12 * * *`
-
-## 5. Mapping des workflows existants
-
-- `.github/workflows/etl-extract.yml` -> Job `extract`
-- `.github/workflows/etl-transform.yml` -> Job `transform`
-- `.github/workflows/data-quality-validation.yml` -> Job `validate`
-
-## 6. Double run recommande
-
-Pendant 1 a 2 semaines:
-
-- Conserver GitHub Actions actives.
-- Activer en parallele Scaleway Jobs.
-- Comparer les volumes et resultats:
-  - nombre d'enregistrements `raw_data_lake`
-  - nombre d'enregistrements `fact_measures`
-  - anomalies detectees
-
-Quand les resultats sont stables, desactiver les workflows GitHub.
-
-## 7. Rollback
-
-En cas de probleme:
-
-1. Suspendre les Cron Triggers Scaleway.
-2. Reactiver les workflows `.github/workflows/*`.
-3. Inspecter les logs du job en erreur et corriger.
-
-## Provisioning automatise (CLI)
-
-Un script pret a l'emploi est disponible:
-- `deploy/scaleway/scw_provision_jobs.sh`
-
-Il automatise:
-- creation du namespace registry
-- build/push de l'image
+- creation/verification du namespace registry
+- build/push de l'image serverless
 - creation/mise a jour des secrets
-- creation/mise a jour des 3 definitions de jobs + CRON
-- association des secrets aux jobs
+- creation/mise a jour des 3 jobs et cron
+- liaison des secrets aux jobs
 
-Exemple d'execution:
+Exemple:
 
 ```bash
-export PROJECT_ID="<votre-project-id>"
+export PROJECT_ID="<project-id>"
 export OPENWEATHER_API_KEY="<...>"
 export AQICN_API_KEY="<...>"
-export SUPABASE_URL="https://...supabase.co"
+export SUPABASE_URL="https://<project>.supabase.co"
 export SUPABASE_KEY="<...>"
 
 # Recommande sur Mac Apple Silicon
@@ -121,8 +44,49 @@ export IMAGE_PLATFORM="linux/amd64"
 bash deploy/scaleway/scw_provision_jobs.sh
 ```
 
-## Notes importantes
+Variables utiles du script:
 
-- Les scripts ETL ecrivent des logs dans `/app/logs` dans le conteneur.
-- Les logs de reference operationnelle restent ceux de Scaleway (stdout/stderr).
-- Aucune cle ne doit etre committee dans Git.
+- `REGION` (defaut `fr-par`)
+- `NAMESPACE` (defaut `totalgreen`)
+- `IMAGE_NAME` (defaut `totalgreen-etl`)
+- `IMAGE_TAG` (defaut `serverless`)
+- `VALIDATION_HOURS` (defaut `24`)
+- `VALIDATION_STRICT` (defaut `false`)
+
+## Configuration manuelle (si necessaire)
+
+1. Construire et publier l'image `Dockerfile.serverless` dans le registry Scaleway.
+2. Creer les 4 secrets (`OPENWEATHER_API_KEY`, `AQICN_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`).
+3. Creer 3 definitions de jobs utilisant la meme image et les variables:
+   - `JOB_TYPE=extract`, cron `0 * * * *`
+   - `JOB_TYPE=transform`, cron `5 * * * *`
+   - `JOB_TYPE=validate`, cron `15 0,12 * * *`
+4. Ajouter sur le job `validate`:
+   - `VALIDATION_HOURS=24`
+   - `VALIDATION_STRICT=false`
+
+Le dispatch est gere par `scripts/scaleway/run_job.sh`.
+
+## Verification post-deploiement
+
+- Demarrer manuellement chaque job une premiere fois.
+- Verifier les logs Scaleway (stdout/stderr).
+- Confirmer les effets cote base:
+  - nouvelles lignes dans `raw_data_lake`
+  - nouvelles lignes dans `fact_measures`
+  - nouvelles lignes dans `anomalies` apres validation
+
+## Rollback
+
+1. Mettre les cron Scaleway en pause.
+2. Revenir temporairement a une execution locale/planifiee alternative.
+3. Corriger l'image, les secrets ou les variables de job.
+4. Relancer un smoke test avant reprise du cron.
+
+## Notes d'exploitation
+
+- Les logs applicatifs existent en local dans `logs/`, mais en serverless la source de verite est la sortie du job.
+- Ne jamais commiter de cles dans Git.
+- Conserver une rotation reguliere des cles API.
+
+Derniere mise a jour: `26 mars 2026`

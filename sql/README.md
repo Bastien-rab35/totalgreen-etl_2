@@ -1,71 +1,55 @@
-# SQL Scripts - MSPR TotalGreen ETL
+# SQL - TotalGreen ETL
 
-Ce dossier contient les scripts SQL pour le projet TotalGreen ETL.
+Reference des scripts SQL presents dans le depot.
 
-## Scripts principaux (Modèle en Étoile)
+## Scripts disponibles
 
-### Création et Migration
-- **`star_schema.sql`** - Schéma complet du modèle en étoile (Data Warehouse)
-  - 4 tables de dimensions : `dim_time`, `dim_city`, `dim_weather_condition`, `dim_air_quality_level`
-  - 1 table de faits : `fact_measures`
-  - Fonctions utilitaires : `populate_dim_time()`, `get_aqi_level_id()`
+- `star_schema.sql`
+  - Schema analytique principal (dimensions + `fact_measures`).
+  - Fonctions utilitaires SQL (ex: mapping niveau AQI).
 
-- **`create_dim_date.sql`** - Création de la dimension temporelle
-  - Remplace dim_time par dim_date
-  - ~1460 jours (2024-2027)
-  
-- **`update_cities_aqi_stations.sql`** - Configuration des stations AQI spécifiques
-  - Stations optimisées pour Lyon et Lille
-  - Amélioration qualité des données
+- `create_dim_date.sql`
+  - Cree et peuple `dim_date` (2024-2027).
+  - Oriente le modele vers une dimension date simplifiee.
 
-- **`anomalies_table.sql`** - Table de stockage des anomalies de qualité des données
-  - Stocke les anomalies détectées par `validate_data_quality.py`
-  - Index pour requêtes sur run_id, severity, category
-  - Vue `anomalies_daily_stats` pour statistiques quotidiennes
+- `anomalies_table.sql`
+  - Cree la table `anomalies` et la vue `anomalies_daily_stats`.
+  - Utilisee par `scripts/validate_data_quality.py`.
 
-- **`migrate_anomalies_table.sql`** - Migration table anomalies (ancien schéma ML → nouveau)
-  - **⚠️ IMPORTANT** : À exécuter si vous aviez l'ancien schéma ML
-  - Supprime l'ancienne table et la recrée avec le nouveau schéma
-  - Utilisez `anomalies_table.sql` pour une nouvelle installation
+- `migrate_anomalies_table.sql`
+  - Migration destructive de l'ancienne table `anomalies` vers le schema actuel.
+  - A utiliser uniquement si vous avez un ancien schema incompatible.
 
-### Analyses
-- **`queries_olap.sql`** - 20+ requêtes d'analyses multidimensionnelles
-  - Analyses temporelles (tendances, patterns)
-  - Analyses géographiques (classements villes)
-  - Analyses par condition météo
-  - Analyses qualité de l'air par niveau AQI
-  - Cubes OLAP et corrélations
+- `queries_olap.sql`
+  - Collection de requetes analytiques et d'exploration.
 
-### Maintenance
-- **`cleanup_old_tables.sql`** - Nettoyage des tables obsolètes
-  - Supprime `measures` (remplacée par `fact_measures`)
-  - Supprime `cities` (remplacée par `dim_city`)
-  - Vérifications de sécurité avant suppression
+- `UPDATE_FUNCTIONS.sql`
+  - Script de rappel/mise a jour lie a la transition vers `dim_date`.
 
-## Ancien modèle (Archive)
-
-- **`schema.sql`** - Schéma du modèle normalisé (ancien)
-- **`archive/`** - Anciens scripts d'analyse et d'insertion
-
-## Ordre d'exécution (Déploiement)
-
-Pour déployer le Data Warehouse depuis zéro :
+## Ordre recommande pour une nouvelle installation
 
 ```sql
--- 1. Créer le schéma en étoile
-\i star_schema.sql
-
--- 2. Créer la dimension temporelle
-\i create_dim_date.sql
-
--- 3. Configurer les stations AQI
-\i update_cities_aqi_stations.sql
-
--- 4. Tester avec les requêtes OLAP
-\i queries_olap.sql
+\i sql/star_schema.sql
+\i sql/create_dim_date.sql
+\i sql/anomalies_table.sql
 ```
 
-## Liens
+Ensuite, executer les requetes d'analyse au besoin:
 
-- Modèle normalisé → Modèle en étoile : Migration complétée le 2026-02-09
-- Documentation complète : voir `docs/ARCHITECTURE.md`
+```sql
+\i sql/queries_olap.sql
+```
+
+## Notes importantes
+
+- Certaines requetes historiques peuvent encore s'appuyer sur `dim_time`.
+- L'architecture cible documentee privilegie `dim_date`.
+- Verifier les jointures temporelles selon votre etat de schema (historique vs cible).
+
+## Bonnes pratiques
+
+- Sauvegarder la base avant toute migration structurelle.
+- Executer les scripts dans l'editeur SQL Supabase avec un compte habilite.
+- Verifier les index et comptes de lignes apres deploiement.
+
+Derniere mise a jour: `26 mars 2026`

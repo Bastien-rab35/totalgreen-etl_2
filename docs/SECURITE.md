@@ -1,131 +1,76 @@
-# Sécurité et Conformité RGPD
+# Securite et Conformite
 
-Documentation de conformité pour le projet TotalGreen ETL.
+Synthese des mesures de securite et des points RGPD pour TotalGreen ETL.
 
----
+## Perimetre des donnees
 
-## Conformité RGPD
+Le projet manipule des donnees environnementales:
 
-### Hébergement et Souveraineté des Données
+- meteo (temperature, pression, humidite, vent)
+- qualite de l'air (AQI, PM2.5, PM10, NO2, O3, SO2, CO)
+- metadonnees geographiques publiques de villes
 
-**Région** : Union Européenne  
-**Provider** : Supabase (AWS)  
-**Zone géographique** : eu-central-1 (Francfort, Allemagne)
+Aucune donnee personnelle utilisateur n'est collecte dans le flux ETL standard.
 
-**100% conforme RGPD** - Aucune donnée ne quitte l'UE
+## Conformite RGPD
 
-### Nature des Données
+- Hebergement cible: region UE.
+- Donnees non personnelles: risque RGPD limite.
+- Principe de minimisation: seules les donnees utiles a l'analyse sont conservees.
 
-| Type | Classification | Données personnelles |
-|------|----------------|---------------------|
-| Température, pression, vent | Environnementales | NON |
-| Qualité de l'air (PM2.5, AQI) | Environnementales | NON |
-| Coordonnées GPS villes | Géographiques publiques | NON |
+## Gestion des secrets
 
-**Conclusion** : Aucune donnée personnelle collectée (pas de nom, email, IP, tracking utilisateur).
+Variables sensibles attendues:
 
----
-
-## Sécurité
-
-### Gestion des Secrets
-
-**Variables d'environnement (.env)** :
 ```env
-OPENWEATHER_API_KEY=***
-AQICN_API_KEY=***
-SUPABASE_URL=https://***.supabase.co
-SUPABASE_KEY=***
+OPENWEATHER_API_KEY=...
+AQICN_API_KEY=...
+SUPABASE_URL=...
+SUPABASE_KEY=...
 ```
 
-**Protections** :
-- .env exclu de Git (.gitignore)
-- .env.example fourni (sans valeurs réelles)
-- Validation au démarrage (config.validate())
-- Aucune clé en dur dans le code
+Bonnes pratiques appliquees:
 
-### Authentification
+- pas de secrets en dur dans le code
+- chargement via `.env` en local
+- gestion centralisee par Secret Manager en serverless
+- validation de presence via `config.validate()`
 
-| Service | Méthode | Sécurité |
-|---------|---------|----------|
-| Supabase | Service Key | Haute |
-| OpenWeather | API Key | Haute |
-| AQICN | Token API | Haute |
+## Controle d'acces
 
-**Recommandation** : Rotation des clés tous les 6 mois.
+- Execution locale: acces limite a l'environnement qui porte le `.env`.
+- Execution serverless: secrets injectes au runtime, non commites.
+- Base de donnees: acces API par cle de service dediee.
 
-### Base de Données
+## Securite reseau
 
-**Connexions** :
-- HTTPS/TLS uniquement
-- Service Key (non exposée publiquement)
-- Row Level Security (RLS) disponible
+- Communications API externes via HTTPS.
+- Connexion a Supabase via TLS.
+- Pas d'exposition directe d'endpoint d'administration dans le depot.
 
-**Politiques RLS** :
-```sql
-ALTER TABLE raw_data_lake ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fact_measures ENABLE ROW LEVEL SECURITY;
-ALTER TABLE etl_logs ENABLE ROW LEVEL SECURITY;
-```
+## Journalisation et audit
 
----
+- Logs applicatifs ETL dans `logs/` en local.
+- Logs d'execution serverless disponibles cote plateforme.
+- Anomalies qualite historisees en base via table `anomalies`.
 
-## Contrôle d'Accès
+## Retention recommandee
 
-### Accès Pipeline ETL
+Politique recommandee (a adapter au besoin metier):
 
-| Composant | Accès | Contrôle |
-|-----------|-------|----------|
-| Scaleway Serverless Jobs | Automatisé | Secret Manager Scaleway |
-| Scripts Python | Serveur/Local | .env requis |
-| Base Supabase | Service Key | Authentification |
+- `raw_data_lake`: 30 jours
+- `fact_measures`: 12 mois ou plus selon besoins analytiques
+- `anomalies`: 12 mois
+- logs techniques: 30 a 90 jours
 
-**Principe** : Aucun accès public au pipeline.
+## Checklist operationnelle
 
-### Accès Données (Lecture)
+- [x] Secrets externalises (`.env` local ou Secret Manager)
+- [x] Aucune donnee personnelle dans le flux standard
+- [x] Communications chiffrees (HTTPS/TLS)
+- [x] Validation qualite des donnees automatisee
+- [ ] Rotation planifiee des cles API
+- [ ] Politique formelle de purge automatisee
+- [ ] Revue periodique des droits de service
 
-Pour phase future (dashboard/API) :
-- Authentification requise
-- Row Level Security activé
-- Accès lecture seule par défaut
-- Logs d'audit activés
-
----
-
-## Conservation des Données
-
-| Table | Durée de rétention | Justification |
-|-------|-------------------|---------------|
-| `raw_data_lake` | 30 jours | Cache temporaire |
-| `fact_measures` | 1 an | Analyses historiques |
-| `dim_*` | Permanentes | Tables de référence |
-| `etl_logs` | 90 jours | Audit et debug |
-
-**Purge automatique** : Script de maintenance à créer (Phase 4).
-
----
-
-## Checklist de Sécurité
-
-- [x] Hébergement UE (RGPD)
-- [x] Aucune donnée personnelle
-- [x] Secrets dans .env
-- [x] .env exclu de Git
-- [x] Connexions HTTPS/TLS
-- [x] Authentification API forte
-- [x] Logs de traçabilité
-- [ ] RLS activé (Phase 4)
-- [ ] Rotation clés programmée (Phase 4)
-- [ ] Purge automatique données (Phase 4)
-
----
-
-## Contact Sécurité
-
-**RSSI** : À définir  
-**DPO** : À définir
-
----
-
-**Dernière révision** : 2026-02-09  
-**Version** : 1.1
+Derniere mise a jour: `26 mars 2026`
