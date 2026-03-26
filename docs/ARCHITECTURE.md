@@ -81,7 +81,7 @@ APIs → Data Lake (JSONB)
 - Collecte depuis OpenWeather API (météo)
 - Collecte depuis AQICN API (qualité air)
 - Stockage brut sans transformation
-- Exécution : Toutes les heures (GitHub Actions)
+- Exécution : Toutes les heures (Scaleway Serverless Job + Cron)
 
 ### Transform (etl_transform_to_db.py)
 
@@ -98,7 +98,7 @@ Data Lake → Data Warehouse (Star Schema)
   - `aqi_level_id` via fonction `get_aqi_level_id()`
 - Insertion dans `fact_measures`
 - Marquage traité (processed=true)
-- Exécution : Toutes les heures (GitHub Actions)
+- Exécution : Toutes les heures (Scaleway Serverless Job + Cron)
 
 ### Stratégie Anti-Perte
 
@@ -129,7 +129,7 @@ Data Lake → Data Warehouse (Star Schema)
 
 Script Python `validate_data_quality.py` :
 - 5 niveaux de validation
-- Exécution automatisée (2×/jour via GitHub Actions)
+- Exécution automatisée (2×/jour via Scaleway Cron)
 - Détection doublons, incohérences, outliers
 - Exit codes pour intégration CI/CD
 
@@ -163,7 +163,7 @@ Script Python `validate_data_quality.py` :
 - **Langage** : Python 3.12
 - **Librairies** : requests, supabase-py, numpy, python-dotenv
 - **APIs externes** : OpenWeather (météo) + AQICN (qualité air)
-- **Orchestration** : GitHub Actions (CRON 3 workflows)
+- **Orchestration** : Scaleway Serverless Jobs (3 jobs CRON)
 - **Hébergement** : Supabase eu-central-1 (conformité RGPD)
 - **Validation** : Script Python 5 niveaux (détection anomalies)
 

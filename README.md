@@ -9,7 +9,7 @@ Pipeline ETL automatisé pour la collecte et l'analyse de données environnement
 **Villes surveillées** : Paris, Marseille, Lyon, Toulouse, Nice, Nantes, Montpellier, Strasbourg, Bordeaux, Lille
 
 **Fonctionnalités** :
-- Collecte horaire automatisée (GitHub Actions)
+- Collecte horaire automatisée (Scaleway Serverless Jobs)
 - Data Lake JSONB pour versioning des données brutes
 - Data Warehouse en étoile (Star Schema) pour analyses OLAP
 - Validation qualité des données avec script Python avancé
@@ -303,37 +303,37 @@ python scripts/validate_data_quality.py --hours 24 --strict
 - `1` : Warnings détectés
 - `2` : Erreurs critiques détectées
 
-### Étape 7 : Automatisation avec GitHub Actions
+### Étape 7 : Automatisation avec Scaleway Serverless
 
-Le projet inclut 3 workflows GitHub Actions :
+Le projet utilise 3 jobs serverless planifiés (même logique que les 3 workflows historiques).
 
-#### A. Pipeline d'extraction (`.github/workflows/etl-extract.yml`)
-- **Déclenchement** : Cron toutes les heures
-- **Action** : Collecte données APIs → Data Lake
-- **Quota** : 240 appels/jour (10 villes × 24h × 2 APIs)
+#### A. Préparer l'image
 
-#### B. Pipeline de transformation (`.github/workflows/etl-transform.yml`)
-- **Déclenchement** : Cron toutes les heures
-- **Action** : Data Lake → Validation + ML → Data Warehouse
-- **Dépendance** : Attend fin d'extraction
+```bash
+docker build -f Dockerfile.serverless -t totalgreen-etl:serverless .
+```
 
-#### C. Validation qualité (`.github/workflows/data-quality-validation.yml`)
-- **Déclenchement** : Cron toutes les 12h (à 00:15 et 12:15)
-- **Action** : Valide données des dernières 24h
-- **Report** : GitHub Actions Summary avec détails
+Publier ensuite cette image dans le registre Scaleway.
 
-**Configuration GitHub Secrets** :
-1. Aller dans Settings → Secrets → Actions
-2. Créer les secrets :
-   - `OPENWEATHER_API_KEY`
-   - `AQICN_API_KEY`
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
+#### B. Créer les jobs
 
-**Activer les workflows** :
-1. Pusher le code sur GitHub
-2. Aller dans Actions tab
-3. Activer les workflows
+Tous les jobs utilisent la même image et le script `scripts/scaleway/run_job.sh`.
+
+- Job `extract` : `JOB_TYPE=extract`, cron `0 * * * *`
+- Job `transform` : `JOB_TYPE=transform`, cron `5 * * * *`
+- Job `validate` : `JOB_TYPE=validate`, cron `15 0,12 * * *`
+
+Variables partagées (via Scaleway Secret Manager) :
+- `OPENWEATHER_API_KEY`
+- `AQICN_API_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+
+Variables validation (optionnelles) :
+- `VALIDATION_HOURS=24`
+- `VALIDATION_STRICT=false`
+
+Guide complet : voir `docs/SCALEWAY_SERVERLESS.md`.
 
 ### Étape 8 : Monitoring et maintenance
 
@@ -520,10 +520,14 @@ LIMIT 20;
 
 ```
 MSPR 1/
-├── .github/workflows/          # GitHub Actions
+├── .github/workflows/          # Historique CI/CD (phase de transition)
 │   ├── etl-extract.yml
 │   ├── etl-transform.yml
 │   └── data-quality-validation.yml
+├── deploy/scaleway/
+│   └── .env.example            # Template variables serverless
+├── Dockerfile.serverless       # Image unique pour jobs Scaleway
+├── .dockerignore
 ├── data/
 │   └── cities_reference.json   # 10 villes (id, name, lat, lon)
 ├── docs/                       # Documentation technique
@@ -536,6 +540,7 @@ MSPR 1/
 ├── scripts/
 │   ├── import_aqicn_historical.py    # Import CSV historique
 │   ├── process_all_remaining.py      # Traitement batch
+│   ├── scaleway/run_job.sh           # Dispatcher des jobs serverless
 │   ├── validate_data_quality.py      # Validation 5 niveaux
 │   ├── README.md                     # Guide des scripts
 │   └── temp/                         # Scripts diagnostic (Git-excluded)
@@ -655,6 +660,7 @@ Ce script détecte :
 - [docs/README.md](docs/README.md) - Index de la documentation
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Architecture technique
 - [docs/SECURITE.md](docs/SECURITE.md) - Sécurité et RGPD
+- [docs/SCALEWAY_SERVERLESS.md](docs/SCALEWAY_SERVERLESS.md) - Exploitation serverless Scaleway
 - [CHANGELOG.md](CHANGELOG.md) - Historique des versions
 - [scripts/README.md](scripts/README.md) - Guide des scripts
 - [sql/README.md](sql/README.md) - Guide SQL
@@ -670,7 +676,7 @@ Ce script détecte :
 
 ---
 
-**Version** : 2.1.0 (Import CSV historique + Validation qualité)  
-**Créé** : Janvi2.0 (Stations AQI optimisées + Validation qualité Python
+**Version** : 2.4.0 (Migration Scaleway Serverless)  
+**Créé** : Janvier 2026  
 **Conformité** : RGPD (hébergement EU)  
-**Automatisation** : GitHub Actions (collecte horaire)
+**Automatisation** : Scaleway Serverless Jobs (collecte horaire)

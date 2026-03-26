@@ -21,7 +21,7 @@ Scripts Python pour les pipelines de données du projet.
   - Limites physiques (business rules)
   - Couverture des données (10 villes)
   - Détection outliers statistiques (>3σ)
-  - Conçu pour GitHub Actions (exit codes 0/1/2)
+  - Conçu pour exécution planifiée serverless (exit codes 0/1/2)
 
 - **`cleanup_data_quality_issues.py`** - Nettoyage automatique des problèmes de qualité
   - Supprime les doublons (garde le plus récent)
@@ -75,5 +75,5 @@ Pour les vérifications/diagnostics, utiliser les scripts dans `temp/` :
 - audit_fact_measures.py - Audit complet intégrité
 - etc.
 
-Note : `validate_data_quality.py` est dans scripts/ car utilisé en production (GitHub Actions).
+Note : `validate_data_quality.py` est dans scripts/ car utilisé en production (jobs planifiés).
 

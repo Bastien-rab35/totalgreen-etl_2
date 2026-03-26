@@ -4,6 +4,27 @@ Ce document retrace les principales évolutions techniques du projet.
 
 ---
 
+## Version 2.4.0 - Migration vers Scaleway Serverless (26 Mars 2026)
+
+### Orchestration
+- Ajout d'un conteneur dédié `Dockerfile.serverless` pour exécuter les jobs ETL.
+- Ajout du script `scripts/scaleway/run_job.sh` pour dispatcher les 3 exécutions:
+  - `extract`
+  - `transform`
+  - `validate`
+- Ajout de `.dockerignore` pour réduire la taille de l'image.
+
+### Déploiement et documentation
+- Ajout du guide `docs/SCALEWAY_SERVERLESS.md`.
+- Ajout du template de variables `deploy/scaleway/.env.example`.
+- Mise à jour des docs principales pour remplacer l'orchestration GitHub Actions par Scaleway Serverless Jobs + Cron.
+
+### Stratégie de bascule
+- Conservation des workflows GitHub en mode transition (double run recommandé).
+- Plan de rollback documenté en cas d'incident.
+
+---
+
 ## Version 2.3.2 - Correction timestamps UTC (6 Mars 2026)
 
 ### Problème identifié

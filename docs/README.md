@@ -21,6 +21,13 @@ Sécurité et conformité RGPD :
 - Contrôle d'accès et RLS
 - Conservation et purge des données
 
+### SCALEWAY_SERVERLESS.md
+Guide de migration et d'exploitation Serverless :
+- Build image Docker pour jobs ETL
+- Configuration des secrets Scaleway
+- Planification CRON (extract/transform/validate)
+- Stratégie de rollback
+
 ---
 
 ## Validation Qualité des Données
@@ -114,7 +121,8 @@ MSPR 1/
 │   └── etl_transform_to_db.py
 ├── scripts/               # Scripts utilitaires
 ├── data/                  # Données référence
-└── .github/workflows/     # Automatisation
+├── deploy/scaleway/       # Templates migration serverless
+└── .github/workflows/     # Workflows historiques (transition)
 ```
 
 ---

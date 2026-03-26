@@ -76,7 +76,7 @@ ALTER TABLE etl_logs ENABLE ROW LEVEL SECURITY;
 
 | Composant | Accès | Contrôle |
 |-----------|-------|----------|
-| GitHub Actions | Automatisé | Secrets GitHub |
+| Scaleway Serverless Jobs | Automatisé | Secret Manager Scaleway |
 | Scripts Python | Serveur/Local | .env requis |
 | Base Supabase | Service Key | Authentification |
 

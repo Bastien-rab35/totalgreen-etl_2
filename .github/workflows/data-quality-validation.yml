@@ -1,10 +1,6 @@
 name: Data Quality Validation
 
 on:
-  # Exécuter toutes les 12 heures
-  schedule:
-    - cron: '15 0,12 * * *'  # Toutes les 12h à 00:15 et 12:15
-  
   # Permettre exécution manuelle
   workflow_dispatch:
     inputs:
