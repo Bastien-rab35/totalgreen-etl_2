@@ -19,20 +19,14 @@
                 <mxCell id="etl_e" value="etl_extract_to_lake.py&#xa;Collecte données brutes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
                     <mxGeometry x="120" y="210" width="240" height="60" as="geometry"/>
                 </mxCell>
-                <mxCell id="dls" value="DataLakeService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" parent="1" vertex="1">
-                    <mxGeometry x="170" y="310" width="140" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="dl" value="raw_data_lake&#xa;Data Lake JSONB&#xa;Supabase Table" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=2;fontSize=12;fontStyle=1" parent="1" vertex="1">
-                    <mxGeometry x="160" y="390" width="160" height="80" as="geometry"/>
+                <mxCell id="dl" value="raw_data_lake&lt;br&gt;Data Lake JSONB&lt;br&gt;Supabase&amp;nbsp;" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=2;fontSize=12;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="160" y="309" width="160" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="etl_t" value="etl_transform_to_db.py&#xa;Transformation &amp; Load" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
-                    <mxGeometry x="120" y="510" width="240" height="60" as="geometry"/>
-                </mxCell>
-                <mxCell id="dbs" value="DatabaseService" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E8F5E9;strokeColor=#1B5E20;fontSize=11" parent="1" vertex="1">
-                    <mxGeometry x="170" y="610" width="140" height="40" as="geometry"/>
+                    <mxGeometry x="120" y="429" width="240" height="60" as="geometry"/>
                 </mxCell>
                 <mxCell id="dw" value="Data Warehouse&#xa;Supabase PostgreSQL" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;fillColor=#F3E5F5;strokeColor=#4A148C;strokeWidth=3;fontSize=13;fontStyle=1" parent="1" vertex="1">
-                    <mxGeometry x="150" y="692" width="180" height="80" as="geometry"/>
+                    <mxGeometry x="150" y="529" width="180" height="80" as="geometry"/>
                 </mxCell>
                 <mxCell id="arr1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;" parent="1" target="ws" edge="1">
                     <mxGeometry relative="1" as="geometry">
@@ -50,44 +44,40 @@
                 <mxCell id="arr4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#E65100;" parent="1" source="aqs" target="etl_e" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="arr5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" parent="1" source="etl_e" target="dls" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="arr6" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#4A148C;" parent="1" source="dls" target="dl" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="arr5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" parent="1" source="etl_e" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="240" y="310" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
                 <mxCell id="arr7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#E65100;" parent="1" source="dl" target="etl_t" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="arr8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" parent="1" source="etl_t" target="dbs" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
+                <mxCell id="arr8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#1B5E20;" parent="1" source="etl_t" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="240" y="529" as="targetPoint"/>
+                    </mxGeometry>
                 </mxCell>
-                <mxCell id="arr9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#4A148C;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="dbs" target="dw" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="2" value="GitHub Actions&#xa;Workflows CRON" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
-                    <mxGeometry x="-37" y="383" width="180" height="50" as="geometry"/>
+                <mxCell id="2" value="SCALEWAY Serverless Jobs" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="-105" y="324" width="180" height="50" as="geometry"/>
                 </mxCell>
                 <mxCell id="3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;dashed=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" parent="1" source="2" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="78" y="423" as="sourcePoint"/>
                         <mxPoint x="118" y="234" as="targetPoint"/>
                         <Array as="points">
-                            <mxPoint x="98" y="382"/>
-                            <mxPoint x="93" y="382"/>
-                            <mxPoint x="93" y="234"/>
+                            <mxPoint x="30" y="306"/>
+                            <mxPoint x="30" y="234"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;dashed=1;" parent="1" source="2" target="etl_t" edge="1">
                     <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="88" y="433" as="sourcePoint"/>
-                        <mxPoint x="169" y="638" as="targetPoint"/>
+                        <mxPoint x="88" y="352" as="sourcePoint"/>
+                        <mxPoint x="169" y="557" as="targetPoint"/>
                         <Array as="points">
-                            <mxPoint x="88" y="433"/>
-                            <mxPoint x="88" y="449"/>
-                            <mxPoint x="85" y="449"/>
-                            <mxPoint x="85" y="540"/>
+                            <mxPoint x="31" y="371"/>
+                            <mxPoint x="32" y="371"/>
+                            <mxPoint x="32" y="459"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>

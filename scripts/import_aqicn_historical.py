@@ -1,378 +1,406 @@
 #!/usr/bin/env python3
 """
-Import des données historiques AQICN CSV vers raw_data_lake
+Import des donnees historiques AQICN CSV vers raw_data_lake.
 
-CONFIGURATION:
-- Villes: Lyon (city_id=3) et Lille (city_id=10) uniquement
-- Source: docs/waqi-covid19-airqualitydata-2026.csv
-- Période: 2024-01-12 → 2026-03-05
-- Format de sortie: Compatible raw_data_lake (format API AQICN)
+Points clefs:
+- Lit un CSV WAQI historique (ex: waqi-covid19-airqualitydata-2026Q2.csv)
+- Construit un payload compatible avec le format AQICN deja utilise dans le projet
+- Peut inserer uniquement les jours/villes manquants (mode par defaut)
 
-UTILISATION:
-    # Simulation (dry-run)
-    python scripts/import_aqicn_historical.py
-    
-    # Insertion réelle
-    python scripts/import_aqicn_historical.py --insert
+Usage:
+  # Simulation (par defaut): affiche ce qui serait insere
+  python scripts/import_aqicn_historical.py --csv waqi-covid19-airqualitydata-2026Q2.csv --start-date 2026-03-26 --end-date 2026-04-15
 
-Ce script convertit les données agrégées journalières du CSV au format
-raw_data_lake compatible avec notre base de données.
+  # Insertion reelle
+  python scripts/import_aqicn_historical.py --csv waqi-covid19-airqualitydata-2026Q2.csv --start-date 2026-03-26 --end-date 2026-04-15 --insert
+
+  # Forcer l'insertion de toutes les lignes CSV (sans filtrer les manquants)
+  python scripts/import_aqicn_historical.py --csv waqi-covid19-airqualitydata-2026Q2.csv --start-date 2026-03-26 --end-date 2026-04-15 --insert --all
 """
 
+import argparse
 import csv
 import json
 import sys
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List
 from collections import defaultdict
+from datetime import date, datetime, time, timezone
+from io import StringIO
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import Config
 from src.services.database_service import DatabaseService
 
-# ============================================================================
-# CONFIGURATION - Lyon et Lille uniquement
-# ============================================================================
+DEFAULT_CSV = "waqi-covid19-airqualitydata-2026Q2.csv"
+DEFAULT_START_DATE = "2026-03-26"
 
-CITIES_CONFIG = {
-    'Lyon': {
-        'city_id': 3,  # ID dans dim_city
-        'city_name': 'Lyon',
-        'station_name': 'Lyon Centre, France',
-        'uid': 3028,  # UID station AQICN (Lyon Centre)
-        'gps': [45.758, 4.854]
-    },
-    'Lille': {
-        'city_id': 10,  # ID dans dim_city (corrigé: était 6=Nantes)
-        'city_name': 'Lille',
-        'station_name': 'Lille, France',
-        'uid': 8613,  # UID station AQICN (Marcq-en-Baroeul)
-        'gps': [50.6292, 3.0573]
-    }
+POLLUTANT_MAPPING = {
+    "pm25": "pm25",
+    "pm10": "pm10",
+    "no2": "no2",
+    "o3": "o3",
+    "so2": "so2",
+    "co": "co",
+    "humidity": "h",
+    "pressure": "p",
+    "temperature": "t",
+    "dew": "dew",
+    "wind": "w",
 }
 
-CSV_FILE = "docs/waqi-covid19-airqualitydata-2026.csv"
 
-# ============================================================================
+def parse_iso_date(value: str) -> date:
+    return datetime.strptime(value, "%Y-%m-%d").date()
+
+
+def load_cities_config() -> Dict[str, Dict]:
+    """Charge les villes depuis data/cities_reference.json."""
+    ref_path = Path(__file__).resolve().parent.parent / "data" / "cities_reference.json"
+
+    with open(ref_path, "r", encoding="utf-8") as f:
+        rows = json.load(f)
+
+    config: Dict[str, Dict] = {}
+    for row in rows:
+        name = row.get("name")
+        city_id = row.get("id")
+        lat = row.get("latitude")
+        lon = row.get("longitude")
+        station = row.get("aqi_station")
+
+        if not name or city_id is None:
+            continue
+
+        config[name] = {
+            "city_id": city_id,
+            "city_name": name,
+            "station_name": f"{name}, France",
+            "uid": int(city_id),
+            "gps": [lat, lon] if lat is not None and lon is not None else [],
+            "station_path": station or name.lower(),
+        }
+
+    return config
 
 
 def calculate_aqi_from_median(species_data: Dict[str, float]) -> int:
-    """
-    Calcule l'AQI global à partir des valeurs médianes des polluants
-    
-    Pour simplifier, on prend la valeur maximale parmi les polluants principaux
-    """
-    pollutants = ['pm25', 'pm10', 'no2', 'o3']
-    aqi_values = []
-    
+    """Approximation AQI globale via le max des polluants principaux."""
+    pollutants = ["pm25", "pm10", "no2", "o3"]
+    values = []
+
     for pol in pollutants:
-        if pol in species_data and species_data[pol] is not None:
-            aqi_values.append(species_data[pol])
-    
-    return int(max(aqi_values)) if aqi_values else 0
+        val = species_data.get(pol)
+        if val is not None:
+            values.append(val)
+
+    if not values:
+        return 0
+
+    return int(round(max(values)))
 
 
-def parse_csv_to_records(csv_file: Path, start_date: str, end_date: str, cities: List[str]) -> Dict[str, List[Dict]]:
+def parse_csv_to_daily_species(
+    csv_file: Path,
+    start_date: date,
+    end_date: date,
+    cities: List[str],
+) -> Dict[str, Dict[date, Dict[str, float]]]:
     """
-    Parse le CSV AQICN et regroupe les données par ville et par date
-    
-    Args:
-        csv_file: Chemin vers le fichier CSV
-        start_date: Date de début (YYYY-MM-DD)
-        end_date: Date de fin (YYYY-MM-DD)
-        cities: Liste des villes à extraire
-    
-    Returns:
-        Dictionnaire {ville: [records]}
+    Parse le CSV et retourne city -> day -> species medianes.
     """
-    
-    print(f"\n⏳ Parsing du fichier CSV...")
-    
-    # Structure: {ville: {date: {specie: median_value}}}
-    city_data = defaultdict(lambda: defaultdict(dict))
-    
-    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-    end_dt = datetime.strptime(end_date, '%Y-%m-%d')
-    
+    city_lookup = {c.lower(): c for c in cities}
+    city_data: Dict[str, Dict[date, Dict[str, float]]] = defaultdict(lambda: defaultdict(dict))
+
     line_count = 0
     matched_count = 0
-    
-    with open(csv_file, 'r', encoding='utf-8') as f:
-        # Filtrer les lignes de commentaires
-        lines = [line for line in f if not line.startswith('#')]
-        
-        # Revenir au début pour DictReader
-        from io import StringIO
-        csv_content = StringIO(''.join(lines))
-        
-        reader = csv.DictReader(csv_content, delimiter=',')
-        
+
+    with open(csv_file, "r", encoding="utf-8") as f:
+        filtered_lines = [line for line in f if not line.startswith("#")]
+        reader = csv.DictReader(StringIO("".join(filtered_lines)), delimiter=",")
+
         for row in reader:
             line_count += 1
-            
-            city = row.get('City')
-            date_str = row.get('Date')
-            specie = row.get('Specie')
-            
-            # Filtrer par ville
-            if city not in cities:
+
+            raw_city = (row.get("City") or "").strip()
+            city = city_lookup.get(raw_city.lower())
+            if not city:
                 continue
-            
-            # Parser la date
+
+            date_str = (row.get("Date") or "").strip()
             try:
-                date = datetime.strptime(date_str, '%Y-%m-%d')
-            except (ValueError, TypeError):
+                day = parse_iso_date(date_str)
+            except (TypeError, ValueError):
                 continue
-            
-            # Filtrer par période
-            if date < start_dt or date > end_dt:
+
+            if day < start_date or day > end_date:
                 continue
-            
-            # Récupérer la valeur médiane
+
+            specie = (row.get("Specie") or "").strip().lower()
+            if not specie:
+                continue
+
             try:
-                median = float(row.get('median', 0))
-            except (ValueError, TypeError):
-                median = None
-            
-            # Stocker
-            if specie and median is not None:
-                city_data[city][date_str][specie] = median
-                matched_count += 1
-    
-    print(f"✅ {line_count:,} lignes traitées")
-    print(f"✅ {matched_count:,} données extraites pour {', '.join(cities)}")
-    
-    # Convertir au format raw_data_lake
-    records_by_city = {}
-    
-    for city in cities:
-        if city not in city_data:
-            print(f"⚠️  Aucune donnée pour {city}")
-            records_by_city[city] = []
-            continue
-        
-        config = CITIES_CONFIG[city]
-        records = []
-        dates = sorted(city_data[city].keys())
-        
-        print(f"\n📊 {city}: {len(dates)} jours de données")
-        
-        for date_str in dates:
-            species = city_data[city][date_str]
-            
-            # Construire l'objet iaqi (Individual Air Quality Index)
-            iaqi = {}
-            
-            # Mapping des noms de polluants
-            pollutant_mapping = {
-                'pm25': 'pm25',
-                'pm10': 'pm10',
-                'no2': 'no2',
-                'o3': 'o3',
-                'so2': 'so2',
-                'co': 'co',
-                'humidity': 'h',
-                'pressure': 'p',
-                'temperature': 't',
-                'dew': 'dew',
-                'wind': 'w'
-            }
-            
-            for spec, value in species.items():
-                mapped_name = pollutant_mapping.get(spec, spec)
-                iaqi[mapped_name] = {'v': value}
-            
-            # Calculer l'AQI global
-            aqi = calculate_aqi_from_median(species)
-            
-            # Parser la date
-            date = datetime.strptime(date_str, '%Y-%m-%d')
-            
-            # Construire la réponse au format AQICN API
-            raw_data = {
-                'status': 'ok',
-                'data': {
-                    'aqi': aqi,
-                    'idx': config['uid'],
-                    'city': {
-                        'name': config['station_name'],
-                        'geo': config['gps'],
-                        'url': f"https://aqicn.org/city/@{config['uid']}"
-                    },
-                    'iaqi': iaqi,
-                    'time': {
-                        's': date.strftime('%Y-%m-%d %H:%M:%S'),
-                        'v': int(date.timestamp()),
-                        'tz': '+01:00',
-                        'iso': date.strftime('%Y-%m-%dT%H:%M:%S+01:00')
-                    },
-                    'attributions': [
-                        {
-                            'name': 'AQICN Historical Data',
-                            'url': 'https://aqicn.org/data-platform/'
-                        }
-                    ]
+                median = float(row.get("median"))
+            except (TypeError, ValueError):
+                continue
+
+            city_data[city][day][specie] = median
+            matched_count += 1
+
+    print(f"Lignes CSV lues: {line_count:,}")
+    print(f"Lignes retenues (villes/periode): {matched_count:,}")
+
+    return city_data
+
+
+def build_raw_record(city_cfg: Dict, day: date, species: Dict[str, float]) -> Dict:
+    """Construit un enregistrement au format raw_data_lake attendu."""
+    ts = datetime.combine(day, time.min, tzinfo=timezone.utc)
+
+    iaqi = {}
+    for spec, value in species.items():
+        mapped = POLLUTANT_MAPPING.get(spec, spec)
+        iaqi[mapped] = {"v": value}
+
+    aqi = calculate_aqi_from_median(species)
+
+    raw_data = {
+        "status": "ok",
+        "data": {
+            "aqi": aqi,
+            "idx": city_cfg["uid"],
+            "city": {
+                "name": city_cfg["station_name"],
+                "geo": city_cfg["gps"],
+                "url": f"https://aqicn.org/city/{city_cfg['station_path']}",
+            },
+            "iaqi": iaqi,
+            "time": {
+                "s": ts.strftime("%Y-%m-%d %H:%M:%S"),
+                "v": int(ts.timestamp()),
+                "tz": "+00:00",
+                "iso": ts.isoformat(),
+            },
+            "attributions": [
+                {
+                    "name": "AQICN Historical Data",
+                    "url": "https://aqicn.org/data-platform/",
                 }
-            }
-            
-            # Format raw_data_lake
-            record = {
-                'city_id': config['city_id'],
-                'city_name': config['city_name'],
-                'source': 'aqicn',
-                'raw_data': raw_data,
-                'collected_at': date.isoformat(),
-                'processed': False,
-                'processed_at': None
-            }
-            
-            records.append(record)
-        
-        records_by_city[city] = records
-        
-        # Afficher quelques stats
-        if records:
-            aqi_values = [r['raw_data']['data']['aqi'] for r in records]
-            print(f"   Période: {dates[0]} → {dates[-1]}")
-            print(f"   AQI moyen: {sum(aqi_values) / len(aqi_values):.1f}")
-            print(f"   AQI min: {min(aqi_values)}")
-            print(f"   AQI max: {max(aqi_values)}")
-    
+            ],
+        },
+    }
+
+    return {
+        "city_id": city_cfg["city_id"],
+        "city_name": city_cfg["city_name"],
+        "source": "aqicn",
+        "raw_data": raw_data,
+        "collected_at": ts.isoformat(),
+        "processed": False,
+        "processed_at": None,
+    }
+
+
+def convert_to_records(
+    city_data: Dict[str, Dict[date, Dict[str, float]]],
+    cities_config: Dict[str, Dict],
+) -> Dict[str, List[Dict]]:
+    """Convertit les medianes journalieres en enregistrements raw_data_lake."""
+    records_by_city: Dict[str, List[Dict]] = {}
+
+    for city_name, days_data in city_data.items():
+        cfg = cities_config[city_name]
+        records: List[Dict] = []
+
+        for day in sorted(days_data.keys()):
+            records.append(build_raw_record(cfg, day, days_data[day]))
+
+        records_by_city[city_name] = records
+
     return records_by_city
 
 
-def insert_records(records_by_city: Dict[str, List[Dict]], db: DatabaseService, dry_run: bool = True) -> None:
-    """
-    Insère les enregistrements dans raw_data_lake
-    
-    Args:
-        records_by_city: Dictionnaire {ville: [records]}
-        db: Instance DatabaseService
-        dry_run: Si True, simule l'insertion sans la faire réellement
-    """
-    
-    total_records = sum(len(records) for records in records_by_city.values())
-    
-    print(f"\n{'='*70}")
-    print(f"💾 {'SIMULATION' if dry_run else 'INSERTION'} dans raw_data_lake")
-    print(f"{'='*70}\n")
-    
-    print(f"📊 Total: {total_records:,} enregistrements")
-    
-    for city, records in records_by_city.items():
-        print(f"   • {city}: {len(records):,} enregistrements")
-    
-    if not total_records:
-        print("\n❌ Aucun enregistrement à insérer")
-        return
-    
-    # Afficher un exemple
-    if total_records > 0:
-        first_city = next(iter(records_by_city))
-        example = records_by_city[first_city][0]
-        
-        print(f"\n📋 Exemple d'enregistrement ({first_city}):")
-        print(f"   Date: {example['collected_at']}")
-        print(f"   AQI: {example['raw_data']['data']['aqi']}")
-        print(f"   Polluants: {list(example['raw_data']['data']['iaqi'].keys())}")
-    
-    if dry_run:
-        print(f"\n⚠️  MODE SIMULATION - Aucune insertion réelle")
-        print(f"   Pour insérer, relancer avec --insert")
-        
-        # Sauvegarder des exemples
-        for city, records in records_by_city.items():
-            if records:
-                output_file = Path(__file__).parent / f"{city.lower()}_historical_sample.json"
-                with open(output_file, 'w', encoding='utf-8') as f:
-                    json.dump(records[:5], f, indent=2, ensure_ascii=False, default=str)
-                print(f"   📄 Exemple {city}: {output_file}")
-        
-        return
-    
-    # Insertion réelle
-    print(f"\n🚀 Insertion en cours...")
-    
-    batch_size = 100
-    total_inserted = 0
-    
-    for city, records in records_by_city.items():
-        print(f"\n   {city}:")
-        
-        for i in range(0, len(records), batch_size):
-            batch = records[i:i+batch_size]
-            
+def fetch_existing_city_days(db: DatabaseService, start_date: date, end_date: date) -> Set[Tuple[str, date]]:
+    """Recupere les couples (city_name, day) deja presents en source aqicn."""
+    existing: Set[Tuple[str, date]] = set()
+
+    start_ts = datetime.combine(start_date, time.min, tzinfo=timezone.utc).isoformat()
+    end_ts = datetime.combine(end_date, time.max, tzinfo=timezone.utc).isoformat()
+
+    page_size = 1000
+    offset = 0
+
+    while True:
+        response = (
+            db.client.table("raw_data_lake")
+            .select("city_name,collected_at")
+            .eq("source", "aqicn")
+            .gte("collected_at", start_ts)
+            .lte("collected_at", end_ts)
+            .range(offset, offset + page_size - 1)
+            .execute()
+        )
+
+        rows = response.data or []
+        if not rows:
+            break
+
+        for row in rows:
+            city_name = row.get("city_name")
+            collected_at = row.get("collected_at")
+            if not city_name or not collected_at:
+                continue
+
             try:
-                result = db.client.table('raw_data_lake').insert(batch).execute()
-                total_inserted += len(batch)
-                print(f"      ✅ Batch {i//batch_size + 1}: {len(batch)} enregistrements insérés")
-            except Exception as e:
-                print(f"      ❌ Erreur batch {i//batch_size + 1}: {e}")
-                # Essayer un par un pour identifier les problèmes
-                for j, record in enumerate(batch):
-                    try:
-                        db.client.table('raw_data_lake').insert([record]).execute()
-                        total_inserted += 1
-                    except Exception as e2:
-                        print(f"         ❌ Record {i+j} ({record['collected_at']}): {e2}")
-    
-    print(f"\n✅ Total inséré: {total_inserted:,}/{total_records:,} enregistrements")
+                day = datetime.fromisoformat(collected_at.replace("Z", "+00:00")).date()
+            except ValueError:
+                continue
+
+            existing.add((city_name, day))
+
+        if len(rows) < page_size:
+            break
+
+        offset += page_size
+
+    return existing
 
 
-def main():
-    """Fonction principale"""
-    
-    print("\n" + "="*70)
-    print("📥 Import données historiques AQICN CSV → raw_data_lake")
-    print("="*70)
-    
-    csv_path = Path(CSV_FILE)
-    
-    if not csv_path.exists():
-        print(f"\n❌ Fichier non trouvé: {csv_path}")
-        print(f"\n💡 Assurez-vous que le fichier CSV AQICN est présent dans docs/")
-        return
-    
-    print(f"\n✅ Fichier CSV: {csv_path}")
-    print(f"   Taille: {csv_path.stat().st_size / 1024 / 1024:.1f} MB")
-    
-    # Période à extraire
-    start_date = "2024-01-12"
-    end_date = "2026-03-05"
-    
-    print(f"\n📅 Période: {start_date} → {end_date}")
-    
-    # Villes à extraire - LYON ET LILLE UNIQUEMENT
-    # (city_id: Lyon=3, Lille=10)
-    cities = ['Lyon', 'Lille']
-    print(f"🏙️  Villes: {', '.join(cities)}")
-    
-    # Parser le CSV
-    records_by_city = parse_csv_to_records(csv_path, start_date, end_date, cities)
-    
-    # Connexion BDD
-    db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
-    
-    # Mode dry-run par défaut
-    dry_run = '--insert' not in sys.argv
-    
-    # Insérer
-    insert_records(records_by_city, db, dry_run=dry_run)
-    
-    print(f"\n{'='*70}")
-    
+def filter_missing_records(
+    records_by_city: Dict[str, List[Dict]],
+    existing_city_days: Set[Tuple[str, date]],
+) -> Tuple[Dict[str, List[Dict]], int]:
+    """Conserve uniquement les jours/villes absents de raw_data_lake."""
+    filtered: Dict[str, List[Dict]] = {}
+    skipped = 0
+
+    for city_name, records in records_by_city.items():
+        kept: List[Dict] = []
+
+        for record in records:
+            day = datetime.fromisoformat(record["collected_at"].replace("Z", "+00:00")).date()
+            if (record["city_name"], day) in existing_city_days:
+                skipped += 1
+                continue
+            kept.append(record)
+
+        filtered[city_name] = kept
+
+    return filtered, skipped
+
+
+def insert_records(
+    records_by_city: Dict[str, List[Dict]],
+    db: DatabaseService,
+    dry_run: bool,
+    batch_size: int,
+) -> int:
+    """Insere les enregistrements dans raw_data_lake."""
+    total_records = sum(len(v) for v in records_by_city.values())
+    print(f"Total enregistrements a inserer: {total_records:,}")
+
+    for city, rows in records_by_city.items():
+        print(f"- {city}: {len(rows):,}")
+
+    if total_records == 0:
+        return 0
+
     if dry_run:
-        print("ℹ️  Pour effectuer l'insertion réelle:")
-        print("   python scripts/import_aqicn_historical.py --insert")
+        print("Mode simulation actif (--insert absent): aucune ecriture en base.")
+        return 0
+
+    inserted = 0
+
+    for city_name, rows in records_by_city.items():
+        if not rows:
+            continue
+
+        print(f"Insertion {city_name}...")
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i : i + batch_size]
+            db.client.table("raw_data_lake").insert(batch).execute()
+            inserted += len(batch)
+
+    return inserted
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Import historique AQICN CSV -> raw_data_lake")
+    parser.add_argument("--csv", default=DEFAULT_CSV, help="Chemin du CSV historique")
+    parser.add_argument("--start-date", default=DEFAULT_START_DATE, help="Date debut YYYY-MM-DD")
+    parser.add_argument(
+        "--end-date",
+        default=date.today().isoformat(),
+        help="Date fin YYYY-MM-DD",
+    )
+    parser.add_argument(
+        "--cities",
+        default="",
+        help="Liste de villes separees par virgule (defaut: toutes les villes du referentiel)",
+    )
+    parser.add_argument("--insert", action="store_true", help="Effectuer l'insertion reelle")
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="Ne pas filtrer sur les jours deja presents en base",
+    )
+    parser.add_argument("--batch-size", type=int, default=200, help="Taille de batch d'insertion")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+
+    start_date = parse_iso_date(args.start_date)
+    end_date = parse_iso_date(args.end_date)
+
+    if end_date < start_date:
+        raise ValueError("--end-date doit etre >= --start-date")
+
+    csv_path = Path(args.csv)
+    if not csv_path.is_absolute():
+        csv_path = Path(__file__).resolve().parent.parent / csv_path
+
+    if not csv_path.exists():
+        raise FileNotFoundError(f"CSV introuvable: {csv_path}")
+
+    cities_config = load_cities_config()
+
+    if args.cities.strip():
+        requested = [c.strip() for c in args.cities.split(",") if c.strip()]
+        missing = [c for c in requested if c not in cities_config]
+        if missing:
+            raise ValueError(f"Villes inconnues dans --cities: {', '.join(missing)}")
+        selected_cities = requested
     else:
-        print("✅ Import terminé !")
-        print("\n📋 Prochaines étapes:")
-        print("   1. Transformer les données: python src/etl_transform_to_db.py")
-        print("   2. Vérifier: python scripts/check_lyon_aqi.py")
-    
-    print("="*70 + "\n")
+        selected_cities = list(cities_config.keys())
+
+    print("=" * 70)
+    print("Import historique AQICN CSV -> raw_data_lake")
+    print("=" * 70)
+    print(f"CSV: {csv_path}")
+    print(f"Periode: {start_date} -> {end_date}")
+    print(f"Villes: {', '.join(selected_cities)}")
+    print(f"Mode: {'INSERT' if args.insert else 'DRY-RUN'}")
+    print(f"Filtre manquants: {'NON' if args.all else 'OUI'}")
+
+    city_data = parse_csv_to_daily_species(csv_path, start_date, end_date, selected_cities)
+    records_by_city = convert_to_records(city_data, cities_config)
+
+    db = DatabaseService(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+
+    if not args.all:
+        existing = fetch_existing_city_days(db, start_date, end_date)
+        records_by_city, skipped = filter_missing_records(records_by_city, existing)
+        print(f"Jours/villes deja presents ignores: {skipped:,}")
+
+    inserted = insert_records(records_by_city, db, dry_run=not args.insert, batch_size=args.batch_size)
+
+    if args.insert:
+        print(f"Insertion terminee: {inserted:,} enregistrements ajoutes.")
+        print("Etape suivante: python scripts/process_all_remaining.py")
 
 
 if __name__ == "__main__":

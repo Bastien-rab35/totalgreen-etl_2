@@ -188,68 +188,64 @@
                         <mxPoint x="-5" y="-9" as="offset"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="anomalies_table" value="ANOMALIES" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E1F5FE;strokeColor=#01579B;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
-                    <mxGeometry x="460" y="720" width="240" height="235" as="geometry"/>
+                <mxCell id="anomalies_table" value="ANOMALIES" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E1F5FE;strokeColor=#01579B;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="759" y="711" width="240" height="235" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_pk" value="id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_pk" value="id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="30" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_1" value="validation_run_id (UUID)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_1" value="validation_run_id (UUID)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="55" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_2" value="severity (critical, warning, info)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_2" value="severity (critical, warning, info)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="80" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_3" value="category (data_missing, etc.)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_3" value="category (data_missing, etc.)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="105" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_4" value="message (TEXT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_4" value="message (TEXT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="130" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_5" value="details (JSONB)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_5" value="details (JSONB)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="155" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_6" value="detected_at (TIMESTAMPTZ)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_6" value="detected_at (TIMESTAMPTZ)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="180" width="240" height="25" as="geometry"/>
                 </mxCell>
-                <mxCell id="anomalies_7" value="validation_period_hours (INT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                <mxCell id="anomalies_7" value="validation_period_hours (INT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="anomalies_table" vertex="1">
                     <mxGeometry y="205" width="240" height="30" as="geometry"/>
                 </mxCell>
-                <mxCell id="script_validate" value="validate_data_quality.py&#xa;Script Python - 5 validations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
-                    <mxGeometry x="150" y="782" width="200" height="50" as="geometry"/>
+                <mxCell id="script_validate" value="validate_data_quality.py&#xa;Script Python - 5 validations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="389" y="782" width="200" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="script_cleanup" value="cleanup_data_quality_issues.py&#xa;Nettoyage automatique" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
-                    <mxGeometry x="150" y="852" width="200" height="50" as="geometry"/>
+                <mxCell id="script_cleanup" value="cleanup_data_quality_issues.py&#xa;Nettoyage automatique" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="389" y="869" width="200" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="github_actions" value="GitHub Actions&#xa;2×/jour CRON (6h, 18h)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
-                    <mxGeometry x="760" y="782" width="180" height="50" as="geometry"/>
+                <mxCell id="github_actions" value="&lt;span style=&quot;color: rgb(0, 0, 0);&quot;&gt;SCALE&lt;/span&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;WAY Serverless Jobs&lt;/span&gt;&lt;div&gt;2×/jour&amp;nbsp; (0h, 12h)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="399" y="678" width="180" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="rel_fact_validate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="fact_m6" target="script_validate">
+                <mxCell id="rel_fact_validate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;dashed=1;exitX=0.479;exitY=1.16;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="fact_m6" target="script_validate" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="410" y="618"/>
-                            <mxPoint x="410" y="807"/>
+                            <mxPoint x="627" y="782"/>
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="rel_validate_cleanup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;" edge="1" parent="1" source="script_validate" target="script_cleanup">
+                <mxCell id="rel_validate_cleanup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;" parent="1" source="script_validate" target="script_cleanup" edge="1">
                     <mxGeometry relative="1" as="geometry"/>
                 </mxCell>
-                <mxCell id="rel_github_validate" value="déclenche" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;dashed=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="github_actions" target="script_validate">
+                <mxCell id="rel_github_validate" value="déclenche" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;dashed=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="github_actions" target="script_validate" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <mxPoint x="350" y="807" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="rel_validate_anomalies" value="INSERT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="script_validate" target="anomalies_table">
+                <mxCell id="rel_validate_anomalies" value="INSERT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;" parent="1" source="script_validate" target="anomalies_2" edge="1">
                     <mxGeometry relative="1" as="geometry">
                         <Array as="points">
-                            <mxPoint x="420" y="807"/>
-                            <mxPoint x="420" y="837"/>
+                            <mxPoint x="716" y="807"/>
+                            <mxPoint x="716" y="807"/>
                         </Array>
                     </mxGeometry>
-                </mxCell>
-                <mxCell id="title_quality" value="QUALITÉ DES DONNÉES (v2.3)" style="text;html=1;strokeColor=#01579B;fillColor=#E1F5FE;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=13;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
-                    <mxGeometry x="470" y="670" width="220" height="30" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
