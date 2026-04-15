@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# PDF (critères évaluation)
+*.pdf
+
+# CSV (données brutes)
+*.csv
+
+# Data
+data/lake/*.json
+!data/cities_reference.json
+
+# Temporary
+*.tmp
+*.bak
+
+# Scripts temporaires/diagnostic
+scripts/temp/
+
+# Dossiers archive (historique non versionné)
+docs/archive/
+scripts/archive/
+sql/archive/

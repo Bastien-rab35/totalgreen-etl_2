@@ -1,0 +1,40 @@
+name: 1️⃣ Extract vers Data Lake (Toutes les heures)
+
+on:
+  workflow_dispatch:  # Permet l'exécution manuelle
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Extract data to Data Lake
+      env:
+        OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        AQICN_API_KEY: ${{ secrets.AQICN_API_KEY }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        cd src
+        python etl_extract_to_lake.py
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: extract-logs
+        path: logs/etl_extract.log
+        retention-days: 7

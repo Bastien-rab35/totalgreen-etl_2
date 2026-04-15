@@ -1,0 +1,40 @@
+name: 2️⃣ Transform vers BDD (Toutes les heures)
+
+on:
+  workflow_dispatch:  # Permet l'exécution manuelle
+
+jobs:
+  transform:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Transform Data Lake to Database
+      env:
+        OPENWEATHER_API_KEY: ${{ secrets.OPENWEATHER_API_KEY }}
+        AQICN_API_KEY: ${{ secrets.AQICN_API_KEY }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      run: |
+        cd src
+        python etl_transform_to_db.py
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: transform-logs
+        path: logs/etl_transform.log
+        retention-days: 7

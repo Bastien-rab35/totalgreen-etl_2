@@ -1,0 +1,257 @@
+<mxfile host="65bd71144e">
+    <diagram name="Star Schema" id="star-schema">
+        <mxGraphModel dx="1187" dy="1063" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="fact_measures" value="FACT_MEASURE" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=40;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFCCBC;strokeColor=#BF360C;strokeWidth=3;fontSize=13;" parent="1" vertex="1">
+                    <mxGeometry x="500" y="300" width="265" height="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_pk" value="measure_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="40" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk_title" value="─── Clés Étrangères ───" style="text;strokeColor=none;fillColor=#E3F2FD;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=2;fontSize=10;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="65" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk1" value="city_id (FK → dim_city)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="85" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk2" value="time_id (FK → dim_time)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="110" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk3" value="weather_condition_id (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="135" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_fk4" value="aqi_level_id (FK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontColor=#1976D2;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="160" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_metrics_title" value="─── Métriques (Mesures) ───" style="text;strokeColor=none;fillColor=#FFF3E0;align=center;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=2;fontSize=10;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="185" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m1" value="temperature, feels_like" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="205" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m2" value="pressure, humidity" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="225" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m3" value="wind_speed, wind_deg, wind_gust" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="245" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m4" value="aqi_index, pm25, pm10" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="265" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m5" value="no2, o3, so2, co" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="285" width="265" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="fact_m6" value="captured_at, created_at" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="fact_measures" vertex="1">
+                    <mxGeometry y="305" width="265" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city" value="DIM_CITY" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="140" y="178" width="220" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_pk" value="city_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="30" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_1" value="city_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="55" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_2" value="latitude, longitude" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="80" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_3" value="country, region" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="105" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_4" value="timezone" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="130" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_city_5" value="population, altitude" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_city" vertex="1">
+                    <mxGeometry y="155" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time" value="DIM_TIME" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="153" width="220" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_pk" value="time_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="30" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_1" value="full_date (timestamp)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="55" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_2" value="hour (0-23)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="80" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_3" value="day, day_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="105" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_4" value="week, month, month_name" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="130" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_5" value="quarter, year" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="155" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_6" value="is_weekend (boolean)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="180" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_time_7" value="season (printemps, été...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_time" vertex="1">
+                    <mxGeometry y="205" width="220" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather" value="DIM_WEATHER_CONDITION" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="120" y="480" width="240" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_pk" value="weather_condition_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="30" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_1" value="weather_id (OpenWeather code)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="55" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_2" value="main (Clear, Clouds, Rain...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="80" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_3" value="description" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="105" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_4" value="category (sunny, cloudy...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="130" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_weather_5" value="icon" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_weather" vertex="1">
+                    <mxGeometry y="155" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi" value="DIM_AIR_QUALITY" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#FFF9C4;strokeColor=#F57F17;strokeWidth=2;fontSize=12;" parent="1" vertex="1">
+                    <mxGeometry x="900" y="480" width="260" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_pk" value="aqi_level_id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="30" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_1" value="aqi_min, aqi_max (range)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="55" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_2" value="level_name (Good, Moderate...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="80" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_3" value="health_concern" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="105" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_4" value="color_code (green, yellow...)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="130" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="dim_aqi_5" value="health_advice" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" parent="dim_aqi" vertex="1">
+                    <mxGeometry y="155" width="260" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_city" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_city" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_city_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_city" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_city_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_city" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_time" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_time" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_time_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_time" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_time_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_time" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_weather" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_weather" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_weather_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_weather" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_weather_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_weather" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_aqi" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#F57F17;endArrow=ERmany;startArrow=ERone;startFill=0;endFill=0;" parent="1" source="dim_aqi" target="fact_measures" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_aqi_label" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_aqi" vertex="1" connectable="0">
+                    <mxGeometry x="-0.8" y="1" relative="1" as="geometry">
+                        <mxPoint x="5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_aqi_label2" value="N" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=10;fontStyle=1;" parent="rel_aqi" vertex="1" connectable="0">
+                    <mxGeometry x="0.8" y="-1" relative="1" as="geometry">
+                        <mxPoint x="-5" y="-9" as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="anomalies_table" value="ANOMALIES" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=30;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;fillColor=#E1F5FE;strokeColor=#01579B;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+                    <mxGeometry x="460" y="720" width="240" height="235" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_pk" value="id (PK)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=1;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="30" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_1" value="validation_run_id (UUID)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="55" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_2" value="severity (critical, warning, info)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="80" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_3" value="category (data_missing, etc.)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="105" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_4" value="message (TEXT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="130" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_5" value="details (JSONB)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="155" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_6" value="detected_at (TIMESTAMPTZ)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="180" width="240" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="anomalies_7" value="validation_period_hours (INT)" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=10;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=11;" vertex="1" parent="anomalies_table">
+                    <mxGeometry y="205" width="240" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="script_validate" value="validate_data_quality.py&#xa;Script Python - 5 validations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="150" y="782" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="script_cleanup" value="cleanup_data_quality_issues.py&#xa;Nettoyage automatique" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE0B2;strokeColor=#E65100;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="150" y="852" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="github_actions" value="GitHub Actions&#xa;2×/jour CRON (6h, 18h)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#C8E6C9;strokeColor=#388E3C;strokeWidth=2;fontSize=11;fontStyle=1" vertex="1" parent="1">
+                    <mxGeometry x="760" y="782" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_fact_validate" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;dashed=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="fact_m6" target="script_validate">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="410" y="618"/>
+                            <mxPoint x="410" y="807"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_validate_cleanup" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#E65100;" edge="1" parent="1" source="script_validate" target="script_cleanup">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel_github_validate" value="déclenche" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#388E3C;dashed=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="github_actions" target="script_validate">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="350" y="807" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="rel_validate_anomalies" value="INSERT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#01579B;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="script_validate" target="anomalies_table">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="420" y="807"/>
+                            <mxPoint x="420" y="837"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="title_quality" value="QUALITÉ DES DONNÉES (v2.3)" style="text;html=1;strokeColor=#01579B;fillColor=#E1F5FE;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=13;fontStyle=1;strokeWidth=2;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="670" width="220" height="30" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

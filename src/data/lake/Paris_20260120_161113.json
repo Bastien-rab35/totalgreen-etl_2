@@ -1,0 +1,1174 @@
+[
+  {
+    "id": 44,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "aqicn",
+    "raw_data": {
+      "data": {
+        "aqi": 59,
+        "idx": 5722,
+        "city": {
+          "geo": [
+            48.856614,
+            2.3522219
+          ],
+          "url": "https://aqicn.org/city/paris",
+          "name": "Paris",
+          "location": ""
+        },
+        "iaqi": {
+          "h": {
+            "v": 84
+          },
+          "p": {
+            "v": 1014.5
+          },
+          "t": {
+            "v": 9.1
+          },
+          "w": {
+            "v": 0.4
+          },
+          "co": {
+            "v": 0.1
+          },
+          "o3": {
+            "v": 8.7
+          },
+          "no2": {
+            "v": 18.6
+          },
+          "so2": {
+            "v": 0.6
+          },
+          "pm10": {
+            "v": 30
+          },
+          "pm25": {
+            "v": 59
+          }
+        },
+        "time": {
+          "s": "2026-01-20 13:00:00",
+          "v": 1768914000,
+          "tz": "+01:00",
+          "iso": "2026-01-20T13:00:00+01:00"
+        },
+        "debug": {
+          "sync": "2026-01-20T23:54:24+09:00"
+        },
+        "forecast": {
+          "daily": {
+            "o3": [
+              {
+                "avg": 5,
+                "day": "2026-01-20",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 8,
+                "day": "2026-01-21",
+                "max": 11,
+                "min": 6
+              },
+              {
+                "avg": 9,
+                "day": "2026-01-22",
+                "max": 11,
+                "min": 7
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 10,
+                "min": 5
+              },
+              {
+                "avg": 5,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 2,
+                "day": "2026-01-25",
+                "max": 2,
+                "min": 2
+              }
+            ],
+            "uvi": [
+              {
+                "avg": 0,
+                "day": "2026-01-20",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-21",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-22",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-23",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-24",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-25",
+                "max": 0,
+                "min": 0
+              }
+            ],
+            "pm10": [
+              {
+                "avg": 12,
+                "day": "2026-01-20",
+                "max": 17,
+                "min": 7
+              },
+              {
+                "avg": 11,
+                "day": "2026-01-21",
+                "max": 15,
+                "min": 8
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-22",
+                "max": 15,
+                "min": 6
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 9,
+                "min": 5
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 4
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-25",
+                "max": 10,
+                "min": 10
+              }
+            ],
+            "pm25": [
+              {
+                "avg": 32,
+                "day": "2026-01-20",
+                "max": 49,
+                "min": 18
+              },
+              {
+                "avg": 28,
+                "day": "2026-01-21",
+                "max": 42,
+                "min": 20
+              },
+              {
+                "avg": 26,
+                "day": "2026-01-22",
+                "max": 45,
+                "min": 13
+              },
+              {
+                "avg": 14,
+                "day": "2026-01-23",
+                "max": 16,
+                "min": 10
+              },
+              {
+                "avg": 18,
+                "day": "2026-01-24",
+                "max": 30,
+                "min": 9
+              },
+              {
+                "avg": 30,
+                "day": "2026-01-25",
+                "max": 30,
+                "min": 30
+              }
+            ]
+          }
+        },
+        "dominentpol": "pm25",
+        "attributions": [
+          {
+            "url": "http://www.eea.europa.eu/themes/air/",
+            "logo": "Europe-EEA.png",
+            "name": "European Environment Agency"
+          },
+          {
+            "url": "https://www.airparif.asso.fr/",
+            "logo": "Paris-Air-Parif.png",
+            "name": "AirParif - Association de surveillance de la qualité de l'air en Île-de-France"
+          },
+          {
+            "url": "https://waqi.info/",
+            "name": "World Air Quality Index Project"
+          }
+        ]
+      },
+      "status": "ok"
+    },
+    "collected_at": "2026-01-20T15:11:13.733113+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:11:13.897128+00:00"
+  },
+  {
+    "id": 43,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "openweather",
+    "raw_data": {
+      "dt": 1768921508,
+      "id": 2988507,
+      "cod": 200,
+      "sys": {
+        "id": 2012208,
+        "type": 2,
+        "sunset": 1768926481,
+        "country": "FR",
+        "sunrise": 1768894485
+      },
+      "base": "stations",
+      "main": {
+        "temp": 9.09,
+        "humidity": 84,
+        "pressure": 1013,
+        "temp_max": 10.03,
+        "temp_min": 8.28,
+        "sea_level": 1013,
+        "feels_like": 6.03,
+        "grnd_level": 1003
+      },
+      "name": "Paris",
+      "wind": {
+        "deg": 140,
+        "speed": 6.17
+      },
+      "coord": {
+        "lat": 48.8534,
+        "lon": 2.3488
+      },
+      "clouds": {
+        "all": 75
+      },
+      "weather": [
+        {
+          "id": 803,
+          "icon": "04d",
+          "main": "Clouds",
+          "description": "nuageux"
+        }
+      ],
+      "timezone": 3600,
+      "visibility": 10000
+    },
+    "collected_at": "2026-01-20T15:11:13.62398+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:11:13.85727+00:00"
+  },
+  {
+    "id": 24,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "aqicn",
+    "raw_data": {
+      "data": {
+        "aqi": 59,
+        "idx": 5722,
+        "city": {
+          "geo": [
+            48.856614,
+            2.3522219
+          ],
+          "url": "https://aqicn.org/city/paris",
+          "name": "Paris",
+          "location": ""
+        },
+        "iaqi": {
+          "h": {
+            "v": 84
+          },
+          "p": {
+            "v": 1014.5
+          },
+          "t": {
+            "v": 9.1
+          },
+          "w": {
+            "v": 0.4
+          },
+          "co": {
+            "v": 0.1
+          },
+          "o3": {
+            "v": 8.7
+          },
+          "no2": {
+            "v": 18.6
+          },
+          "so2": {
+            "v": 0.6
+          },
+          "pm10": {
+            "v": 30
+          },
+          "pm25": {
+            "v": 59
+          }
+        },
+        "time": {
+          "s": "2026-01-20 13:00:00",
+          "v": 1768914000,
+          "tz": "+01:00",
+          "iso": "2026-01-20T13:00:00+01:00"
+        },
+        "debug": {
+          "sync": "2026-01-20T23:54:24+09:00"
+        },
+        "forecast": {
+          "daily": {
+            "o3": [
+              {
+                "avg": 5,
+                "day": "2026-01-20",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 8,
+                "day": "2026-01-21",
+                "max": 11,
+                "min": 6
+              },
+              {
+                "avg": 9,
+                "day": "2026-01-22",
+                "max": 11,
+                "min": 7
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 10,
+                "min": 5
+              },
+              {
+                "avg": 5,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 2,
+                "day": "2026-01-25",
+                "max": 2,
+                "min": 2
+              }
+            ],
+            "uvi": [
+              {
+                "avg": 0,
+                "day": "2026-01-20",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-21",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-22",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-23",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-24",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-25",
+                "max": 0,
+                "min": 0
+              }
+            ],
+            "pm10": [
+              {
+                "avg": 12,
+                "day": "2026-01-20",
+                "max": 17,
+                "min": 7
+              },
+              {
+                "avg": 11,
+                "day": "2026-01-21",
+                "max": 15,
+                "min": 8
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-22",
+                "max": 15,
+                "min": 6
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 9,
+                "min": 5
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 4
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-25",
+                "max": 10,
+                "min": 10
+              }
+            ],
+            "pm25": [
+              {
+                "avg": 32,
+                "day": "2026-01-20",
+                "max": 49,
+                "min": 18
+              },
+              {
+                "avg": 28,
+                "day": "2026-01-21",
+                "max": 42,
+                "min": 20
+              },
+              {
+                "avg": 26,
+                "day": "2026-01-22",
+                "max": 45,
+                "min": 13
+              },
+              {
+                "avg": 14,
+                "day": "2026-01-23",
+                "max": 16,
+                "min": 10
+              },
+              {
+                "avg": 18,
+                "day": "2026-01-24",
+                "max": 30,
+                "min": 9
+              },
+              {
+                "avg": 30,
+                "day": "2026-01-25",
+                "max": 30,
+                "min": 30
+              }
+            ]
+          }
+        },
+        "dominentpol": "pm25",
+        "attributions": [
+          {
+            "url": "http://www.eea.europa.eu/themes/air/",
+            "logo": "Europe-EEA.png",
+            "name": "European Environment Agency"
+          },
+          {
+            "url": "https://www.airparif.asso.fr/",
+            "logo": "Paris-Air-Parif.png",
+            "name": "AirParif - Association de surveillance de la qualité de l'air en Île-de-France"
+          },
+          {
+            "url": "https://waqi.info/",
+            "name": "World Air Quality Index Project"
+          }
+        ]
+      },
+      "status": "ok"
+    },
+    "collected_at": "2026-01-20T15:10:28.498264+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:10:28.616034+00:00"
+  },
+  {
+    "id": 23,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "openweather",
+    "raw_data": {
+      "dt": 1768921508,
+      "id": 2988507,
+      "cod": 200,
+      "sys": {
+        "id": 2012208,
+        "type": 2,
+        "sunset": 1768926481,
+        "country": "FR",
+        "sunrise": 1768894485
+      },
+      "base": "stations",
+      "main": {
+        "temp": 9.09,
+        "humidity": 84,
+        "pressure": 1013,
+        "temp_max": 10.03,
+        "temp_min": 8.28,
+        "sea_level": 1013,
+        "feels_like": 6.03,
+        "grnd_level": 1003
+      },
+      "name": "Paris",
+      "wind": {
+        "deg": 140,
+        "speed": 6.17
+      },
+      "coord": {
+        "lat": 48.8534,
+        "lon": 2.3488
+      },
+      "clouds": {
+        "all": 75
+      },
+      "weather": [
+        {
+          "id": 803,
+          "icon": "04d",
+          "main": "Clouds",
+          "description": "nuageux"
+        }
+      ],
+      "timezone": 3600,
+      "visibility": 10000
+    },
+    "collected_at": "2026-01-20T15:10:28.388222+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:10:28.576849+00:00"
+  },
+  {
+    "id": 22,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "aqicn",
+    "raw_data": {
+      "data": {
+        "aqi": 59,
+        "idx": 5722,
+        "city": {
+          "geo": [
+            48.856614,
+            2.3522219
+          ],
+          "url": "https://aqicn.org/city/paris",
+          "name": "Paris",
+          "location": ""
+        },
+        "iaqi": {
+          "h": {
+            "v": 84
+          },
+          "p": {
+            "v": 1014.5
+          },
+          "t": {
+            "v": 9.1
+          },
+          "w": {
+            "v": 0.4
+          },
+          "co": {
+            "v": 0.1
+          },
+          "o3": {
+            "v": 8.7
+          },
+          "no2": {
+            "v": 18.6
+          },
+          "so2": {
+            "v": 0.6
+          },
+          "pm10": {
+            "v": 30
+          },
+          "pm25": {
+            "v": 59
+          }
+        },
+        "time": {
+          "s": "2026-01-20 13:00:00",
+          "v": 1768914000,
+          "tz": "+01:00",
+          "iso": "2026-01-20T13:00:00+01:00"
+        },
+        "debug": {
+          "sync": "2026-01-20T23:54:24+09:00"
+        },
+        "forecast": {
+          "daily": {
+            "o3": [
+              {
+                "avg": 5,
+                "day": "2026-01-20",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 8,
+                "day": "2026-01-21",
+                "max": 11,
+                "min": 6
+              },
+              {
+                "avg": 9,
+                "day": "2026-01-22",
+                "max": 11,
+                "min": 7
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 10,
+                "min": 5
+              },
+              {
+                "avg": 5,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 2,
+                "day": "2026-01-25",
+                "max": 2,
+                "min": 2
+              }
+            ],
+            "uvi": [
+              {
+                "avg": 0,
+                "day": "2026-01-20",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-21",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-22",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-23",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-24",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-25",
+                "max": 0,
+                "min": 0
+              }
+            ],
+            "pm10": [
+              {
+                "avg": 12,
+                "day": "2026-01-20",
+                "max": 17,
+                "min": 7
+              },
+              {
+                "avg": 11,
+                "day": "2026-01-21",
+                "max": 15,
+                "min": 8
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-22",
+                "max": 15,
+                "min": 6
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 9,
+                "min": 5
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 4
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-25",
+                "max": 10,
+                "min": 10
+              }
+            ],
+            "pm25": [
+              {
+                "avg": 32,
+                "day": "2026-01-20",
+                "max": 49,
+                "min": 18
+              },
+              {
+                "avg": 28,
+                "day": "2026-01-21",
+                "max": 42,
+                "min": 20
+              },
+              {
+                "avg": 26,
+                "day": "2026-01-22",
+                "max": 45,
+                "min": 13
+              },
+              {
+                "avg": 14,
+                "day": "2026-01-23",
+                "max": 16,
+                "min": 10
+              },
+              {
+                "avg": 18,
+                "day": "2026-01-24",
+                "max": 30,
+                "min": 9
+              },
+              {
+                "avg": 30,
+                "day": "2026-01-25",
+                "max": 30,
+                "min": 30
+              }
+            ]
+          }
+        },
+        "dominentpol": "pm25",
+        "attributions": [
+          {
+            "url": "http://www.eea.europa.eu/themes/air/",
+            "logo": "Europe-EEA.png",
+            "name": "European Environment Agency"
+          },
+          {
+            "url": "https://www.airparif.asso.fr/",
+            "logo": "Paris-Air-Parif.png",
+            "name": "AirParif - Association de surveillance de la qualité de l'air en Île-de-France"
+          },
+          {
+            "url": "https://waqi.info/",
+            "name": "World Air Quality Index Project"
+          }
+        ]
+      },
+      "status": "ok"
+    },
+    "collected_at": "2026-01-20T15:10:04.986351+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:10:05.189765+00:00"
+  },
+  {
+    "id": 21,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "openweather",
+    "raw_data": {
+      "dt": 1768921508,
+      "id": 2988507,
+      "cod": 200,
+      "sys": {
+        "id": 2012208,
+        "type": 2,
+        "sunset": 1768926481,
+        "country": "FR",
+        "sunrise": 1768894485
+      },
+      "base": "stations",
+      "main": {
+        "temp": 9.09,
+        "humidity": 84,
+        "pressure": 1013,
+        "temp_max": 10.03,
+        "temp_min": 8.28,
+        "sea_level": 1013,
+        "feels_like": 6.03,
+        "grnd_level": 1003
+      },
+      "name": "Paris",
+      "wind": {
+        "deg": 140,
+        "speed": 6.17
+      },
+      "coord": {
+        "lat": 48.8534,
+        "lon": 2.3488
+      },
+      "clouds": {
+        "all": 75
+      },
+      "weather": [
+        {
+          "id": 803,
+          "icon": "04d",
+          "main": "Clouds",
+          "description": "nuageux"
+        }
+      ],
+      "timezone": 3600,
+      "visibility": 10000
+    },
+    "collected_at": "2026-01-20T15:10:04.864694+00:00",
+    "processed": true,
+    "processed_at": "2026-01-20T15:10:05.146442+00:00"
+  },
+  {
+    "id": 2,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "aqicn",
+    "raw_data": {
+      "data": {
+        "aqi": 59,
+        "idx": 5722,
+        "city": {
+          "geo": [
+            48.856614,
+            2.3522219
+          ],
+          "url": "https://aqicn.org/city/paris",
+          "name": "Paris",
+          "location": ""
+        },
+        "iaqi": {
+          "h": {
+            "v": 84
+          },
+          "p": {
+            "v": 1014.5
+          },
+          "t": {
+            "v": 9.1
+          },
+          "w": {
+            "v": 0.4
+          },
+          "co": {
+            "v": 0.1
+          },
+          "o3": {
+            "v": 8.7
+          },
+          "no2": {
+            "v": 18.6
+          },
+          "so2": {
+            "v": 0.6
+          },
+          "pm10": {
+            "v": 30
+          },
+          "pm25": {
+            "v": 59
+          }
+        },
+        "time": {
+          "s": "2026-01-20 13:00:00",
+          "v": 1768914000,
+          "tz": "+01:00",
+          "iso": "2026-01-20T13:00:00+01:00"
+        },
+        "debug": {
+          "sync": "2026-01-20T23:54:24+09:00"
+        },
+        "forecast": {
+          "daily": {
+            "o3": [
+              {
+                "avg": 5,
+                "day": "2026-01-20",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 8,
+                "day": "2026-01-21",
+                "max": 11,
+                "min": 6
+              },
+              {
+                "avg": 9,
+                "day": "2026-01-22",
+                "max": 11,
+                "min": 7
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 10,
+                "min": 5
+              },
+              {
+                "avg": 5,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 1
+              },
+              {
+                "avg": 2,
+                "day": "2026-01-25",
+                "max": 2,
+                "min": 2
+              }
+            ],
+            "uvi": [
+              {
+                "avg": 0,
+                "day": "2026-01-20",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-21",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-22",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-23",
+                "max": 1,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-24",
+                "max": 0,
+                "min": 0
+              },
+              {
+                "avg": 0,
+                "day": "2026-01-25",
+                "max": 0,
+                "min": 0
+              }
+            ],
+            "pm10": [
+              {
+                "avg": 12,
+                "day": "2026-01-20",
+                "max": 17,
+                "min": 7
+              },
+              {
+                "avg": 11,
+                "day": "2026-01-21",
+                "max": 15,
+                "min": 8
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-22",
+                "max": 15,
+                "min": 6
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-23",
+                "max": 9,
+                "min": 5
+              },
+              {
+                "avg": 7,
+                "day": "2026-01-24",
+                "max": 10,
+                "min": 4
+              },
+              {
+                "avg": 10,
+                "day": "2026-01-25",
+                "max": 10,
+                "min": 10
+              }
+            ],
+            "pm25": [
+              {
+                "avg": 32,
+                "day": "2026-01-20",
+                "max": 49,
+                "min": 18
+              },
+              {
+                "avg": 28,
+                "day": "2026-01-21",
+                "max": 42,
+                "min": 20
+              },
+              {
+                "avg": 26,
+                "day": "2026-01-22",
+                "max": 45,
+                "min": 13
+              },
+              {
+                "avg": 14,
+                "day": "2026-01-23",
+                "max": 16,
+                "min": 10
+              },
+              {
+                "avg": 18,
+                "day": "2026-01-24",
+                "max": 30,
+                "min": 9
+              },
+              {
+                "avg": 30,
+                "day": "2026-01-25",
+                "max": 30,
+                "min": 30
+              }
+            ]
+          }
+        },
+        "dominentpol": "pm25",
+        "attributions": [
+          {
+            "url": "http://www.eea.europa.eu/themes/air/",
+            "logo": "Europe-EEA.png",
+            "name": "European Environment Agency"
+          },
+          {
+            "url": "https://www.airparif.asso.fr/",
+            "logo": "Paris-Air-Parif.png",
+            "name": "AirParif - Association de surveillance de la qualité de l'air en Île-de-France"
+          },
+          {
+            "url": "https://waqi.info/",
+            "name": "World Air Quality Index Project"
+          }
+        ]
+      },
+      "status": "ok"
+    },
+    "collected_at": "2026-01-20T15:09:11.208536+00:00",
+    "processed": false,
+    "processed_at": null
+  },
+  {
+    "id": 1,
+    "city_id": 1,
+    "city_name": "Paris",
+    "source": "openweather",
+    "raw_data": {
+      "dt": 1768921508,
+      "id": 2988507,
+      "cod": 200,
+      "sys": {
+        "id": 2012208,
+        "type": 2,
+        "sunset": 1768926481,
+        "country": "FR",
+        "sunrise": 1768894485
+      },
+      "base": "stations",
+      "main": {
+        "temp": 9.09,
+        "humidity": 84,
+        "pressure": 1013,
+        "temp_max": 10.03,
+        "temp_min": 8.28,
+        "sea_level": 1013,
+        "feels_like": 6.03,
+        "grnd_level": 1003
+      },
+      "name": "Paris",
+      "wind": {
+        "deg": 140,
+        "speed": 6.17
+      },
+      "coord": {
+        "lat": 48.8534,
+        "lon": 2.3488
+      },
+      "clouds": {
+        "all": 75
+      },
+      "weather": [
+        {
+          "id": 803,
+          "icon": "04d",
+          "main": "Clouds",
+          "description": "nuageux"
+        }
+      ],
+      "timezone": 3600,
+      "visibility": 10000
+    },
+    "collected_at": "2026-01-20T15:09:11.054736+00:00",
+    "processed": false,
+    "processed_at": null
+  }
+]
