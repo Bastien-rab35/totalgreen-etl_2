@@ -2,7 +2,7 @@
 Service de gestion de la base de données Supabase
 """
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from supabase import create_client, Client
 
@@ -141,25 +141,47 @@ class DatabaseService:
             # 1. Récupérer weather_condition_id depuis dim_weather_condition
             weather_id = measure.get('weather_id')
             weather_condition_id = None
-            if weather_id:
+            if weather_id is not None:
                 weather_result = self.client.table('dim_weather_condition').select('weather_condition_id').eq('weather_id', weather_id).limit(1).execute()
                 weather_condition_id = weather_result.data[0]['weather_condition_id'] if weather_result.data else None
             
             # 2. Calculer aqi_level_id (via fonction PostgreSQL)
             aqi_index = measure.get('aqi_index')
             aqi_level_id = None
-            if aqi_index:
+            if aqi_index is not None:
                 # Utiliser la fonction get_aqi_level_id définie dans star_schema.sql
                 aqi_result = self.client.rpc('get_aqi_level_id', {'aqi_value': aqi_index}).execute()
                 aqi_level_id = aqi_result.data if aqi_result.data else None
             
-            # 3. Calculer capture_date (DATE) depuis captured_at (TIMESTAMP)
-            from datetime import datetime
+            # 3. Normaliser captured_at en UTC et calculer capture_date
             captured_at = measure.get('captured_at')
             capture_date = None
             if captured_at:
-                dt = datetime.fromisoformat(captured_at.replace('Z', '+00:00'))
-                capture_date = dt.date().isoformat()  # Format YYYY-MM-DD
+                if isinstance(captured_at, datetime):
+                    dt = captured_at
+                elif isinstance(captured_at, str):
+                    dt = datetime.fromisoformat(captured_at.replace('Z', '+00:00'))
+                else:
+                    raise ValueError(f"Format captured_at non supporte: {type(captured_at).__name__}")
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+
+                dt_utc = dt.astimezone(timezone.utc)
+
+                # Certaines APIs peuvent remonter une heure légèrement en avance.
+                # On borne au moment courant pour rester cohérent avec la validation.
+                now_utc = datetime.now(timezone.utc)
+                if dt_utc > now_utc:
+                    logger.warning(
+                        "captured_at dans le futur detecte (city_id=%s, captured_at=%s) -> clamp a now",
+                        measure.get('city_id'),
+                        dt_utc.isoformat()
+                    )
+                    dt_utc = now_utc.replace(microsecond=0)
+
+                captured_at = dt_utc.isoformat()
+                capture_date = dt_utc.date().isoformat()  # Format YYYY-MM-DD
             
             # 4. Construire l'enregistrement pour fact_measures
             fact_measure = {
@@ -203,9 +225,31 @@ class DatabaseService:
             # Nettoyage des None
             fact_measure = {k: v for k, v in fact_measure.items() if v is not None}
             
-            # 5. Insérer dans fact_measures
-            response = self.client.table('fact_measures').insert(fact_measure).execute()
-            logger.info(f"✓ Mesure insérée dans modèle en étoile - city_id={measure.get('city_id')}")
+            # 5. Upsert logique: si une mesure existe déjà pour (city_id, captured_at),
+            # on la met à jour pour éviter les doublons tout en enrichissant les champs.
+            existing = (self.client.table('fact_measures')
+                        .select('measure_id')
+                        .eq('city_id', fact_measure.get('city_id'))
+                        .eq('captured_at', fact_measure.get('captured_at'))
+                        .order('measure_id', desc=True)
+                        .limit(1)
+                        .execute())
+
+            existing_rows = existing.data or []
+            if existing_rows:
+                existing_id = existing_rows[0]['measure_id']
+                update_payload = {
+                    k: v for k, v in fact_measure.items()
+                    if k not in ('city_id', 'captured_at') and v is not None
+                }
+
+                if update_payload:
+                    self.client.table('fact_measures').update(update_payload).eq('measure_id', existing_id).execute()
+
+                logger.info(f"~ Mesure existante mise à jour (measure_id={existing_id})")
+            else:
+                self.client.table('fact_measures').insert(fact_measure).execute()
+                logger.info(f"✓ Mesure insérée dans modèle en étoile - city_id={measure.get('city_id')}")
             return True
             
         except Exception as e:

@@ -164,75 +164,66 @@ class TransformToDB:
             logger.error(f"Erreur transformation: {e}")
             return False
     
-    def group_by_city_and_time(self, data_list: list) -> dict:
-        """Groupe les entrées data lake par (city_id, timestamp arrondi à l'heure)
-        
-        STRATÉGIE ANTI-PERTE:
-        1. Groupe weather+AQI par (city_id, heure) pour fusion optimale
-        2. Traite AUSSI les entrées orphelines (>2h d'âge) SEULES pour ne rien perdre
-        3. Garantit 0% de perte de données même si une API est en panne
+    def group_by_city_and_time(self, data_list: list) -> tuple:
+        """Groupe les entrées data lake par (city_id, heure) et dédoublonne par source.
+
+        Pour un même (ville, heure, source), conserve l'entrée la plus récente
+        et retourne la liste des IDs écartés pour les marquer comme traités.
         """
         from collections import defaultdict
-        
+
         grouped = defaultdict(lambda: {'weather': None, 'aqi': None})
-        orphans = []  # Entrées orphelines à traiter immédiatement
+        discarded_ids = set()
         now = datetime.utcnow()
-        
+
         for entry in data_list:
             city_id = entry['city_id']
-            # Arrondir le timestamp à l'heure
             timestamp_str = entry.get('collected_at', '')
             if timestamp_str:
-                # Extraire l'heure (YYYY-MM-DD HH:00:00)
                 dt = datetime.fromisoformat(timestamp_str.replace('Z', '+00:00'))
-                hour_key = dt.replace(minute=0, second=0, microsecond=0).isoformat()
-                
-                # Calculer l'âge de l'entrée
-                age_hours = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
             else:
-                hour_key = now.replace(minute=0, second=0, microsecond=0).isoformat()
-                age_hours = 0
-            
-            # STRATÉGIE: Si entrée > 2h, traiter IMMÉDIATEMENT même seule
-            # Sinon, grouper normalement pour tenter fusion
-            if age_hours > 2:
-                # Entrée orpheline : trop vieille, traiter maintenant
-                orphan_key = (city_id, hour_key, entry['id'])  # Clé unique pour éviter collision
-                if entry['source'] == 'openweather':
-                    grouped[orphan_key] = {'weather': entry, 'aqi': None}
+                dt = now
+
+            hour_key = dt.replace(minute=0, second=0, microsecond=0).isoformat()
+            key = (city_id, hour_key)
+
+            if entry['source'] == 'openweather':
+                source_key = 'weather'
+            elif entry['source'] == 'aqicn':
+                source_key = 'aqi'
+            else:
+                logger.warning(f"Source inconnue ignorée dans le grouping: {entry.get('source')}")
+                discarded_ids.add(entry['id'])
+                continue
+
+            current = grouped[key][source_key]
+            if current is None:
+                grouped[key][source_key] = entry
+            else:
+                # Conserver l'entrée la plus récente pour une même source sur la même heure.
+                if entry['id'] > current['id']:
+                    discarded_ids.add(current['id'])
+                    grouped[key][source_key] = entry
                 else:
-                    grouped[orphan_key] = {'weather': None, 'aqi': entry}
-                orphans.append(orphan_key)
-                logger.warning(f"⏰ Entrée orpheline détectée (âge: {age_hours:.1f}h) - City {city_id} @ {hour_key[:19]} [{entry['source']}] → traitement immédiat")
-            else:
-                # Entrée récente : grouper normalement
-                key = (city_id, hour_key)
-                
-                if entry['source'] == 'openweather':
-                    if grouped[key]['weather'] is None:
-                        grouped[key]['weather'] = entry
-                elif entry['source'] == 'aqicn':
-                    if grouped[key]['aqi'] is None:
-                        grouped[key]['aqi'] = entry
-        
-        # Log des mesures incomplètes (normales, pas orphelines)
+                    discarded_ids.add(entry['id'])
+
+        # Log des mesures incomplètes (normal: une API peut être temporairement indisponible)
         for key, data in grouped.items():
-            if key not in orphans:  # Ne pas logger les orphelines (déjà loggées)
-                if data['weather'] is None or data['aqi'] is None:
-                    city_id, timestamp = key[:2]  # key peut être (city, time) ou (city, time, id)
-                    missing = 'weather' if data['weather'] is None else 'aqi'
-                    age_info = ""
-                    if data['weather']:
-                        dt = datetime.fromisoformat(data['weather']['collected_at'].replace('Z', '+00:00'))
-                        age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
-                        age_info = f" (âge: {age:.1f}h)"
-                    elif data['aqi']:
-                        dt = datetime.fromisoformat(data['aqi']['collected_at'].replace('Z', '+00:00'))
-                        age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
-                        age_info = f" (âge: {age:.1f}h)"
-                    logger.warning(f"⏳ Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}{age_info}")
-        
-        return grouped
+            if data['weather'] is None or data['aqi'] is None:
+                city_id, timestamp = key
+                missing = 'weather' if data['weather'] is None else 'aqi'
+                age_info = ""
+                if data['weather']:
+                    dt = datetime.fromisoformat(data['weather']['collected_at'].replace('Z', '+00:00'))
+                    age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
+                    age_info = f" (âge: {age:.1f}h)"
+                elif data['aqi']:
+                    dt = datetime.fromisoformat(data['aqi']['collected_at'].replace('Z', '+00:00'))
+                    age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
+                    age_info = f" (âge: {age:.1f}h)"
+                logger.warning(f"⏳ Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}{age_info}")
+
+        return grouped, discarded_ids
     
     def transform_and_load_combined(self, weather_entry: dict, aqi_entry: dict) -> bool:
         """Transforme et charge une mesure combinée météo + AQI"""
@@ -401,9 +392,9 @@ class TransformToDB:
         
         logger.info(f"{len(unprocessed_data)} entrées à traiter")
         
-        # Grouper par (city_id, timestamp)
-        grouped = self.group_by_city_and_time(unprocessed_data)
-        logger.info(f"{len(grouped)} mesures combinées à créer")
+        # Grouper par (city_id, timestamp) + dédoublonnage source/heure
+        grouped, discarded_ids = self.group_by_city_and_time(unprocessed_data)
+        logger.info(f"{len(grouped)} mesures combinées à créer ({len(discarded_ids)} doublons source/heure écartés)")
         
         success_count = 0
         processed_entries = 0
@@ -416,6 +407,15 @@ class TransformToDB:
                 success_count += 1
                 if weather: processed_entries += 1
                 if aqi: processed_entries += 1
+
+        # Marquer comme traitées les entrées dédoublonnées non retenues.
+        discarded_marked = 0
+        for lake_id in discarded_ids:
+            if self.data_lake_service.mark_as_processed(lake_id):
+                discarded_marked += 1
+
+        if discarded_marked:
+            logger.info(f"{discarded_marked} entrées dupliquées marquées comme traitées")
         
         # Stats
         duration = time.time() - start_time
@@ -425,6 +425,7 @@ class TransformToDB:
             'errors': error_count,
             'total': len(grouped),
             'processed_entries': processed_entries,
+            'discarded_duplicates': discarded_marked,
             'duration': round(duration, 2)
         }
         

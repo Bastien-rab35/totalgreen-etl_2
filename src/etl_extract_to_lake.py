@@ -5,6 +5,8 @@ Collecte les données des APIs et les stocke en JSONB dans Supabase
 import logging
 import time
 import os
+import json
+from pathlib import Path
 from datetime import datetime
 
 from config import config
@@ -52,22 +54,61 @@ class ExtractToLake:
                 config.SUPABASE_URL,
                 config.SUPABASE_KEY
             )
+
+            self.aqi_station_map = self._load_aqi_station_map()
             
             logger.info("Service d'extraction initialisé")
             
         except Exception as e:
             logger.error(f"Erreur d'initialisation: {e}")
             raise
+
+    def _load_aqi_station_map(self) -> dict:
+        """Charge le mapping des stations AQI depuis le référentiel local."""
+        try:
+            ref_path = Path(__file__).resolve().parent.parent / 'data' / 'cities_reference.json'
+            with open(ref_path, 'r', encoding='utf-8') as f:
+                cities_ref = json.load(f)
+
+            mapping = {}
+            for row in cities_ref:
+                station = row.get('aqi_station')
+                city_id = row.get('id')
+                city_name = row.get('name')
+                if not station:
+                    continue
+                if city_id is not None:
+                    mapping[city_id] = station
+                if city_name:
+                    mapping[city_name] = station
+
+            logger.info(f"Référentiel AQI chargé: {len(cities_ref)} villes")
+            return mapping
+        except Exception as e:
+            logger.warning(f"Impossible de charger le référentiel AQI local: {e}")
+            return {}
+
+    def _resolve_aqi_station(self, city: dict) -> str:
+        """Résout la station AQI à utiliser (BDD puis fallback référentiel local)."""
+        station = city.get('aqi_station')
+        if station:
+            return station
+
+        city_id = city.get('id')
+        city_name = city.get('name')
+        return self.aqi_station_map.get(city_id) or self.aqi_station_map.get(city_name)
     
     def extract_city_data(self, city: dict) -> bool:
         """Extrait et stocke les données d'une ville dans le Data Lake"""
         city_name = city.get('name')
         city_id = city.get('id')
-        aqi_station = city.get('aqi_station')  # Station AQICN spécifique
+        aqi_station = self._resolve_aqi_station(city)
         logger.info(f"Extraction de {city_name}...")
         
         try:
             success = False
+            weather_success = False
+            aqi_success = False
             
             # 1. Extraction Météo
             weather_data = self.weather_service.fetch_weather_data(city_name)
@@ -80,6 +121,7 @@ class ExtractToLake:
                 if raw_weather_id:
                     logger.info(f"✓ Météo {city_name} → Data Lake (ID: {raw_weather_id})")
                     success = True
+                    weather_success = True
             
             # 2. Extraction Qualité de l'air (avec station spécifique)
             aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
@@ -92,6 +134,10 @@ class ExtractToLake:
                 if raw_aqi_id:
                     logger.info(f"✓ AQI {city_name} → Data Lake (ID: {raw_aqi_id})")
                     success = True
+                    aqi_success = True
+
+            if weather_success and not aqi_success:
+                logger.error(f"✗ AQI absent pour {city_name} (station: {aqi_station})")
             
             return success
             
@@ -113,34 +159,64 @@ class ExtractToLake:
         
         logger.info(f"{len(cities)} villes à extraire")
         
-        success_count = 0
+        city_success_count = 0
+        weather_inserted_count = 0
+        aqi_inserted_count = 0
+        aqi_failure_count = 0
         for city in cities:
-            if self.extract_city_data(city):
-                success_count += 1
+            city_name = city.get('name')
+            city_id = city.get('id')
+            aqi_station = self._resolve_aqi_station(city)
+            weather_data = self.weather_service.fetch_weather_data(city_name)
+            aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
+
+            if weather_data and weather_data.get('raw'):
+                weather_timestamp = self.weather_service.get_timestamp(weather_data['raw'])
+                raw_weather_id = self.data_lake_service.store_raw_data(
+                    city_id, city_name, 'openweather', weather_data['raw'], weather_timestamp
+                )
+                if raw_weather_id:
+                    weather_inserted_count += 1
+
+            if aqi_data and aqi_data.get('raw'):
+                aqi_timestamp = self.air_quality_service.get_timestamp(aqi_data['raw'])
+                raw_aqi_id = self.data_lake_service.store_raw_data(
+                    city_id, city_name, 'aqicn', aqi_data['raw'], aqi_timestamp
+                )
+                if raw_aqi_id:
+                    aqi_inserted_count += 1
+            else:
+                aqi_failure_count += 1
+
+            if weather_data and weather_data.get('raw'):
+                city_success_count += 1
             time.sleep(1)  # Respect des limites API
         
         # Stats
         duration = time.time() - start_time
-        error_count = len(cities) - success_count
+        error_count = len(cities) - city_success_count
         stats = {
-            'success': success_count,
+            'success': city_success_count,
             'errors': error_count,
             'total': len(cities),
+            'weather_inserted': weather_inserted_count,
+            'aqi_inserted': aqi_inserted_count,
+            'aqi_errors': aqi_failure_count,
             'duration': round(duration, 2)
         }
         
         # Log ETL
-        status = 'success' if error_count == 0 else 'warning' if success_count > 0 else 'error'
+        status = 'success' if error_count == 0 else 'warning' if city_success_count > 0 else 'error'
         self.db_service.log_etl_execution(
             status=status,
             source='extract',
-            records_inserted=success_count,
+            records_inserted=city_success_count,
             duration=duration,
-            error_message=f"{error_count} échecs" if error_count > 0 else None
+            error_message=(f"{error_count} échecs; AQI: {aqi_inserted_count}/{len(cities)} villes" if (error_count > 0 or aqi_failure_count > 0) else None)
         )
         
         logger.info("="*60)
-        logger.info(f"Extraction terminée - {success_count}/{len(cities)} - {duration:.2f}s")
+        logger.info(f"Extraction terminée - {city_success_count}/{len(cities)} villes, météo: {weather_inserted_count}, AQI: {aqi_inserted_count} - {duration:.2f}s")
         logger.info("="*60)
         
         return stats
@@ -160,7 +236,7 @@ def main():
             exit(0)  # Succès
             
     except Exception as e:
-        logger.error(f"Erreur fatale: {e}")
+        logger.exception(f"Erreur fatale: {e}")
         exit(1)
 
 if __name__ == "__main__":

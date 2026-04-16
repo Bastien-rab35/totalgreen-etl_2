@@ -3,7 +3,8 @@ Service de collecte des données météorologiques depuis OpenWeather API
 """
 import requests
 import logging
-from datetime import datetime
+import json
+from datetime import datetime, timezone
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,17 @@ class WeatherService:
             response = requests.get(self.base_url, params=params, timeout=10)
             response.raise_for_status()
             data = response.json()
+
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    logger.error(f"Réponse météo invalide pour {city_name}: JSON string non parsable")
+                    return None
+
+            if not isinstance(data, dict):
+                logger.error(f"Réponse météo invalide pour {city_name}: type inattendu {type(data).__name__}")
+                return None
             
             logger.info(f"Données météo récupérées pour {city_name}")
             return {'raw': data, 'parsed': self._parse_weather_data(data)}
@@ -38,9 +50,36 @@ class WeatherService:
     
     def _parse_weather_data(self, raw_data: Dict) -> Dict:
         """Parse les données OpenWeather API 2.5"""
+        if isinstance(raw_data, str):
+            try:
+                raw_data = json.loads(raw_data)
+            except json.JSONDecodeError:
+                return {}
+
+        if not isinstance(raw_data, dict):
+            return {}
+
         main = raw_data.get('main', {})
         wind = raw_data.get('wind', {})
-        weather = raw_data.get('weather', [{}])[0]
+        clouds = raw_data.get('clouds', {})
+        rain = raw_data.get('rain', {})
+        snow = raw_data.get('snow', {})
+        weather = raw_data.get('weather', [{}])
+
+        if not isinstance(main, dict):
+            main = {}
+        if not isinstance(wind, dict):
+            wind = {}
+        if not isinstance(clouds, dict):
+            clouds = {}
+        if not isinstance(rain, dict):
+            rain = {}
+        if not isinstance(snow, dict):
+            snow = {}
+        if not isinstance(weather, list) or not weather:
+            weather = [{}]
+
+        weather = weather[0] if isinstance(weather[0], dict) else {}
         
         return {
             'temp': main.get('temp'),
@@ -48,14 +87,14 @@ class WeatherService:
             'pressure': main.get('pressure'),
             'humidity': main.get('humidity'),
             'dew_point': None,  # Non dispo API 2.5
-            'clouds': raw_data.get('clouds', {}).get('all'),
+            'clouds': clouds.get('all'),
             'uvi': None,  # Non dispo API 2.5
             'visibility': raw_data.get('visibility'),
             'wind_speed': wind.get('speed'),
             'wind_deg': wind.get('deg'),
             'wind_gust': wind.get('gust'),
-            'rain_1h': raw_data.get('rain', {}).get('1h', 0),
-            'snow_1h': raw_data.get('snow', {}).get('1h', 0),
+            'rain_1h': rain.get('1h', 0),
+            'snow_1h': snow.get('1h', 0),
             'weather_id': weather.get('id'),
             'weather_main': weather.get('main'),
             'weather_description': weather.get('description')
@@ -63,9 +102,22 @@ class WeatherService:
     
     def get_timestamp(self, raw_data: Dict) -> Optional[datetime]:
         """Extrait le timestamp de l'API (moment réel de la mesure)"""
+        if isinstance(raw_data, str):
+            try:
+                raw_data = json.loads(raw_data)
+            except json.JSONDecodeError:
+                return None
+
+        if not isinstance(raw_data, dict):
+            return None
+
         timestamp = raw_data.get('dt')
-        if timestamp:
-            return datetime.fromtimestamp(timestamp)
+        if timestamp is not None:
+            try:
+                # OpenWeather fournit un timestamp UNIX en UTC.
+                return datetime.fromtimestamp(float(timestamp), tz=timezone.utc)
+            except (TypeError, ValueError, OSError):
+                return None
         return None
     
     def parse_weather_data(self, raw_data: Dict) -> Dict:
