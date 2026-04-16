@@ -1,4 +1,4 @@
-name: 1️⃣ Extract vers Data Lake (Toutes les heures)
+name: MSPR2 - ETL Extract vers Data Lake
 
 on:
   workflow_dispatch:  # Permet l'exécution manuelle

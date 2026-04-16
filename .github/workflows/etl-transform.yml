@@ -1,4 +1,4 @@
-name: 2️⃣ Transform vers BDD (Toutes les heures)
+name: MSPR2 - ETL Transform vers DWH
 
 on:
   workflow_dispatch:  # Permet l'exécution manuelle

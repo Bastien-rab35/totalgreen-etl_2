@@ -10,7 +10,8 @@ from pathlib import Path
 from datetime import datetime
 
 from config import config
-from services import WeatherService, AirQualityService, DatabaseService, DataLakeService
+from services import WeatherService, AirQualityService, DatabaseService, DataLakeService, TomTomService, HubeauService
+import uuid
 
 # Création du dossier logs
 os.makedirs('../logs', exist_ok=True)
@@ -54,8 +55,23 @@ class ExtractToLake:
                 config.SUPABASE_URL,
                 config.SUPABASE_KEY
             )
+            
+            self.tomtom_service = TomTomService(
+                config.TOMTOM_API_KEY,
+                config.TOMTOM_FLOW_BASE_URL,
+                config.TOMTOM_INCIDENTS_BASE_URL
+            )
+            
+            self.hubeau_service = HubeauService(
+                config.HUBEAU_STATIONS_BASE_URL,
+                config.HUBEAU_CHRONIQUES_BASE_URL,
+                config.HUBEAU_CHRONIQUES_TR_BASE_URL
+            )
 
             self.aqi_station_map = self._load_aqi_station_map()
+            
+            # Pour regrouper les appels TomTom avec le même traffic model (passe par exécution)
+            self.current_traffic_model_id = str(uuid.uuid4())
             
             logger.info("Service d'extraction initialisé")
             
@@ -163,9 +179,15 @@ class ExtractToLake:
         weather_inserted_count = 0
         aqi_inserted_count = 0
         aqi_failure_count = 0
+        tomtom_inserted_count = 0
+        hubeau_inserted_count = 0
+        
         for city in cities:
             city_name = city.get('name')
             city_id = city.get('id')
+            lat = city.get('latitude')
+            lon = city.get('longitude')
+            
             aqi_station = self._resolve_aqi_station(city)
             weather_data = self.weather_service.fetch_weather_data(city_name)
             aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
@@ -188,6 +210,45 @@ class ExtractToLake:
             else:
                 aqi_failure_count += 1
 
+            # --- EXTRACT: TomTom ---
+            if lat and lon:
+                bbox_tt = f"{lon-0.05},{lat-0.05},{lon+0.05},{lat+0.05}"
+                
+                # Incidents
+                incidents = self.tomtom_service.get_traffic_incidents(city_name, bbox_tt, self.current_traffic_model_id)
+                for inc in incidents:
+                    if self.data_lake_service.store_raw_data(city_id, city_name, 'tomtom_incidents', inc):
+                        tomtom_inserted_count += 1
+                        
+                # Flow (Vitesse sur 3 axes par ville pour représentativité)
+                points = [("C", lat, lon), ("E", lat, lon+0.02), ("W", lat, lon-0.02)]
+                for suf, p_lat, p_lon in points:
+                    flow = self.tomtom_service.get_traffic_flow(
+                        f"{city_name[:3].upper()}_{suf}", city_name, p_lat, p_lon, self.current_traffic_model_id
+                    )
+                    if flow:
+                        if self.data_lake_service.store_raw_data(city_id, city_name, 'tomtom_flow', flow):
+                            tomtom_inserted_count += 1
+
+            # --- EXTRACT: Hub'Eau ---
+            if lat and lon:
+                bbox_he = f"{lon-0.1},{lat-0.1},{lon+0.1},{lat+0.1}"
+                
+                # Stations locales
+                stations = self.hubeau_service.get_stations_by_bbox(bbox_he)
+                for st in stations:
+                    if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_stations', st):
+                        hubeau_inserted_count += 1
+                        
+                # Mesures Temps Réel (limite à 3 stations par ville pour ne pas surcharger)
+                for st in stations[:3]:
+                    code_bss = st.get('code_bss')
+                    if code_bss:
+                        trs = self.hubeau_service.get_chroniques_tr(code_bss)
+                        for tr in trs:
+                            if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_chroniques_tr', tr):
+                                hubeau_inserted_count += 1
+
             if weather_data and weather_data.get('raw'):
                 city_success_count += 1
             time.sleep(1)  # Respect des limites API
@@ -202,6 +263,8 @@ class ExtractToLake:
             'weather_inserted': weather_inserted_count,
             'aqi_inserted': aqi_inserted_count,
             'aqi_errors': aqi_failure_count,
+            'tomtom_inserted': tomtom_inserted_count,
+            'hubeau_inserted': hubeau_inserted_count,
             'duration': round(duration, 2)
         }
         

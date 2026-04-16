@@ -2,6 +2,30 @@
 
 Historique des evolutions principales du projet.
 
+## 2.6.0 - Implémentation Extract & Transform via TomTom & Hub'Eau (16 avril 2026)
+- **TomTom Service** : Ajout de l'extraction API du trafic routier (`tomtom_flow`) et des incidents (`tomtom_incidents`) avec bounding box par ville, gestion des quotas 429 et calcul de KPI sur la congestion.
+- **Hub'Eau Service** : Ajout de l'extraction API des nappes phréatiques (stations et `chroniques_tr` Temps Réel), gestion de la pagination et de la bounding box.
+- **ETL Extract** : Intégration de ces deux services à l'extracteur global (`etl_extract_to_lake.py`) avec stockage dans Supabase sous forme de JSON brut.
+- **ETL Transform** : Modification de la transformation combinée (`etl_transform_to_db.py`) pour traiter analytiquement le trafic et l'eau. Ajout de la formule mathématique `incident_severity_score` et du dimensionnement `_resolve_time_id`.
+- **Database Service** : Intégration et requêtage vers les 5 nouvelles tables (`dim_traffic_point`, `dim_incident_category`, `fact_traffic_flow_hourly`, etc.).
+
+## 2.5.1 - Cadrage integration TomTom et Hub Eau (15 avril 2026)
+
+- Ajout du mapping SQL cible pour l'integration Traffic (TomTom) et Piezometrie (Hub Eau):
+  - `sql/mspr2_traffic_groundwater_schema.sql`
+- Ajout du contrat d'extraction JSON normalise pour les 2 APIs:
+  - `docs/CONTRAT_EXTRACTION_TOMTOM_HUBEAU_MSPR2.md`
+- Formalisation des KPIs metier cibles:
+  - `congestion_ratio`, `speed_ratio`, `incident_severity_score`
+  - `groundwater_level_ngf`, `groundwater_depth`, `groundwater_trend_7d`, `anomaly_score`
+
+## 2.5.0 - Baseline MSPR2 et nouveau depot GitHub (15 avril 2026)
+
+- Initialisation du depot MSPR2 sur `Bastien-rab35/totalgreen-etl_2` avec historique propre.
+- Separation explicite du perimetre MSPR2 vis-a-vis de l'historique MSPR1.
+- Harmonisation des references projet (README, changelog, workflows CI).
+- Preparation de la roadmap technique MSPR2 (milestones + backlog d'issues techniques).
+
 ## 2.4.1 - Mise a jour documentation (26 mars 2026)
 
 - Relecture complete et harmonisation de tous les fichiers `.md` du depot.

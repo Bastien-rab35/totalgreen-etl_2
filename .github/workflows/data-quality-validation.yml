@@ -1,4 +1,4 @@
-name: Data Quality Validation
+name: MSPR2 - Data Quality Validation
 
 on:
   # Permettre exécution manuelle

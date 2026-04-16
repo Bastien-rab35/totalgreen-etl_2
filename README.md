@@ -1,6 +1,6 @@
-# TotalGreen ETL
+# TotalGreen ETL - MSPR2
 
-Pipeline ETL de collecte et de transformation de donnees environnementales (meteo OpenWeather + qualite de l'air AQICN) pour 10 villes francaises.
+Pipeline ETL MSPR2 de collecte et de transformation de donnees environnementales (meteo OpenWeather + qualite de l'air AQICN) pour 10 villes francaises.
 
 ## Vue d'ensemble
 
@@ -89,7 +89,7 @@ Details: `docs/SCALEWAY_SERVERLESS.md`.
 ## Structure du projet
 
 ```text
-MSPR 1/
+MSPR 2/
 ├── CHANGELOG.md
 ├── Dockerfile.serverless
 ├── README.md
@@ -164,5 +164,5 @@ LIMIT 20;
 
 ## Version
 
-- Version documentaire: `2.4.1`
-- Derniere mise a jour: `26 mars 2026`
+- Version documentaire: `2.5.0`
+- Derniere mise a jour: `15 avril 2026`

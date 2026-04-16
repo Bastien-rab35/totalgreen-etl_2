@@ -375,7 +375,123 @@ class TransformToDB:
             import traceback
             traceback.print_exc()
             return False
-    
+
+    def transform_and_load_tomtom(self, entry: dict) -> bool:
+        """Transforme et charge les données trafic routier (Flow ou Incidents)"""
+        import math
+        try:
+            source = entry['source']
+            raw = entry['raw_data']
+            city_id = entry['city_id']
+            city_name = entry.get('city_name', 'Unknown')
+            collected_at_str = entry.get('collected_at', datetime.now(timezone.utc).isoformat())
+            dt = datetime.fromisoformat(collected_at_str.replace('Z', '+00:00'))
+            
+            time_id = self.db_service._resolve_time_id(dt)
+            if not time_id:
+                logger.error(f"Impossible de résoudre le time_id pour {city_name} à {collected_at_str}")
+                return False
+                
+            if source == 'tomtom_flow':
+                tp_id = self.db_service.upsert_traffic_point({
+                    'city_id': city_id,
+                    'code_point': raw.get('code_point'),
+                    'libelle_point': f"Point {raw.get('code_point')}",
+                    'latitude': raw.get('latitude'),
+                    'longitude': raw.get('longitude'),
+                    'actif': True
+                })
+                if not tp_id: return False
+                return self.db_service.insert_fact_traffic_flow({
+                    'time_id': time_id,
+                    'city_id': city_id,
+                    'traffic_point_id': tp_id,
+                    'traffic_model_id': raw.get('traffic_model_id'),
+                    'vitesse_actuelle_kmph': raw.get('vitesse_actuelle_kmph'),
+                    'vitesse_fluide_kmph': raw.get('vitesse_fluide_kmph'),
+                    'temps_trajet_actuel_s': raw.get('temps_trajet_actuel_s'),
+                    'temps_trajet_fluide_s': raw.get('temps_trajet_fluide_s'),
+                    'congestion_ratio': raw.get('congestion_ratio'),
+                    'speed_ratio': raw.get('speed_ratio'),
+                    'route_fermee': raw.get('route_fermee', False),
+                    'indice_confiance': raw.get('indice_confiance'),
+                    'raw_data_id': entry['id']
+                })
+                
+            elif source == 'tomtom_incidents':
+                icon_cat = raw.get('categorie_incident', 0)
+                cat_id = self.db_service.upsert_incident_category({
+                    'icon_category': icon_cat,
+                    'libelle_category': raw.get('libelle_categorie', 'Unknown')
+                })
+                
+                gravite = raw.get('gravite_retard', 0) or 0
+                retard_s = raw.get('retard_s', 0) or 0
+                # score_severite_incident = 0.5 * gravite_retard + 0.3 * ln(1 + retard_s) + 0.2 * poids_categorie
+                weight_map = {8: 5, 1: 4, 6: 3}
+                poids = weight_map.get(icon_cat, 2)
+                score = 0.5 * gravite + 0.3 * math.log(1 + retard_s) + 0.2 * poids
+                
+                return self.db_service.insert_fact_traffic_incident({
+                    'time_id': time_id,
+                    'city_id': city_id,
+                    'incident_category_id': cat_id,
+                    'traffic_model_id': raw.get('traffic_model_id'),
+                    'incident_id_ext': raw.get('incident_id'),
+                    'gravite_retard': gravite,
+                    'retard_s': retard_s,
+                    'longueur_m': raw.get('longueur_m'),
+                    'incident_severity_score': round(score, 2),
+                    'debut_incident_utc': raw.get('debut_incident_utc'),
+                    'fin_incident_utc': raw.get('fin_incident_utc'),
+                    'raw_data_id': entry['id']
+                })
+            return False
+        except Exception as e:
+            logger.error(f"Erreur TomTom transform {entry.get('id')}: {e}")
+            return False
+
+    def transform_and_load_hubeau(self, entry: dict) -> bool:
+        """Transforme et charge les données nappes phréatiques (Stations ou Chroniques TR)"""
+        try:
+            source = entry['source']
+            raw = entry['raw_data']
+            city_id = entry['city_id']
+            collected_at_str = entry.get('collected_at', datetime.now(timezone.utc).isoformat())
+            dt = datetime.fromisoformat(collected_at_str.replace('Z', '+00:00'))
+            
+            if source == 'hubeau_stations':
+                return self.db_service.upsert_groundwater_station({
+                    'code_bss': raw.get('code_bss'),
+                    'bss_id': raw.get('bss_id'),
+                    'urn_bss': raw.get('urn_bss'),
+                    'city_id': city_id,
+                    'nom_station': raw.get('nom_station'),
+                    'latitude': raw.get('latitude'),
+                    'longitude': raw.get('longitude'),
+                    'altitude_station_m': raw.get('altitude_station_m')
+                }) is not None
+                
+            elif source == 'hubeau_chroniques_tr':
+                time_id = self.db_service._resolve_time_id(dt)
+                st_id = self.db_service.upsert_groundwater_station({'code_bss': raw.get('code_bss')})
+                if not time_id or not st_id: return False
+                
+                return self.db_service.insert_fact_groundwater({
+                    'time_id': time_id,
+                    'groundwater_station_id': st_id,
+                    'groundwater_level_ngf_m': raw.get('groundwater_level_ngf_m'),
+                    'groundwater_depth_m': raw.get('groundwater_depth_m'),
+                    'timestamp_mesure': raw.get('timestamp_mesure'),
+                    'statut_mesure': raw.get('statut_mesure'),
+                    'qualification_mesure': raw.get('qualification_mesure', ''),
+                    'raw_data_id': entry['id']
+                })
+            return False
+        except Exception as e:
+            logger.error(f"Erreur Hubeau transform {entry.get('id')}: {e}")
+            return False
+            
     def run(self, batch_size: int = 100) -> dict:
         """Traite les données non traitées du Data Lake en combinant météo + AQI"""
         start_time = time.time()
@@ -390,14 +506,19 @@ class TransformToDB:
             logger.info("Aucune donnée à traiter")
             return {'success': 0, 'errors': 0, 'total': 0, 'duration': 0}
         
-        logger.info(f"{len(unprocessed_data)} entrées à traiter")
-        
-        # Grouper par (city_id, timestamp) + dédoublonnage source/heure
-        grouped, discarded_ids = self.group_by_city_and_time(unprocessed_data)
-        logger.info(f"{len(grouped)} mesures combinées à créer ({len(discarded_ids)} doublons source/heure écartés)")
+        # Identifier les catégories de données
+        weather_aqi_data = [d for d in unprocessed_data if d['source'] in ('openweather', 'aqicn')]
+        tomtom_data =      [d for d in unprocessed_data if d['source'] in ('tomtom_flow', 'tomtom_incidents')]
+        hubeau_data =      [d for d in unprocessed_data if d['source'] in ('hubeau_stations', 'hubeau_chroniques_tr')]
+
+        logger.info(f"{len(unprocessed_data)} entrées à traiter (Météo/AQI: {len(weather_aqi_data)}, TomTom: {len(tomtom_data)}, Hub'eau: {len(hubeau_data)})")
         
         success_count = 0
         processed_entries = 0
+        
+        # 1. Groupe et traitement Métio/Air
+        grouped, discarded_ids = self.group_by_city_and_time(weather_aqi_data)
+        logger.info(f"{len(grouped)} mesures combinées à créer ({len(discarded_ids)} doublons source/heure écartés)")
         
         for key, data in grouped.items():
             weather = data['weather']
@@ -407,15 +528,29 @@ class TransformToDB:
                 success_count += 1
                 if weather: processed_entries += 1
                 if aqi: processed_entries += 1
-
-        # Marquer comme traitées les entrées dédoublonnées non retenues.
+                
+        # Marquer comme traitées les entrées Météo/Air dédoublonnées...
         discarded_marked = 0
         for lake_id in discarded_ids:
             if self.data_lake_service.mark_as_processed(lake_id):
                 discarded_marked += 1
 
+        # 2. Groupe et traitement TomTom
+        for entry in tomtom_data:
+            if self.transform_and_load_tomtom(entry):
+                self.data_lake_service.mark_as_processed(entry['id'])
+                success_count += 1
+                processed_entries += 1
+                
+        # 3. Groupe et traitement Hub'Eau
+        for entry in hubeau_data:
+            if self.transform_and_load_hubeau(entry):
+                self.data_lake_service.mark_as_processed(entry['id'])
+                success_count += 1
+                processed_entries += 1
+        
         if discarded_marked:
-            logger.info(f"{discarded_marked} entrées dupliquées marquées comme traitées")
+            logger.info(f"{discarded_marked} entrées Météo/Air dupliquées marquées comme traitées")
         
         # Stats
         duration = time.time() - start_time

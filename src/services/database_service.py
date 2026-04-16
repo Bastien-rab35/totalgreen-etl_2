@@ -361,3 +361,88 @@ class DatabaseService:
             logger.error(f"Erreur insertion anomalie: {e}")
             return False
 
+    def _resolve_time_id(self, dt: datetime) -> Optional[int]:
+        """Résout un time_id dans dim_time depuis un datetime"""
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt_utc = dt.astimezone(timezone.utc)
+        
+        # Arrondir à l'heure
+        date_str = dt_utc.date().isoformat()
+        hour = dt_utc.hour
+        
+        try:
+            res = self.client.table('dim_time').select('time_id').eq('date_only', date_str).eq('hour', hour).limit(1).execute()
+            if res.data:
+                return res.data[0]['time_id']
+            return None
+        except Exception as e:
+            logger.error(f"Erreur résolution time_id: {e}")
+            return None
+
+    def upsert_traffic_point(self, tp: Dict) -> Optional[int]:
+        """Insère ou met à jour un point de trafic (dim_traffic_point)"""
+        try:
+            res = self.client.table('dim_traffic_point').select('traffic_point_id').eq('city_id', tp['city_id']).eq('code_point', tp['code_point']).execute()
+            if res.data:
+                return res.data[0]['traffic_point_id']
+            
+            insert_res = self.client.table('dim_traffic_point').insert(tp).execute()
+            return insert_res.data[0]['traffic_point_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_traffic_point: {e}")
+            return None
+
+    def insert_fact_traffic_flow(self, flow: Dict) -> bool:
+        """Insère une ligne dans fact_traffic_flow_hourly"""
+        try:
+            self.client.table('fact_traffic_flow_hourly').insert(flow).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Erreur insert_fact_traffic_flow: {e}")
+            return False
+
+    def upsert_incident_category(self, cat: Dict) -> Optional[int]:
+        """Résout une catégorie d'incident via icon_category (dim_incident_category)"""
+        try:
+            res = self.client.table('dim_incident_category').select('incident_category_id').eq('icon_category', cat['icon_category']).execute()
+            if res.data:
+                return res.data[0]['incident_category_id']
+            
+            insert_res = self.client.table('dim_incident_category').insert(cat).execute()
+            return insert_res.data[0]['incident_category_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_incident_category: {e}")
+            return None
+
+    def insert_fact_traffic_incident(self, inc: Dict) -> bool:
+        """Insère une ligne dans fact_traffic_incident_hourly"""
+        try:
+            self.client.table('fact_traffic_incident_hourly').insert(inc).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Erreur insert_fact_traffic_incident: {e}")
+            return False
+
+    def upsert_groundwater_station(self, st: Dict) -> Optional[int]:
+        """Insère ou met à jour une station (dim_groundwater_station)"""
+        try:
+            res = self.client.table('dim_groundwater_station').select('groundwater_station_id').eq('code_bss', st['code_bss']).execute()
+            if res.data:
+                return res.data[0]['groundwater_station_id']
+            
+            insert_res = self.client.table('dim_groundwater_station').insert(st).execute()
+            return insert_res.data[0]['groundwater_station_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_groundwater_station: {e}")
+            return None
+
+    def insert_fact_groundwater(self, gw: Dict) -> bool:
+        """Insère une ligne dans fact_groundwater_realtime"""
+        try:
+            self.client.table('fact_groundwater_realtime').insert(gw).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Erreur insert_fact_groundwater: {e}")
+            return False
+
