@@ -58,7 +58,12 @@ class HubeauService:
         """Récupère les résultats qualité de l'eau potable pour une commune (dernière année en général)"""
         # On va chercher les résultats récents pour une commune donnée
         # (ex: nom_commune = 'Paris', mais attention aux arrondissements ou homonymes)
-        params = {'nom_commune': nom_commune, 'date_min_prelevement': '2024-01-01', 'size': 20}
+        params = {
+            'nom_commune': nom_commune, 
+            'date_min_prelevement': '2024-01-01', 
+            'size': 20, 
+            'sort': 'desc' # Les plus récents en premier
+        }
         raw_results = self._fetch_all_pages(self.eau_potable_url, params, limit_pages=1)
         
         formatted = []
