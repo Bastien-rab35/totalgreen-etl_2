@@ -28,4 +28,4 @@ Index de la documentation technique du projet.
 
 ## Date de mise a jour
 
-- `26 mars 2026`
+- `17 avril 2026`

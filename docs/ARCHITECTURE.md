@@ -1,19 +1,19 @@
 # Architecture Technique - TotalGreen ETL
 
-Ce document decrit l'architecture fonctionnelle et technique actuelle du projet.
+Ce document decrit l'architecture fonctionnelle et technique actuelle du projet pour 10 grandes villes françaises.
 
 ## Vue globale
 
 Le systeme suit un flux ETL en 3 etapes:
 
 ```text
-OpenWeather + AQICN
+OpenWeather + AQICN + TomTom + Hub'Eau
         |
         v
 Extract -> raw_data_lake (JSONB)
         |
         v
-Transform -> fact_measures + dimensions
+Transform -> fact_measures + trafic + eaux souterraines + dimensions
         |
         v
 Validate -> controle qualite + table anomalies
@@ -31,7 +31,10 @@ Validate -> controle qualite + table anomalies
 
 ### Data Warehouse
 
-- Table de faits: `fact_measures`
+- Tables de faits: 
+  - `fact_measures` (Météo & Qualité de l'air)
+  - `fact_traffic_flow` & `fact_traffic_incidents` (TomTom)
+  - `fact_groundwater_realtime` (Hub'Eau)
 - Dimensions principales:
   - `dim_city`
   - `dim_weather_condition`
@@ -55,16 +58,16 @@ Validate -> controle qualite + table anomalies
 ### 1) Extract (`src/etl_extract_to_lake.py`)
 
 - Lit le referentiel des villes depuis la base.
-- Interroge OpenWeather et AQICN.
+- Interroge OpenWeather, AQICN, TomTom et Hub'Eau (chroniques temps réel limitées aux dernières 24h pour préserver le stockage).
 - Stocke les reponses brutes dans `raw_data_lake`.
 - Marque le statut des extractions via logs ETL.
 
 ### 2) Transform (`src/etl_transform_to_db.py`)
 
-- Lit les enregistrements non traites (`processed = false`).
+- Lit les enregistrements non traites (`processed = false`) par larges paquets (batch_size de 1000).
 - Groupe les donnees par ville et plage temporelle.
-- Fusionne meteo + qualite de l'air quand possible.
-- Charge dans le schema analytique (`fact_measures`).
+- Fusionne meteo + qualite de l'air quand possible, charge le trafic et l'eau séparément avec gestion silencieuse des conflits PostgreSQL.
+- Charge dans les schemas analytiques respectifs.
 - Marque les lignes source en `processed = true`.
 
 ### 3) Validate (`scripts/validate_data_quality.py`)
@@ -106,9 +109,10 @@ Details: `docs/SECURITE.md`.
 
 - `sql/star_schema.sql`
 - `sql/create_dim_date.sql`
+- `sql/mspr2_traffic_groundwater_schema.sql`
 - `sql/anomalies_table.sql`
 - `src/etl_extract_to_lake.py`
 - `src/etl_transform_to_db.py`
 - `scripts/validate_data_quality.py`
 
-Derniere mise a jour: `26 mars 2026`
+Derniere mise a jour: `17 avril 2026`

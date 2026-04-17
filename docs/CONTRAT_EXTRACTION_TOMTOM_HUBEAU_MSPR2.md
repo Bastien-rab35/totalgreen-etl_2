@@ -152,7 +152,7 @@ Exemple de `poids_categorie`:
 - TomTom representativite: 3 a 5 points par ville minimum.
 - TomTom synchronisation: reutiliser un meme `traffic_model_id` pour tous les appels d'une passe.
 - TomTom quota: retry avec backoff exponentiel sur `429`.
-- Hub'Eau pagination: suivre `next` jusqu'a epuisement.
+- Hub'Eau pagination: suivre `next` jusqu'a epuisement. (Note : avec une restriction sur `date_debut_mesure` aux dernieres 24h pour les TR pour eviter l'inflation de donnees).
 - Hub'Eau unites: conserver separement `groundwater_level_ngf_m` et `groundwater_depth_m`.
 - Hub'Eau TR: conserver `statut`/`qualification` quand disponibles et marquer `donnee_brute=true`.
 

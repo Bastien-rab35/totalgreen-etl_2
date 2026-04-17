@@ -4,11 +4,13 @@ Synthese des mesures de securite et des points RGPD pour TotalGreen ETL.
 
 ## Perimetre des donnees
 
-Le projet manipule des donnees environnementales:
+Le projet manipule des donnees environnementales et routières:
 
 - meteo (temperature, pression, humidite, vent)
 - qualite de l'air (AQI, PM2.5, PM10, NO2, O3, SO2, CO)
 - metadonnees geographiques publiques de villes
+- trafic routier (TomTom) (flux, ralentissements et incidents non personnels)
+- niveaux des nappes phréatiques (Hub'Eau)
 
 Aucune donnee personnelle utilisateur n'est collecte dans le flux ETL standard.
 
@@ -25,6 +27,7 @@ Variables sensibles attendues:
 ```env
 OPENWEATHER_API_KEY=...
 AQICN_API_KEY=...
+TOMTOM_API_KEY=...
 SUPABASE_URL=...
 SUPABASE_KEY=...
 ```
@@ -73,4 +76,4 @@ Politique recommandee (a adapter au besoin metier):
 - [ ] Politique formelle de purge automatisee
 - [ ] Revue periodique des droits de service
 
-Derniere mise a jour: `26 mars 2026`
+Derniere mise a jour: `17 avril 2026`

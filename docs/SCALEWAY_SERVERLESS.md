@@ -14,6 +14,7 @@ Executer les 3 taches (`extract`, `transform`, `validate`) sur une image Docker 
 - Variables sensibles:
   - `OPENWEATHER_API_KEY`
   - `AQICN_API_KEY`
+  - `TOMTOM_API_KEY`
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
 
@@ -35,6 +36,7 @@ Exemple:
 export PROJECT_ID="<project-id>"
 export OPENWEATHER_API_KEY="<...>"
 export AQICN_API_KEY="<...>"
+export TOMTOM_API_KEY="<...>"
 export SUPABASE_URL="https://<project>.supabase.co"
 export SUPABASE_KEY="<...>"
 
@@ -56,10 +58,10 @@ Variables utiles du script:
 ## Configuration manuelle (si necessaire)
 
 1. Construire et publier l'image `Dockerfile.serverless` dans le registry Scaleway.
-2. Creer les 4 secrets (`OPENWEATHER_API_KEY`, `AQICN_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`).
+2. Creer les 5 secrets (`OPENWEATHER_API_KEY`, `AQICN_API_KEY`, `TOMTOM_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`).
 3. Creer 3 definitions de jobs utilisant la meme image et les variables:
-   - `JOB_TYPE=extract`, cron `0 * * * *`
-   - `JOB_TYPE=transform`, cron `5 * * * *`
+   - `JOB_TYPE=extract`, cron `0 * * * *` (extraction API, limite historique Hub'Eau 24h)
+   - `JOB_TYPE=transform`, cron `5 * * * *` (transformation en base, limit batch_size=1000)
    - `JOB_TYPE=validate`, cron `15 0,12 * * *`
 4. Ajouter sur le job `validate`:
    - `VALIDATION_HOURS=24`
@@ -89,4 +91,4 @@ Le dispatch est gere par `scripts/scaleway/run_job.sh`.
 - Ne jamais commiter de cles dans Git.
 - Conserver une rotation reguliere des cles API.
 
-Derniere mise a jour: `26 mars 2026`
+Derniere mise a jour: `17 avril 2026`
