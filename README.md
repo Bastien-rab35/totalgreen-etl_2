@@ -1,13 +1,13 @@
 # TotalGreen ETL - MSPR2
 
-Pipeline ETL MSPR2 de collecte et de transformation de donnees environnementales (meteo OpenWeather + qualite de l'air AQICN) pour 10 villes francaises.
+Pipeline ETL MSPR2 de collecte et de transformation de donnees environnementales et routières (Météo OpenWeather, Qualite de l'air AQICN, Trafic TomTom, Nappes Phréatiques Hub'Eau) pour 10 villes francaises.
 
 ## Vue d'ensemble
 
 Le projet repose sur 3 etapes operationnelles:
 
-1. `extract` : collecte API et stockage brut dans `raw_data_lake` (JSONB).
-2. `transform` : transformation et chargement dans le Data Warehouse (`fact_measures` + dimensions).
+1. `extract` : collecte multi-APIs (limité à 24h d'historique pour Hub'Eau afin d'optimiser le volume) et stockage brut dans `raw_data_lake` (JSONB).
+2. `transform` : transformation par paquets (batch_size = 1000) et chargement dans le Data Warehouse (tables de faits + dimensions) avec gestion silencieuse des doublons.
 3. `validate` : controle qualite des donnees via `scripts/validate_data_quality.py`.
 
 Orchestration cible: Scaleway Serverless Jobs (cron).
@@ -19,6 +19,7 @@ Orchestration cible: Scaleway Serverless Jobs (cron).
 - Cles API:
   - `OPENWEATHER_API_KEY`
   - `AQICN_API_KEY`
+  - `TOMTOM_API_KEY`
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
 
@@ -35,6 +36,7 @@ Creer un fichier `.env` a la racine:
 ```env
 OPENWEATHER_API_KEY=...
 AQICN_API_KEY=...
+TOMTOM_API_KEY=...
 SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_KEY=...
 ```
@@ -47,17 +49,14 @@ Dans l'editeur SQL Supabase, executer dans cet ordre:
 -- 1) Schema principal (dimensions + faits + fonctions)
 \i sql/star_schema.sql
 
--- 2) Dimension date simplifiee (architecture cible)
+-- 2) Schema additionnel (Trafic et Eaux souterraines)
+\i sql/mspr2_traffic_groundwater_schema.sql
+
+-- 3) Dimension date simplifiee (architecture cible)
 \i sql/create_dim_date.sql
 
--- 3) Table de suivi des anomalies de validation
+-- 4) Table de suivi des anomalies de validation
 \i sql/anomalies_table.sql
-```
-
-Si une ancienne table `anomalies` existe deja avec un ancien schema:
-
-```sql
-\i sql/migrate_anomalies_table.sql
 ```
 
 ## Execution locale
@@ -71,6 +70,9 @@ python src/etl_transform_to_db.py
 
 # 3) Validation qualite
 python scripts/validate_data_quality.py --hours 24
+
+# En cas de retard du Data Lake, forcer une transformation totale:
+python scripts/process_all_remaining.py
 ```
 
 ## Orchestration Scaleway
@@ -79,7 +81,7 @@ python scripts/validate_data_quality.py --hours 24
 - Point d'entree: `scripts/scaleway/run_job.sh`
 - Jobs:
   - `JOB_TYPE=extract` (cron `0 * * * *`)
-  - `JOB_TYPE=transform` (cron `5 * * * *`)
+  - `JOB_TYPE=transform` (cron `5 * * * *` - paquets de 1000 lignes)
   - `JOB_TYPE=validate` (cron `15 0,12 * * *`)
 
 Provisioning automatise disponible via `deploy/scaleway/scw_provision_jobs.sh`.
@@ -118,6 +120,7 @@ MSPR 2/
 │   ├── create_dim_date.sql
 │   ├── migrate_anomalies_table.sql
 │   ├── queries_olap.sql
+│   ├── mspr2_traffic_groundwater_schema.sql
 │   └── star_schema.sql
 └── src/
     ├── config.py
@@ -138,18 +141,10 @@ python -c "from src.config import config; config.validate(); print('OK')"
 Verifier les non-traites dans le data lake:
 
 ```sql
-SELECT COUNT(*) AS pending
+SELECT source, COUNT(*) AS pending
 FROM raw_data_lake
-WHERE processed = false;
-```
-
-Verifier les dernieres mesures chargees:
-
-```sql
-SELECT captured_at, city_id, aqi_index, temperature
-FROM fact_measures
-ORDER BY captured_at DESC
-LIMIT 20;
+WHERE processed = false
+GROUP BY source;
 ```
 
 ## Documentation
@@ -164,5 +159,5 @@ LIMIT 20;
 
 ## Version
 
-- Version documentaire: `2.5.0`
-- Derniere mise a jour: `15 avril 2026`
+- Version documentaire: `2.6.0`
+- Derniere mise a jour: `17 avril 2026`
