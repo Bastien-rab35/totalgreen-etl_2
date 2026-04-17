@@ -1,0 +1,521 @@
+"""
+Service de gestion de la base de données Supabase
+"""
+import logging
+from datetime import datetime, timezone
+from typing import Dict, List, Optional
+from supabase import create_client, Client
+
+logger = logging.getLogger(__name__)
+
+class DatabaseService:
+    """Service de gestion de la persistance des données"""
+    
+    def __init__(self, supabase_url: str, supabase_key: str):
+        """
+        Initialise la connexion à Supabase
+        
+        Args:
+            supabase_url: URL du projet Supabase
+            supabase_key: Clé d'API de service
+        """
+        try:
+            # Compatibilité avec supabase-py 2.x
+            self.client: Client = create_client(
+                supabase_url=supabase_url,
+                supabase_key=supabase_key
+            )
+            logger.info("Connexion à Supabase établie")
+        except Exception as e:
+            logger.error(f"Erreur de connexion à Supabase: {e}")
+            raise
+    
+    def get_all_cities(self) -> List[Dict]:
+        """
+        Récupère toutes les villes du référentiel
+        
+        Returns:
+            Liste des villes avec leurs coordonnées
+        """
+        try:
+            response = self.client.table('cities').select('*').execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Erreur lors de la récupération des villes: {e}")
+            return []
+    
+    def insert_measure(self, city_id: int, weather_data: Dict, aqi_data: Dict, 
+                      raw_weather_id: int = None, raw_aqi_id: int = None) -> bool:
+        """
+        Insère une nouvelle mesure dans la base de données
+        
+        Args:
+            city_id: ID de la ville
+            weather_data: Données météorologiques
+            raw_weather_id: ID dans le data lake (données météo brutes)
+            raw_aqi_id: ID dans le data lake (données AQI brutes)
+            
+        Returns:
+            True si succès, False sinon
+        """
+        try:
+            measure = {
+                'city_id': city_id,
+                'raw_weather_id': raw_weather_id,
+                'raw_aqi_id': raw_aqi_id,
+                'captured_at': datetime.now(timezone.utc).isoformat(),
+                **weather_data,
+                **aqi_data
+            }
+            
+            # Nettoyage des valeurs None
+            measure = {k: v for k, v in measure.items() if v is not None}
+            
+            response = self.client.table('measures').insert(measure).execute()
+            logger.info(f"Mesure insérée pour city_id={city_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'insertion de la mesure: {e}")
+            return False
+    
+    def log_etl_execution(self, status: str, source: str, city_id: Optional[int] = None, 
+                          records_inserted: int = 0, error_message: Optional[str] = None,
+                          duration: float = 0) -> None:
+        """Enregistre l'exécution d'un job ETL"""
+        try:
+            log_entry = {
+                'execution_time': datetime.now(timezone.utc).isoformat(),
+                'status': status,
+                'source': source,
+                'city_id': city_id,
+                'records_inserted': records_inserted,
+                'error_message': error_message,
+                'execution_duration_seconds': duration
+            }
+            self.client.table('etl_logs').insert(log_entry).execute()
+            logger.info(f"ETL log: {status} - {source}")
+        except Exception as e:
+            logger.error(f"Erreur log ETL: {e}")
+    
+    def insert_measure_direct(self, measure: Dict) -> bool:
+        """
+        Insère directement une mesure (utilisé par le pipeline de transformation)
+        ANCIENNE VERSION: insère dans measures (normalisé)
+        
+        Args:
+            measure: Dictionnaire contenant les données de la mesure
+            
+        Returns:
+            True si succès, False sinon
+        """
+        try:
+            # Nettoyage des valeurs None
+            measure = {k: v for k, v in measure.items() if v is not None}
+            
+            response = self.client.table('measures').insert(measure).execute()
+            logger.info(f"Mesure insérée pour city_id={measure.get('city_id')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'insertion de la mesure: {e}")
+            return False
+    
+    def insert_into_star_schema(self, measure: Dict) -> bool:
+        """
+        Insère une mesure dans le modèle en étoile (fact_measures)
+        
+        Args:
+            measure: Dictionnaire contenant:
+                - city_id, captured_at (timestamp direct)
+                - temp, feels_like, humidity, etc. (météo)
+                - aqi_index, pm25, pm10, etc. (qualité air)
+                - weather_id (pour lookup dim_weather_condition)
+                - raw_weather_id, raw_aqi_id (traçabilité)
+                - is_anomaly, anomaly_score (détection ML)
+        
+        Returns:
+            True si succès, False sinon
+        """
+        try:
+            # 1. Récupérer weather_condition_id depuis dim_weather_condition
+            weather_id = measure.get('weather_id')
+            weather_condition_id = None
+            if weather_id is not None:
+                weather_result = self.client.table('dim_weather_condition').select('weather_condition_id').eq('weather_id', weather_id).limit(1).execute()
+                weather_condition_id = weather_result.data[0]['weather_condition_id'] if weather_result.data else None
+            
+            # 2. Calculer aqi_level_id (via fonction PostgreSQL)
+            aqi_index = measure.get('aqi_index')
+            aqi_level_id = None
+            if aqi_index is not None:
+                # Utiliser la fonction get_aqi_level_id définie dans star_schema.sql
+                aqi_result = self.client.rpc('get_aqi_level_id', {'aqi_value': aqi_index}).execute()
+                aqi_level_id = aqi_result.data if aqi_result.data else None
+            
+            # 3. Normaliser captured_at en UTC et calculer capture_date
+            captured_at = measure.get('captured_at')
+            capture_date = None
+            if captured_at:
+                if isinstance(captured_at, datetime):
+                    dt = captured_at
+                elif isinstance(captured_at, str):
+                    dt = datetime.fromisoformat(captured_at.replace('Z', '+00:00'))
+                else:
+                    raise ValueError(f"Format captured_at non supporte: {type(captured_at).__name__}")
+
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+
+                dt_utc = dt.astimezone(timezone.utc)
+
+                # Certaines APIs peuvent remonter une heure légèrement en avance.
+                # On borne au moment courant pour rester cohérent avec la validation.
+                now_utc = datetime.now(timezone.utc)
+                if dt_utc > now_utc:
+                    logger.warning(
+                        "captured_at dans le futur detecte (city_id=%s, captured_at=%s) -> clamp a now",
+                        measure.get('city_id'),
+                        dt_utc.isoformat()
+                    )
+                    dt_utc = now_utc.replace(microsecond=0)
+
+                captured_at = dt_utc.isoformat()
+                capture_date = dt_utc.date().isoformat()  # Format YYYY-MM-DD
+            
+            # 4. Construire l'enregistrement pour fact_measures
+            fact_measure = {
+                'captured_at': captured_at,  # Timestamp exact
+                'capture_date': capture_date,  # Date pour FK vers dim_date
+                'city_id': measure.get('city_id'),
+                'weather_condition_id': weather_condition_id,
+                'aqi_level_id': aqi_level_id,
+                
+                # Métriques météo
+                'temperature': measure.get('temp'),
+                'feels_like': measure.get('feels_like'),
+                'pressure': measure.get('pressure'),
+                'humidity': measure.get('humidity'),
+                'wind_speed': measure.get('wind_speed'),
+                'wind_deg': measure.get('wind_deg'),
+                'wind_gust': measure.get('wind_gust'),
+                'clouds': measure.get('clouds'),
+                'visibility': measure.get('visibility'),
+                'rain_1h': measure.get('rain_1h', 0),
+                'snow_1h': measure.get('snow_1h', 0),
+                
+                # Métriques qualité air
+                'aqi_index': aqi_index,
+                'pm25': measure.get('pm25'),
+                'pm10': measure.get('pm10'),
+                'no2': measure.get('no2'),
+                'o3': measure.get('o3'),
+                'so2': measure.get('so2'),
+                'co': measure.get('co'),
+                
+                # Détection d'anomalies ML
+                'is_anomaly': measure.get('is_anomaly', False),
+                'anomaly_score': measure.get('anomaly_score'),
+                
+                # Traçabilité
+                'raw_weather_id': measure.get('raw_weather_id'),
+                'raw_aqi_id': measure.get('raw_aqi_id')
+            }
+            
+            # Nettoyage des None
+            fact_measure = {k: v for k, v in fact_measure.items() if v is not None}
+            
+            # 5. Upsert logique: si une mesure existe déjà pour (city_id, captured_at),
+            # on la met à jour pour éviter les doublons tout en enrichissant les champs.
+            existing = (self.client.table('fact_measures')
+                        .select('measure_id')
+                        .eq('city_id', fact_measure.get('city_id'))
+                        .eq('captured_at', fact_measure.get('captured_at'))
+                        .order('measure_id', desc=True)
+                        .limit(1)
+                        .execute())
+
+            existing_rows = existing.data or []
+            if existing_rows:
+                existing_id = existing_rows[0]['measure_id']
+                update_payload = {
+                    k: v for k, v in fact_measure.items()
+                    if k not in ('city_id', 'captured_at') and v is not None
+                }
+
+                if update_payload:
+                    self.client.table('fact_measures').update(update_payload).eq('measure_id', existing_id).execute()
+
+                logger.info(f"~ Mesure existante mise à jour (measure_id={existing_id})")
+            else:
+                self.client.table('fact_measures').insert(fact_measure).execute()
+                logger.info(f"✓ Mesure insérée dans modèle en étoile - city_id={measure.get('city_id')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur insertion modèle en étoile: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def get_latest_measures(self, city_id: int, limit: int = 10) -> List[Dict]:
+        """Récupère les dernières mesures"""
+        try:
+            response = (self.client.table('measures')
+                       .select('*')
+                       .eq('city_id', city_id)
+                       .order('captured_at', desc=True)
+                       .limit(limit)
+                       .execute())
+            return response.data
+        except Exception as e:
+            logger.error(f"Erreur récupération mesures: {e}")
+            return []
+    
+    def get_city_statistics(self, city_name: str, days: int = 30) -> Optional[Dict]:
+        """
+        Calcule les statistiques historiques pour une ville.
+        Utilisé pour la détection d'anomalies statistiques.
+        
+        Args:
+            city_name: Nom de la ville
+            days: Nombre de jours d'historique
+            
+        Returns:
+            Dictionnaire avec mean/std par champ
+        """
+        try:
+            # Requête RPC pour calculer les stats côté Supabase
+            # Plus performant que récupérer toutes les données
+            response = self.client.rpc(
+                'get_city_stats',
+                {'p_city_name': city_name, 'p_days': days}
+            ).execute()
+            
+            if response.data and len(response.data) > 0:
+                return response.data[0]
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Erreur calcul statistiques pour {city_name}: {e}")
+            return None
+    
+    def get_historical_data_for_ml(self, limit: int = 5000) -> Optional[List[List]]:
+        """
+        Récupère les données historiques pour entraîner le modèle ML.
+        
+        Args:
+            limit: Nombre maximum de mesures à récupérer
+            
+        Returns:
+            Liste de listes [temperature, humidity, pressure, aqi, pm2_5, pm10]
+        """
+        try:
+            response = (self.client.table('fact_measures')
+                       .select('temperature, humidity, pressure, aqi_index, pm25, pm10')
+                       .is_('is_anomaly', 'false')  # Seulement les mesures normales
+                       .order('captured_at', desc=True)
+                       .limit(limit)
+                       .execute())
+            
+            if not response.data:
+                return None
+            
+            # Convertir en array numpy-compatible
+            data = []
+            for row in response.data:
+                if all(row.get(k) is not None for k in ['temperature', 'humidity', 'pressure', 'aqi_index']):
+                    data.append([
+                        row.get('temperature', 0),
+                        row.get('humidity', 0),
+                        row.get('pressure', 0),
+                        row.get('aqi_index', 0),
+                        row.get('pm25', 0),
+                        row.get('pm10', 0)
+                    ])
+            
+            logger.info(f"✓ {len(data)} mesures historiques récupérées pour ML")
+            return data if len(data) >= 100 else None
+            
+        except Exception as e:
+            logger.error(f"Erreur récupération données ML: {e}")
+            return None
+    
+    def insert_anomaly(self, anomaly: Dict) -> bool:
+        """
+        Insère une anomalie détectée dans la table anomalies.
+        
+        Args:
+            anomaly: Dictionnaire avec les infos de l'anomalie
+            
+        Returns:
+            True si insertion réussie
+        """
+        try:
+            response = self.client.table('anomalies').insert(anomaly).execute()
+            logger.debug(f"✓ Anomalie enregistrée: {anomaly.get('anomaly_type')} - {anomaly.get('field_name')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Erreur insertion anomalie: {e}")
+            return False
+
+    def _resolve_date_and_hour(self, dt: datetime) -> Optional[tuple[str, int]]:
+        """Résout un date_id (date_value) et hour depuis un datetime pour MSPR 2"""
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        dt_utc = dt.astimezone(timezone.utc)
+        
+        # Arrondir à l'heure
+        date_str = dt_utc.date().isoformat()
+        hour = dt_utc.hour
+        
+        try:
+            # Vérifie simplement si la date existe dans dim_date
+            res = self.client.table('dim_date').select('date_value').eq('date_value', date_str).limit(1).execute()
+            if res.data:
+                return (res.data[0]['date_value'], hour)
+            return None
+        except Exception as e:
+            logger.error(f"Erreur résolution date_value et hour: {e}")
+            return None
+
+    def upsert_traffic_point(self, tp: Dict) -> Optional[int]:
+        """Insère ou met à jour un point de trafic (dim_traffic_point)"""
+        try:
+            res = self.client.table('dim_traffic_point').select('traffic_point_id').eq('city_id', tp['city_id']).eq('code_point', tp['code_point']).execute()
+            if res.data:
+                return res.data[0]['traffic_point_id']
+            
+            insert_res = self.client.table('dim_traffic_point').insert(tp).execute()
+            return insert_res.data[0]['traffic_point_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_traffic_point: {e}")
+            return None
+
+    def insert_fact_traffic_flow(self, flow: Dict) -> bool:
+        """Insère une ligne dans fact_traffic_flow_hourly"""
+        try:
+            self.client.table('fact_traffic_flow_hourly').insert(flow).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                logger.warning(f"Entrée fact_traffic_flow_hourly ignorée (déjà existante).")
+                return True
+            logger.error(f"Erreur insert_fact_traffic_flow: {e}")
+            return False
+
+    def upsert_incident_category(self, cat: Dict) -> Optional[int]:
+        """Résout une catégorie d'incident via icon_category (dim_incident_category)"""
+        try:
+            res = self.client.table('dim_incident_category').select('incident_category_id').eq('icon_category', cat['icon_category']).execute()
+            if res.data:
+                return res.data[0]['incident_category_id']
+            
+            insert_res = self.client.table('dim_incident_category').insert(cat).execute()
+            return insert_res.data[0]['incident_category_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_incident_category: {e}")
+            return None
+
+    def insert_fact_traffic_incident(self, inc: Dict) -> bool:
+        """Insère ou met à jour une ligne dans fact_traffic_incident_hourly par aggrégation"""
+        try:
+            # check if exists to aggregate
+            res = self.client.table('fact_traffic_incident_hourly').select('*').eq('date_value', inc['date_value']).eq('hour_of_day', inc['hour_of_day']).eq('city_id', inc['city_id']).eq('incident_category_id', inc['incident_category_id']).execute()
+            if res.data:
+                row = res.data[0]
+                new_count = row['nombre_incidents'] + 1
+                new_delay = row['retard_total_s'] + inc.get('retard_total_s', 0)
+                new_avg_delay = new_delay / new_count
+                new_score = max(row.get('incident_severity_score', 0), inc.get('incident_severity_score', 0))
+                
+                self.client.table('fact_traffic_incident_hourly').update({
+                    'nombre_incidents': new_count,
+                    'retard_total_s': new_delay,
+                    'retard_moyen_s': new_avg_delay,
+                    'incident_severity_score': new_score
+                }).eq('traffic_incident_id', row['traffic_incident_id']).execute()
+            else:
+                inc['retard_moyen_s'] = inc.get('retard_total_s', 0)
+                self.client.table('fact_traffic_incident_hourly').insert(inc).execute()
+            return True
+        except Exception as e:
+            logger.error(f"Erreur insert_fact_traffic_incident: {e}")
+            return False
+
+    def upsert_groundwater_station(self, st: Dict) -> Optional[int]:
+        """Insère ou met à jour une station (dim_groundwater_station)"""
+        try:
+            res = self.client.table('dim_groundwater_station').select('groundwater_station_id').eq('code_bss', st['code_bss']).execute()
+            if res.data:
+                return res.data[0]['groundwater_station_id']
+            
+            insert_res = self.client.table('dim_groundwater_station').insert(st).execute()
+            return insert_res.data[0]['groundwater_station_id'] if insert_res.data else None
+        except Exception as e:
+            logger.error(f"Erreur upsert_groundwater_station: {e}")
+            return None
+
+    def insert_fact_groundwater(self, gw: Dict) -> bool:
+        """Insère une ligne dans fact_groundwater_realtime"""
+        try:
+            self.client.table('fact_groundwater_realtime').insert(gw).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                logger.warning(f"Entrée fact_groundwater_realtime ignorée (déjà existante).")
+                return True
+            logger.error(f"Erreur insert_fact_groundwater: {e}")
+            return False
+
+
+    def upsert_eau_potable_commune(self, code_commune: str, nom_commune: str) -> Optional[int]:
+        try:
+            res = self.client.table('dim_eau_potable_commune').select('commune_id').eq('code_commune', code_commune).execute()
+            if res.data:
+                return res.data[0]['commune_id']
+            insert_res = self.client.table('dim_eau_potable_commune').insert({
+                'code_commune': code_commune,
+                'nom_commune': nom_commune
+            }).execute()
+            return insert_res.data[0]['commune_id'] if insert_res.data else None
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Erreur upsert_eau_potable_commune: {e}")
+            return None
+
+    def insert_fact_eau_potable(self, data: dict) -> bool:
+        try:
+            self.client.table('fact_eau_potable').insert(data).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                return True
+            import logging
+            logging.getLogger(__name__).error(f"Erreur insert_fact_eau_potable: {e}")
+            return False
+
+    def upsert_cours_deau_station(self, st: dict) -> Optional[int]:
+        try:
+            res = self.client.table('dim_cours_deau_station').select('station_id').eq('code_station', st['code_station']).execute()
+            if res.data:
+                return res.data[0]['station_id']
+            insert_res = self.client.table('dim_cours_deau_station').insert(st).execute()
+            return insert_res.data[0]['station_id'] if insert_res.data else None
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Erreur upsert_cours_deau_station: {e}")
+            return None
+
+    def insert_fact_cours_deau_observation(self, data: dict) -> bool:
+        try:
+            self.client.table('fact_cours_deau_observation').insert(data).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                return True
+            import logging
+            logging.getLogger(__name__).error(f"Erreur insert_fact_cours_deau_observation: {e}")
+            return False
