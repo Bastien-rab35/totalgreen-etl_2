@@ -9,7 +9,7 @@ import os
 import numpy as np
 from datetime import datetime, timezone
 
-from config import config
+from config import config, setup_logging
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService
 from services.anomaly_detection_service import AnomalyDetectionService, format_anomaly_for_db
 
@@ -17,14 +17,7 @@ from services.anomaly_detection_service import AnomalyDetectionService, format_a
 os.makedirs('../logs', exist_ok=True)
 
 # Configuration logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('../logs/etl_transform.log'),
-        logging.StreamHandler()
-    ]
-)
+setup_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -387,10 +380,12 @@ class TransformToDB:
             collected_at_str = entry.get('collected_at', datetime.now(timezone.utc).isoformat())
             dt = datetime.fromisoformat(collected_at_str.replace('Z', '+00:00'))
             
-            time_id = self.db_service._resolve_time_id(dt)
-            if not time_id:
-                logger.error(f"Impossible de résoudre le time_id pour {city_name} à {collected_at_str}")
+            time_info = self.db_service._resolve_date_and_hour(dt)
+            if not time_info:
+                logger.error(f"Impossible de résoudre la date pour {city_name} à {collected_at_str}")
                 return False
+                
+            date_val, hour_val = time_info
                 
             if source == 'tomtom_flow':
                 tp_id = self.db_service.upsert_traffic_point({
@@ -403,10 +398,11 @@ class TransformToDB:
                 })
                 if not tp_id: return False
                 return self.db_service.insert_fact_traffic_flow({
-                    'time_id': time_id,
+                    'date_value': date_val,
+                    'hour_of_day': hour_val,
                     'city_id': city_id,
                     'traffic_point_id': tp_id,
-                    'traffic_model_id': raw.get('traffic_model_id'),
+                    'traffic_model_id': raw.get('traffic_model_id', '')[:30] if raw.get('traffic_model_id') else None,
                     'vitesse_actuelle_kmph': raw.get('vitesse_actuelle_kmph'),
                     'vitesse_fluide_kmph': raw.get('vitesse_fluide_kmph'),
                     'temps_trajet_actuel_s': raw.get('temps_trajet_actuel_s'),
@@ -415,7 +411,6 @@ class TransformToDB:
                     'speed_ratio': raw.get('speed_ratio'),
                     'route_fermee': raw.get('route_fermee', False),
                     'indice_confiance': raw.get('indice_confiance'),
-                    'raw_data_id': entry['id']
                 })
                 
             elif source == 'tomtom_incidents':
@@ -433,18 +428,15 @@ class TransformToDB:
                 score = 0.5 * gravite + 0.3 * math.log(1 + retard_s) + 0.2 * poids
                 
                 return self.db_service.insert_fact_traffic_incident({
-                    'time_id': time_id,
+                    'date_value': date_val,
+                    'hour_of_day': hour_val,
                     'city_id': city_id,
                     'incident_category_id': cat_id,
-                    'traffic_model_id': raw.get('traffic_model_id'),
-                    'incident_id_ext': raw.get('incident_id'),
-                    'gravite_retard': gravite,
-                    'retard_s': retard_s,
-                    'longueur_m': raw.get('longueur_m'),
+                    'traffic_model_id': raw.get('traffic_model_id', '')[:30] if raw.get('traffic_model_id') else None,
+                    'nombre_incidents': 1,
+                    'retard_total_s': retard_s,
+                    'longueur_moyenne_m': raw.get('longueur_m', 0),
                     'incident_severity_score': round(score, 2),
-                    'debut_incident_utc': raw.get('debut_incident_utc'),
-                    'fin_incident_utc': raw.get('fin_incident_utc'),
-                    'raw_data_id': entry['id']
                 })
             return False
         except Exception as e:
@@ -465,7 +457,7 @@ class TransformToDB:
                     'code_bss': raw.get('code_bss'),
                     'bss_id': raw.get('bss_id'),
                     'urn_bss': raw.get('urn_bss'),
-                    'city_id': city_id,
+                    'city_id_proche': city_id,
                     'nom_station': raw.get('nom_station'),
                     'latitude': raw.get('latitude'),
                     'longitude': raw.get('longitude'),
@@ -473,26 +465,32 @@ class TransformToDB:
                 }) is not None
                 
             elif source == 'hubeau_chroniques_tr':
-                time_id = self.db_service._resolve_time_id(dt)
+                # Utiliser la VRAIE date de la mesure, pas la date de collecte de l'API
+                real_date_str = raw.get('date_mesure_utc')
+                if real_date_str:
+                    dt = datetime.fromisoformat(real_date_str.replace('Z', '+00:00'))
+                    
+                time_info = self.db_service._resolve_date_and_hour(dt)
                 st_id = self.db_service.upsert_groundwater_station({'code_bss': raw.get('code_bss')})
-                if not time_id or not st_id: return False
+                if not time_info or not st_id: return False
                 
+                date_val, hour_val = time_info
                 return self.db_service.insert_fact_groundwater({
-                    'time_id': time_id,
+                    'date_value': date_val,
+                    'hour_of_day': hour_val,
                     'groundwater_station_id': st_id,
                     'groundwater_level_ngf_m': raw.get('groundwater_level_ngf_m'),
                     'groundwater_depth_m': raw.get('groundwater_depth_m'),
-                    'timestamp_mesure': raw.get('timestamp_mesure'),
-                    'statut_mesure': raw.get('statut_mesure'),
-                    'qualification_mesure': raw.get('qualification_mesure', ''),
-                    'raw_data_id': entry['id']
+                    'altitude_repere_m': raw.get('altitude_repere_m'),
+                    'altitude_station_m': raw.get('altitude_station_m'),
+                    'source_timestamp': raw.get('timestamp_mesure')
                 })
             return False
         except Exception as e:
             logger.error(f"Erreur Hubeau transform {entry.get('id')}: {e}")
             return False
             
-    def run(self, batch_size: int = 100) -> dict:
+    def run(self, batch_size: int = 1000) -> dict:
         """Traite les données non traitées du Data Lake en combinant météo + AQI"""
         start_time = time.time()
         logger.info("="*60)

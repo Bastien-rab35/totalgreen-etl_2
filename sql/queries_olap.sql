@@ -16,7 +16,7 @@ SELECT
     ROUND(AVG(fm.humidity), 2) AS humidite_moyenne,
     COUNT(*) AS nb_mesures
 FROM fact_measures fm
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 JOIN dim_city dc ON fm.city_id = dc.city_id
 WHERE dt.year IN (2025, 2026)
 GROUP BY dc.city_name, dt.year, dt.month, dt.month_name
@@ -24,14 +24,14 @@ ORDER BY dc.city_name, dt.year, dt.month;
 
 -- Évolution horaire de la température (pattern journalier)
 SELECT 
-    dt.hour,
+    fm.capture_hour,
     ROUND(AVG(fm.temperature), 2) AS temp_moyenne,
     ROUND(MIN(fm.temperature), 2) AS temp_min,
     ROUND(MAX(fm.temperature), 2) AS temp_max
 FROM fact_measures fm
-JOIN dim_time dt ON fm.time_id = dt.time_id
-GROUP BY dt.hour
-ORDER BY dt.hour;
+JOIN dim_date dt ON fm.capture_date = dt.date_value
+GROUP BY fm.capture_hour
+ORDER BY fm.capture_hour;
 
 -- Comparaison weekend vs semaine
 SELECT 
@@ -39,7 +39,7 @@ SELECT
     ROUND(AVG(fm.aqi_index), 0) AS aqi_moyen,
     COUNT(*) AS nb_mesures
 FROM fact_measures fm
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 WHERE fm.aqi_index IS NOT NULL
 GROUP BY dt.is_weekend;
 
@@ -135,7 +135,7 @@ SELECT
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
 JOIN dim_air_quality_level daql ON fm.aqi_level_id = daql.aqi_level_id
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 WHERE daql.aqi_min > 100
 GROUP BY dc.city_name, daql.level_name
 ORDER BY nb_alertes DESC;
@@ -153,7 +153,7 @@ SELECT
     ROUND(AVG(fm.aqi_index), 0) AS aqi_moyen
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 JOIN dim_air_quality_level daql ON fm.aqi_level_id = daql.aqi_level_id
 WHERE dt.year = 2026
 GROUP BY CUBE(dc.city_name, dt.month, dt.month_name, daql.level_name)
@@ -179,7 +179,7 @@ SELECT
     ROUND(AVG(fm.no2), 2) AS no2_moyen,
     COUNT(*) AS nb_mesures
 FROM fact_measures fm
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 WHERE fm.pm25 IS NOT NULL
 GROUP BY dt.season
 ORDER BY 
@@ -197,7 +197,7 @@ ORDER BY
 -- Dashboard global dernières 24h
 WITH last_24h AS (
     SELECT * FROM fact_measures fm
-    JOIN dim_time dt ON fm.time_id = dt.time_id
+    JOIN dim_date dt ON fm.capture_date = dt.date_value
     WHERE dt.full_date >= NOW() - INTERVAL '24 hours'
 )
 SELECT 
@@ -230,9 +230,9 @@ SELECT
     fm.aqi_index
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 LEFT JOIN dim_weather_condition dwc ON fm.weather_condition_id = dwc.weather_condition_id
-WHERE dt.full_date = (SELECT MAX(full_date) FROM dim_time WHERE full_date <= NOW())
+WHERE dt.full_date = (SELECT MAX(full_date) FROM dim_date WHERE full_date <= NOW())
 ORDER BY fm.temperature DESC
 LIMIT 5;
 
@@ -254,7 +254,7 @@ SELECT
     COUNT(*) AS measure_count
 FROM fact_measures fm
 JOIN dim_city dc ON fm.city_id = dc.city_id
-JOIN dim_time dt ON fm.time_id = dt.time_id
+JOIN dim_date dt ON fm.capture_date = dt.date_value
 GROUP BY dc.city_id, dc.city_name, dt.year, dt.month, dt.month_name;
 
 CREATE UNIQUE INDEX ON mv_monthly_avg (city_id, year, month);

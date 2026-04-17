@@ -8,21 +8,14 @@ import os
 from datetime import datetime
 from typing import Tuple
 
-from config import config
+from config import config, setup_logging
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService
 
 # Création du dossier logs
 os.makedirs('../logs', exist_ok=True)
 
 # Configuration logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('../logs/etl.log'),
-        logging.StreamHandler()
-    ]
-)
+setup_logging()
 
 logger = logging.getLogger(__name__)
 

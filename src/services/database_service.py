@@ -361,8 +361,8 @@ class DatabaseService:
             logger.error(f"Erreur insertion anomalie: {e}")
             return False
 
-    def _resolve_time_id(self, dt: datetime) -> Optional[int]:
-        """Résout un time_id dans dim_time depuis un datetime"""
+    def _resolve_date_and_hour(self, dt: datetime) -> Optional[tuple[str, int]]:
+        """Résout un date_id (date_value) et hour depuis un datetime pour MSPR 2"""
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         dt_utc = dt.astimezone(timezone.utc)
@@ -372,12 +372,13 @@ class DatabaseService:
         hour = dt_utc.hour
         
         try:
-            res = self.client.table('dim_time').select('time_id').eq('date_only', date_str).eq('hour', hour).limit(1).execute()
+            # Vérifie simplement si la date existe dans dim_date
+            res = self.client.table('dim_date').select('date_value').eq('date_value', date_str).limit(1).execute()
             if res.data:
-                return res.data[0]['time_id']
+                return (res.data[0]['date_value'], hour)
             return None
         except Exception as e:
-            logger.error(f"Erreur résolution time_id: {e}")
+            logger.error(f"Erreur résolution date_value et hour: {e}")
             return None
 
     def upsert_traffic_point(self, tp: Dict) -> Optional[int]:
@@ -399,6 +400,9 @@ class DatabaseService:
             self.client.table('fact_traffic_flow_hourly').insert(flow).execute()
             return True
         except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                logger.warning(f"Entrée fact_traffic_flow_hourly ignorée (déjà existante).")
+                return True
             logger.error(f"Erreur insert_fact_traffic_flow: {e}")
             return False
 
@@ -416,9 +420,26 @@ class DatabaseService:
             return None
 
     def insert_fact_traffic_incident(self, inc: Dict) -> bool:
-        """Insère une ligne dans fact_traffic_incident_hourly"""
+        """Insère ou met à jour une ligne dans fact_traffic_incident_hourly par aggrégation"""
         try:
-            self.client.table('fact_traffic_incident_hourly').insert(inc).execute()
+            # check if exists to aggregate
+            res = self.client.table('fact_traffic_incident_hourly').select('*').eq('date_value', inc['date_value']).eq('hour_of_day', inc['hour_of_day']).eq('city_id', inc['city_id']).eq('incident_category_id', inc['incident_category_id']).execute()
+            if res.data:
+                row = res.data[0]
+                new_count = row['nombre_incidents'] + 1
+                new_delay = row['retard_total_s'] + inc.get('retard_total_s', 0)
+                new_avg_delay = new_delay / new_count
+                new_score = max(row.get('incident_severity_score', 0), inc.get('incident_severity_score', 0))
+                
+                self.client.table('fact_traffic_incident_hourly').update({
+                    'nombre_incidents': new_count,
+                    'retard_total_s': new_delay,
+                    'retard_moyen_s': new_avg_delay,
+                    'incident_severity_score': new_score
+                }).eq('traffic_incident_id', row['traffic_incident_id']).execute()
+            else:
+                inc['retard_moyen_s'] = inc.get('retard_total_s', 0)
+                self.client.table('fact_traffic_incident_hourly').insert(inc).execute()
             return True
         except Exception as e:
             logger.error(f"Erreur insert_fact_traffic_incident: {e}")
@@ -443,6 +464,9 @@ class DatabaseService:
             self.client.table('fact_groundwater_realtime').insert(gw).execute()
             return True
         except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                logger.warning(f"Entrée fact_groundwater_realtime ignorée (déjà existante).")
+                return True
             logger.error(f"Erreur insert_fact_groundwater: {e}")
             return False
 

@@ -2,7 +2,7 @@
 -- MSPR2 - Extensions schema pour TomTom (Traffic) + Hub'Eau
 -- ============================================================
 -- Objectif: ajouter des structures analytiques sans casser le schema existant.
--- Ce script s'appuie sur dim_city et dim_time deja presentes.
+-- Ce script s'appuie sur dim_city et dim_date deja presentes.
 
 -- ==============================
 -- 1) REFERENTIEL TRAFIC TOMTOM
@@ -56,7 +56,8 @@ ON CONFLICT (icon_category) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS fact_traffic_flow_hourly (
     traffic_flow_id BIGSERIAL PRIMARY KEY,
-    time_id INTEGER NOT NULL REFERENCES dim_time(time_id),
+    date_value DATE NOT NULL REFERENCES dim_date(date_value),
+    hour_of_day INTEGER NOT NULL,
     city_id INTEGER NOT NULL REFERENCES dim_city(city_id),
     traffic_point_id INTEGER NOT NULL REFERENCES dim_traffic_point(traffic_point_id),
 
@@ -76,10 +77,11 @@ CREATE TABLE IF NOT EXISTS fact_traffic_flow_hourly (
     source_version VARCHAR(20),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE (time_id, traffic_point_id)
+    UNIQUE (date_value, hour_of_day, traffic_point_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_fact_traffic_flow_time ON fact_traffic_flow_hourly(time_id);
+CREATE INDEX IF NOT EXISTS idx_fact_traffic_flow_date ON fact_traffic_flow_hourly(date_value);
+CREATE INDEX IF NOT EXISTS idx_fact_traffic_flow_hour ON fact_traffic_flow_hourly(hour_of_day);
 CREATE INDEX IF NOT EXISTS idx_fact_traffic_flow_city ON fact_traffic_flow_hourly(city_id);
 CREATE INDEX IF NOT EXISTS idx_fact_traffic_flow_point ON fact_traffic_flow_hourly(traffic_point_id);
 
@@ -91,7 +93,8 @@ COMMENT ON TABLE fact_traffic_flow_hourly IS 'Mesures TomTom Flow par point et p
 
 CREATE TABLE IF NOT EXISTS fact_traffic_incident_hourly (
     traffic_incident_id BIGSERIAL PRIMARY KEY,
-    time_id INTEGER NOT NULL REFERENCES dim_time(time_id),
+    date_value DATE NOT NULL REFERENCES dim_date(date_value),
+    hour_of_day INTEGER NOT NULL,
     city_id INTEGER NOT NULL REFERENCES dim_city(city_id),
     incident_category_id INTEGER NOT NULL REFERENCES dim_incident_category(incident_category_id),
 
@@ -106,10 +109,11 @@ CREATE TABLE IF NOT EXISTS fact_traffic_incident_hourly (
     traffic_model_id VARCHAR(30),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE (time_id, city_id, incident_category_id)
+    UNIQUE (date_value, hour_of_day, city_id, incident_category_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_fact_traffic_incident_time ON fact_traffic_incident_hourly(time_id);
+CREATE INDEX IF NOT EXISTS idx_fact_traffic_incident_date ON fact_traffic_incident_hourly(date_value);
+CREATE INDEX IF NOT EXISTS idx_fact_traffic_incident_hour ON fact_traffic_incident_hourly(hour_of_day);
 CREATE INDEX IF NOT EXISTS idx_fact_traffic_incident_city ON fact_traffic_incident_hourly(city_id);
 
 COMMENT ON TABLE fact_traffic_incident_hourly IS 'Pression incidents TomTom par ville et categorie';
@@ -190,7 +194,8 @@ COMMENT ON TABLE fact_groundwater_daily IS 'Serie historique quotidienne niveaux
 
 CREATE TABLE IF NOT EXISTS fact_groundwater_realtime (
     groundwater_realtime_id BIGSERIAL PRIMARY KEY,
-    time_id INTEGER NOT NULL REFERENCES dim_time(time_id),
+    date_value DATE NOT NULL REFERENCES dim_date(date_value),
+    hour_of_day INTEGER NOT NULL,
     groundwater_station_id BIGINT NOT NULL REFERENCES dim_groundwater_station(groundwater_station_id),
 
     groundwater_level_ngf_m DECIMAL(12,4),
@@ -203,10 +208,11 @@ CREATE TABLE IF NOT EXISTS fact_groundwater_realtime (
     source_timestamp BIGINT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
-    UNIQUE (time_id, groundwater_station_id)
+    UNIQUE (date_value, hour_of_day, groundwater_station_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_fact_groundwater_rt_time ON fact_groundwater_realtime(time_id);
+CREATE INDEX IF NOT EXISTS idx_fact_groundwater_rt_date ON fact_groundwater_realtime(date_value);
+CREATE INDEX IF NOT EXISTS idx_fact_groundwater_rt_hour ON fact_groundwater_realtime(hour_of_day);
 CREATE INDEX IF NOT EXISTS idx_fact_groundwater_rt_station ON fact_groundwater_realtime(groundwater_station_id);
 
 COMMENT ON TABLE fact_groundwater_realtime IS 'Chroniques Hub''Eau quasi temps reel';

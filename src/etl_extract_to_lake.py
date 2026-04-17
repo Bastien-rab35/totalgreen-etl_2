@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
-from config import config
+from config import config, setup_logging
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService, TomTomService, HubeauService
 import uuid
 
@@ -17,14 +17,7 @@ import uuid
 os.makedirs('../logs', exist_ok=True)
 
 # Configuration logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('../logs/etl_extract.log'),
-        logging.StreamHandler()
-    ]
-)
+setup_logging()
 
 logger = logging.getLogger(__name__)
 

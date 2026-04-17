@@ -6,7 +6,7 @@ Historique des evolutions principales du projet.
 - **TomTom Service** : Ajout de l'extraction API du trafic routier (`tomtom_flow`) et des incidents (`tomtom_incidents`) avec bounding box par ville, gestion des quotas 429 et calcul de KPI sur la congestion.
 - **Hub'Eau Service** : Ajout de l'extraction API des nappes phréatiques (stations et `chroniques_tr` Temps Réel), gestion de la pagination et de la bounding box.
 - **ETL Extract** : Intégration de ces deux services à l'extracteur global (`etl_extract_to_lake.py`) avec stockage dans Supabase sous forme de JSON brut.
-- **ETL Transform** : Modification de la transformation combinée (`etl_transform_to_db.py`) pour traiter analytiquement le trafic et l'eau. Ajout de la formule mathématique `incident_severity_score` et du dimensionnement `_resolve_time_id`.
+- **ETL Transform** : Modification de la transformation combinée (`etl_transform_to_db.py`) pour traiter analytiquement le trafic et l'eau. Ajout de la formule mathématique `incident_severity_score` et du dimensionnement `_resolve_date_and_hour`.
 - **Database Service** : Intégration et requêtage vers les 5 nouvelles tables (`dim_traffic_point`, `dim_incident_category`, `fact_traffic_flow_hourly`, etc.).
 
 ## 2.5.1 - Cadrage integration TomTom et Hub Eau (15 avril 2026)

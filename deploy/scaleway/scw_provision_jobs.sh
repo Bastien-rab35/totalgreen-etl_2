@@ -24,6 +24,8 @@ JOB_TIMEOUT="${JOB_TIMEOUT:-900s}"
 # Required runtime secrets
 OPENWEATHER_API_KEY="${OPENWEATHER_API_KEY:-}"
 AQICN_API_KEY="${AQICN_API_KEY:-}"
+TOMTOM_API_KEY="${TOMTOM_API_KEY:-}"
+
 SUPABASE_URL="${SUPABASE_URL:-}"
 SUPABASE_KEY="${SUPABASE_KEY:-}"
 
@@ -49,7 +51,7 @@ if [[ -z "$PROJECT_ID" ]]; then
   exit 1
 fi
 
-for required_var in OPENWEATHER_API_KEY AQICN_API_KEY SUPABASE_URL SUPABASE_KEY; do
+for required_var in OPENWEATHER_API_KEY AQICN_API_KEY TOMTOM_API_KEY SUPABASE_URL SUPABASE_KEY; do
   if [[ -z "${!required_var}" ]]; then
     echo "Missing env var: ${required_var}" >&2
     exit 1
@@ -86,6 +88,8 @@ create_or_update_secret() {
 echo "==> 3) Create/update secrets in Secret Manager"
 SECRET_OPENWEATHER_ID="$(create_or_update_secret OPENWEATHER_API_KEY "$OPENWEATHER_API_KEY")"
 SECRET_AQICN_ID="$(create_or_update_secret AQICN_API_KEY "$AQICN_API_KEY")"
+SECRET_TOMTOM_ID="$(create_or_update_secret TOMTOM_API_KEY "$TOMTOM_API_KEY")"
+
 SECRET_SUPABASE_URL_ID="$(create_or_update_secret SUPABASE_URL "$SUPABASE_URL")"
 SECRET_SUPABASE_KEY_ID="$(create_or_update_secret SUPABASE_KEY "$SUPABASE_KEY")"
 
@@ -205,6 +209,8 @@ echo "==> 6) Attach runtime secrets to all jobs"
 for def_id in "$DEF_EXTRACT" "$DEF_TRANSFORM" "$DEF_VALIDATE"; do
   ensure_secret_binding "$def_id" "$SECRET_OPENWEATHER_ID" OPENWEATHER_API_KEY
   ensure_secret_binding "$def_id" "$SECRET_AQICN_ID" AQICN_API_KEY
+  ensure_secret_binding "$def_id" "$SECRET_TOMTOM_ID" TOMTOM_API_KEY
+
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_URL_ID" SUPABASE_URL
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_KEY_ID" SUPABASE_KEY
 done

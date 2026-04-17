@@ -7,29 +7,30 @@
 -- TABLES DE DIMENSIONS
 -- ============================================
 
--- Dimension Temps (pré-remplie avec toutes les heures)
-CREATE TABLE IF NOT EXISTS dim_time (
-    time_id SERIAL PRIMARY KEY,
-    full_date TIMESTAMP WITH TIME ZONE NOT NULL UNIQUE,
-    date_only DATE NOT NULL,
-    time_only TIME NOT NULL,
-    hour INTEGER NOT NULL,
-    day INTEGER NOT NULL,
+-- Dimension Temps (architecture cible avec dim_date au lieu de dim_time)
+CREATE TABLE IF NOT EXISTS dim_date (
+    date_value DATE PRIMARY KEY,
+    day_of_month INTEGER NOT NULL,
+    day_of_week INTEGER NOT NULL,
     day_name VARCHAR(10) NOT NULL,
-    week INTEGER NOT NULL,
+    day_of_year INTEGER NOT NULL,
+    week_of_year INTEGER NOT NULL,
+    week_of_month INTEGER NOT NULL,
     month INTEGER NOT NULL,
     month_name VARCHAR(10) NOT NULL,
     quarter INTEGER NOT NULL,
+    quarter_name VARCHAR(10) NOT NULL,
     year INTEGER NOT NULL,
     is_weekend BOOLEAN NOT NULL,
+    is_holiday BOOLEAN DEFAULT FALSE,
     season VARCHAR(10) NOT NULL
 );
 
-CREATE INDEX idx_dim_time_date ON dim_time(date_only);
-CREATE INDEX idx_dim_time_hour ON dim_time(hour);
-CREATE INDEX idx_dim_time_month ON dim_time(year, month);
+CREATE INDEX IF NOT EXISTS idx_dim_date_value ON dim_date(date_value);
+CREATE INDEX IF NOT EXISTS idx_dim_date_week ON dim_date(week_of_year);
+CREATE INDEX IF NOT EXISTS idx_dim_date_year_month ON dim_date(year, month);
 
-COMMENT ON TABLE dim_time IS 'Dimension temporelle - permet analyses par période';
+COMMENT ON TABLE dim_date IS 'Dimension date - permet analyses par période journalière';
 
 -- Dimension Ville (hérite de cities existante)
 CREATE TABLE IF NOT EXISTS dim_city (
@@ -86,7 +87,9 @@ CREATE TABLE IF NOT EXISTS fact_measures (
     measure_id BIGSERIAL PRIMARY KEY,
     
     -- Clés étrangères vers dimensions
-    time_id INTEGER REFERENCES dim_time(time_id),
+    capture_date DATE NOT NULL REFERENCES dim_date(date_value),
+    capture_hour INTEGER NOT NULL,
+    capture_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     city_id INTEGER REFERENCES dim_city(city_id),
     weather_condition_id INTEGER REFERENCES dim_weather_condition(weather_condition_id),
     aqi_level_id INTEGER REFERENCES dim_air_quality_level(aqi_level_id),
@@ -116,16 +119,17 @@ CREATE TABLE IF NOT EXISTS fact_measures (
     -- Métadonnées ETL (traçabilité)
     raw_weather_id BIGINT, -- Référence data lake
     raw_aqi_id BIGINT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    
+    constraint fk_fact_measures_date foreign key (capture_date) references dim_date(date_value)
 );
 
 -- Index pour optimiser les requêtes OLAP
-CREATE INDEX idx_fact_time ON fact_measures(time_id);
-CREATE INDEX idx_fact_city ON fact_measures(city_id);
-CREATE INDEX idx_fact_weather ON fact_measures(weather_condition_id);
-CREATE INDEX idx_fact_aqi ON fact_measures(aqi_level_id);
-CREATE INDEX idx_fact_time_city ON fact_measures(time_id, city_id);
-CREATE INDEX idx_fact_aqi_index ON fact_measures(aqi_index);
+CREATE INDEX IF NOT EXISTS idx_fact_measures_capture_date ON fact_measures(capture_date);
+CREATE INDEX IF NOT EXISTS idx_fact_measures_capture_hour ON fact_measures(capture_hour);
+CREATE INDEX IF NOT EXISTS idx_fact_city ON fact_measures(city_id);
+CREATE INDEX IF NOT EXISTS idx_fact_weather ON fact_measures(weather_condition_id);
+CREATE INDEX IF NOT EXISTS idx_fact_aqi ON fact_measures(aqi_level_id);
+CREATE INDEX IF NOT EXISTS idx_fact_aqi_index ON fact_measures(aqi_index);
 
 COMMENT ON TABLE fact_measures IS 'Table de faits - mesures environnementales agrégées';
 
@@ -194,10 +198,54 @@ ON CONFLICT (weather_id) DO NOTHING;
 -- FONCTIONS UTILITAIRES
 -- ============================================
 
--- Fonction pour générer la dimension temps (appeler une fois)
-CREATE OR REPLACE FUNCTION populate_dim_time(start_date DATE, end_date DATE)
+-- Fonction pour générer la dimension date (dim_date)
+CREATE OR REPLACE FUNCTION populate_dim_date(start_date DATE, end_date DATE)
 RETURNS void AS $$
 DECLARE
+    curr_date DATE := start_date;
+BEGIN
+    WHILE curr_date <= end_date LOOP
+        INSERT INTO dim_date (
+            date_value,
+            day_of_month,
+            day_of_week,
+            day_name,
+            day_of_year,
+            week_of_year,
+            week_of_month,
+            month,
+            month_name,
+            quarter,
+            quarter_name,
+            year,
+            is_weekend,
+            season
+        ) VALUES (
+            curr_date,
+            EXTRACT(DAY FROM curr_date),
+            EXTRACT(DOW FROM curr_date) + 1,
+            TO_CHAR(curr_date, 'Day'),
+            EXTRACT(DOY FROM curr_date),
+            EXTRACT(WEEK FROM curr_date),
+            CAST(TO_CHAR(curr_date, 'W') AS INTEGER),
+            EXTRACT(MONTH FROM curr_date),
+            TO_CHAR(curr_date, 'Month'),
+            EXTRACT(QUARTER FROM curr_date),
+            'Q' || EXTRACT(QUARTER FROM curr_date),
+            EXTRACT(YEAR FROM curr_date),
+            CASE WHEN EXTRACT(ISODOW FROM curr_date) IN (6, 7) THEN true ELSE false END,
+            CASE
+                WHEN EXTRACT(MONTH FROM curr_date) IN (12, 1, 2) THEN 'Winter'
+                WHEN EXTRACT(MONTH FROM curr_date) IN (3, 4, 5) THEN 'Spring'
+                WHEN EXTRACT(MONTH FROM curr_date) IN (6, 7, 8) THEN 'Summer'
+                ELSE 'Autumn'
+            END
+        ) ON CONFLICT (date_value) DO NOTHING;
+
+        curr_date := curr_date + INTERVAL '1 day';
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
     current_dt TIMESTAMP WITH TIME ZONE;
     v_time_id INTEGER;
 BEGIN

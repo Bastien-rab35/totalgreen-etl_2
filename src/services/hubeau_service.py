@@ -129,7 +129,14 @@ class HubeauService:
         """
         Récupère les niveaux d'eau Temps Réel (Chroniques TR) pour la journée en cours
         """
-        params = {'code_bss': code_bss, 'size': 100, 'sort': 'desc'}
+        # Filtre sur les dernières 24 heures pour éviter d'extraire tout l'historique
+        start_date = datetime.now(timezone.utc)
+        params = {
+            'code_bss': code_bss, 
+            'size': 100, 
+            'sort': 'desc',
+            'date_debut_mesure': start_date.strftime('%Y-%m-%d')
+        }
         raw_chroniques = self._fetch_all_pages(self.chroniques_tr_url, params)
         
         formatted = []

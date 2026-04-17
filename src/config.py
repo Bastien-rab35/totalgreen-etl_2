@@ -1,53 +1,62 @@
-"""Configuration centralisée - Variables d'environnement"""
 import os
+import logging
+from dataclasses import dataclass
+from typing import List
 from dotenv import load_dotenv
 
 load_dotenv()
 
+def setup_logging(level: int = logging.INFO) -> None:
+    """Configuration centralisée du logging pour tout le projet."""
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    # Réduire le bruit de certains modules très prolixes
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+    logging.getLogger('httpcore').setLevel(logging.WARNING)
+
+@dataclass
 class Config:
-    """Configuration de l'application"""
+    """Configuration centralisée de l'application (Singleton-like behavior)."""
     
     # APIs
-    OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')
-    AQICN_API_KEY = os.getenv('AQICN_API_KEY')
-    TOMTOM_API_KEY = os.getenv('TOMTOM_API_KEY')
+    OPENWEATHER_API_KEY: str = os.getenv('OPENWEATHER_API_KEY', '')
+    AQICN_API_KEY: str = os.getenv('AQICN_API_KEY', '')
+    TOMTOM_API_KEY: str = os.getenv('TOMTOM_API_KEY', '')
     
     # Supabase
-    SUPABASE_URL = os.getenv('SUPABASE_URL')
-    SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+    SUPABASE_URL: str = os.getenv('SUPABASE_URL', '')
+    SUPABASE_KEY: str = os.getenv('SUPABASE_KEY', '')
     
     # Collecte
-    COLLECTION_INTERVAL = int(os.getenv('COLLECTION_INTERVAL', 60))
+    COLLECTION_INTERVAL: int = int(os.getenv('COLLECTION_INTERVAL', 60))
     
-    # URLs
-    OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
-    AQICN_BASE_URL = "https://api.waqi.info/feed"
-    TOMTOM_FLOW_BASE_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
-    TOMTOM_INCIDENTS_BASE_URL = "https://api.tomtom.com/traffic/services/5/incidentDetails"
-    HUBEAU_STATIONS_BASE_URL = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/stations"
-    HUBEAU_CHRONIQUES_BASE_URL = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques"
-    HUBEAU_CHRONIQUES_TR_BASE_URL = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques_tr"
-    
-    @classmethod
-    def validate(cls):
-        """Vérifie les variables requises"""
-        missing = []
+    # URLs de base
+    OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5/weather"
+    AQICN_BASE_URL: str = "https://api.waqi.info/feed"
+    TOMTOM_FLOW_BASE_URL: str = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
+    TOMTOM_INCIDENTS_BASE_URL: str = "https://api.tomtom.com/traffic/services/5/incidentDetails"
+    HUBEAU_STATIONS_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/stations"
+    HUBEAU_CHRONIQUES_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques"
+    HUBEAU_CHRONIQUES_TR_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques_tr"
+
+    def validate(self) -> bool:
+        """Vérifie la présence absolue des variables d'environnement requises."""
+        missing: List[str] = []
         
-        if not cls.OPENWEATHER_API_KEY:
-            missing.append('OPENWEATHER_API_KEY')
-        if not cls.AQICN_API_KEY:
-            missing.append('AQICN_API_KEY')
-        if not cls.TOMTOM_API_KEY:
-            missing.append('TOMTOM_API_KEY')
-        if not cls.SUPABASE_URL:
-            missing.append('SUPABASE_URL')
-        if not cls.SUPABASE_KEY:
-            missing.append('SUPABASE_KEY')
+        if not self.OPENWEATHER_API_KEY: missing.append('OPENWEATHER_API_KEY')
+        if not self.AQICN_API_KEY: missing.append('AQICN_API_KEY')
+        if not self.TOMTOM_API_KEY: missing.append('TOMTOM_API_KEY')
+        if not self.SUPABASE_URL: missing.append('SUPABASE_URL')
+        if not self.SUPABASE_KEY: missing.append('SUPABASE_KEY')
             
         if missing:
-            raise ValueError(f"Variables manquantes: {', '.join(missing)}")
+            raise ValueError(f"Variables d'environnement manquantes : {', '.join(missing)}")
         
         return True
 
+# Instance globale à utiliser dans tous les autres modules
 config = Config()
 

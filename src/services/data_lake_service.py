@@ -84,7 +84,7 @@ class DataLakeService:
             response = (self.client.table('raw_data_lake')
                        .select('*')
                        .eq('processed', False)
-                       .order('collected_at', desc=False)
+
                        .limit(limit)
                        .execute())
             return response.data
