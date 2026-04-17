@@ -34,7 +34,7 @@ Validate -> controle qualite + table anomalies
 - Tables de faits: 
   - `fact_measures` (Météo & Qualité de l'air)
   - `fact_traffic_flow` & `fact_traffic_incidents` (TomTom)
-  - `fact_groundwater_realtime` (Hub'Eau)
+  - `fact_eau_potable` et `fact_cours_deau_observation` (Hub'Eau)
 - Dimensions principales:
   - `dim_city`
   - `dim_weather_condition`
@@ -58,7 +58,7 @@ Validate -> controle qualite + table anomalies
 ### 1) Extract (`src/etl_extract_to_lake.py`)
 
 - Lit le referentiel des villes depuis la base.
-- Interroge OpenWeather, AQICN, TomTom et Hub'Eau (chroniques temps réel limitées aux dernières 24h pour préserver le stockage).
+- Interroge OpenWeather, AQICN, TomTom et Hub'Eau (données de la qualité de l'eau).
 - Stocke les reponses brutes dans `raw_data_lake`.
 - Marque le statut des extractions via logs ETL.
 
@@ -72,8 +72,8 @@ Validate -> controle qualite + table anomalies
 
 ### 3) Validate (`scripts/validate_data_quality.py`)
 
-- Validation étendue sur l'ensemble des tables de faits (`fact_measures`, `fact_traffic_flow_hourly`, `fact_traffic_incident_hourly`, `fact_groundwater_realtime`).
-- Vérifie l'intégrité de la structure, la temporalité, la couverture spatiale, les outliers statistiques et les limites métiers des variables (ex: trafic congestionné, hauteur des nappes, PM10).
+- Validation étendue sur l'ensemble des tables de faits (`fact_measures`, `fact_traffic_flow_hourly`, `fact_traffic_incident_hourly`, `fact_eau_potable` et `fact_cours_deau_observation`).
+- Vérifie l'intégrité de la structure, la temporalité, la couverture spatiale, les outliers statistiques et les limites métiers des variables (ex: trafic congestionné, qualité de l'eau, PM10).
 - Analyse une fenetre temporelle (`--hours`, defaut 24).
 - Retourne un code de sortie d'exploitation.
 - Sauvegarde les anomalies detectees (severity/category/details).

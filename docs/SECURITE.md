@@ -10,7 +10,7 @@ Le projet manipule des donnees environnementales et routières:
 - qualite de l'air (AQI, PM2.5, PM10, NO2, O3, SO2, CO)
 - metadonnees geographiques publiques de villes
 - trafic routier (TomTom) (flux, ralentissements et incidents non personnels)
-- niveaux des nappes phréatiques (Hub'Eau)
+- niveaux des qualité de l'eau (Hub'Eau)
 
 Aucune donnee personnelle utilisateur n'est collecte dans le flux ETL standard.
 

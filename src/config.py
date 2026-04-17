@@ -38,9 +38,9 @@ class Config:
     AQICN_BASE_URL: str = "https://api.waqi.info/feed"
     TOMTOM_FLOW_BASE_URL: str = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
     TOMTOM_INCIDENTS_BASE_URL: str = "https://api.tomtom.com/traffic/services/5/incidentDetails"
-    HUBEAU_STATIONS_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/stations"
-    HUBEAU_CHRONIQUES_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques"
-    HUBEAU_CHRONIQUES_TR_BASE_URL: str = "https://hubeau.eaufrance.fr/api/v1/niveaux_nappes/chroniques_tr"
+    HUBEAU_EAU_POTABLE_URL: str = "https://hubeau.eaufrance.fr/api/v1/qualite_eau_potable/resultats_dis"
+    HUBEAU_CD_STATIONS_URL: str = "https://hubeau.eaufrance.fr/api/v2/qualite_rivieres/station_pc"
+    HUBEAU_CD_OBSERVATIONS_URL: str = "https://hubeau.eaufrance.fr/api/v2/qualite_rivieres/analyse_pc"
 
     def validate(self) -> bool:
         """Vérifie la présence absolue des variables d'environnement requises."""

@@ -445,28 +445,52 @@ class DatabaseService:
             logger.error(f"Erreur insert_fact_traffic_incident: {e}")
             return False
 
-    def upsert_groundwater_station(self, st: Dict) -> Optional[int]:
-        """Insère ou met à jour une station (dim_groundwater_station)"""
+
+    def upsert_eau_potable_commune(self, code_commune: str, nom_commune: str) -> Optional[int]:
         try:
-            res = self.client.table('dim_groundwater_station').select('groundwater_station_id').eq('code_bss', st['code_bss']).execute()
+            res = self.client.table('dim_eau_potable_commune').select('commune_id').eq('code_commune', code_commune).execute()
             if res.data:
-                return res.data[0]['groundwater_station_id']
-            
-            insert_res = self.client.table('dim_groundwater_station').insert(st).execute()
-            return insert_res.data[0]['groundwater_station_id'] if insert_res.data else None
+                return res.data[0]['commune_id']
+            insert_res = self.client.table('dim_eau_potable_commune').insert({
+                'code_commune': code_commune,
+                'nom_commune': nom_commune
+            }).execute()
+            return insert_res.data[0]['commune_id'] if insert_res.data else None
         except Exception as e:
-            logger.error(f"Erreur upsert_groundwater_station: {e}")
+            import logging
+            logging.getLogger(__name__).error(f"Erreur upsert_eau_potable_commune: {e}")
             return None
 
-    def insert_fact_groundwater(self, gw: Dict) -> bool:
-        """Insère une ligne dans fact_groundwater_realtime"""
+    def insert_fact_eau_potable(self, data: dict) -> bool:
         try:
-            self.client.table('fact_groundwater_realtime').insert(gw).execute()
+            self.client.table('fact_eau_potable').insert(data).execute()
             return True
         except Exception as e:
             if '23505' in str(e) or 'duplicate key' in str(e):
-                logger.warning(f"Entrée fact_groundwater_realtime ignorée (déjà existante).")
                 return True
-            logger.error(f"Erreur insert_fact_groundwater: {e}")
+            import logging
+            logging.getLogger(__name__).error(f"Erreur insert_fact_eau_potable: {e}")
             return False
 
+    def upsert_cours_deau_station(self, st: dict) -> Optional[int]:
+        try:
+            res = self.client.table('dim_cours_deau_station').select('station_id').eq('code_station', st['code_station']).execute()
+            if res.data:
+                return res.data[0]['station_id']
+            insert_res = self.client.table('dim_cours_deau_station').insert(st).execute()
+            return insert_res.data[0]['station_id'] if insert_res.data else None
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Erreur upsert_cours_deau_station: {e}")
+            return None
+
+    def insert_fact_cours_deau_observation(self, data: dict) -> bool:
+        try:
+            self.client.table('fact_cours_deau_observation').insert(data).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                return True
+            import logging
+            logging.getLogger(__name__).error(f"Erreur insert_fact_cours_deau_observation: {e}")
+            return False

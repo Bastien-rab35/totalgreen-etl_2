@@ -56,9 +56,9 @@ class ExtractToLake:
             )
             
             self.hubeau_service = HubeauService(
-                config.HUBEAU_STATIONS_BASE_URL,
-                config.HUBEAU_CHRONIQUES_BASE_URL,
-                config.HUBEAU_CHRONIQUES_TR_BASE_URL
+                config.HUBEAU_EAU_POTABLE_URL,
+                config.HUBEAU_CD_STATIONS_URL,
+                config.HUBEAU_CD_OBSERVATIONS_URL
             )
 
             self.aqi_station_map = self._load_aqi_station_map()
@@ -209,7 +209,7 @@ class ExtractToLake:
                 
                 # Incidents
                 incidents = self.tomtom_service.get_traffic_incidents(city_name, bbox_tt, self.current_traffic_model_id)
-                for inc in incidents:
+                for inc in incidents[:30]:
                     if self.data_lake_service.store_raw_data(city_id, city_name, 'tomtom_incidents', inc):
                         tomtom_inserted_count += 1
                         
@@ -223,23 +223,30 @@ class ExtractToLake:
                         if self.data_lake_service.store_raw_data(city_id, city_name, 'tomtom_flow', flow):
                             tomtom_inserted_count += 1
 
-            # --- EXTRACT: Hub'Eau ---
+            # --- EXTRACT: Hub'Eau (Qualité Eau Potable et Cours d'Eau) ---
+            if city_name:
+                # 1. Eau Potable
+                eau_potable_results = self.hubeau_service.get_eau_potable(city_name)
+                for result in eau_potable_results[:20]:
+                    if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_eau_potable', result):
+                        hubeau_inserted_count += 1
+                        
             if lat and lon:
                 bbox_he = f"{lon-0.1},{lat-0.1},{lon+0.1},{lat+0.1}"
                 
-                # Stations locales
-                stations = self.hubeau_service.get_stations_by_bbox(bbox_he)
-                for st in stations:
-                    if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_stations', st):
+                # 2. Stations Cours d'eau
+                stations_cd = self.hubeau_service.get_cours_deau_stations(bbox_he)
+                for st in stations_cd:
+                    if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_cd_stations', st):
                         hubeau_inserted_count += 1
                         
-                # Mesures Temps Réel (limite à 3 stations par ville pour ne pas surcharger)
-                for st in stations[:3]:
-                    code_bss = st.get('code_bss')
-                    if code_bss:
-                        trs = self.hubeau_service.get_chroniques_tr(code_bss)
-                        for tr in trs:
-                            if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_chroniques_tr', tr):
+                # 3. Observations sur les stations de cours d'eau (limite à 3 stations)
+                for st in stations_cd[:1]:
+                    code_station = st.get('code_station')
+                    if code_station:
+                        observations = self.hubeau_service.get_cours_deau_observations(code_station)
+                        for obs in observations:
+                            if self.data_lake_service.store_raw_data(city_id, city_name, 'hubeau_cd_observations', obs):
                                 hubeau_inserted_count += 1
 
             if weather_data and weather_data.get('raw'):

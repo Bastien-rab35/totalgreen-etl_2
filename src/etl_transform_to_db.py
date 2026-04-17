@@ -443,53 +443,91 @@ class TransformToDB:
             logger.error(f"Erreur TomTom transform {entry.get('id')}: {e}")
             return False
 
-    def transform_and_load_hubeau(self, entry: dict) -> bool:
-        """Transforme et charge les données nappes phréatiques (Stations ou Chroniques TR)"""
+
+    def transform_and_load_eau_potable(self, entry: dict) -> bool:
         try:
-            source = entry['source']
             raw = entry['raw_data']
             city_id = entry['city_id']
             collected_at_str = entry.get('collected_at', datetime.now(timezone.utc).isoformat())
             dt = datetime.fromisoformat(collected_at_str.replace('Z', '+00:00'))
             
-            if source == 'hubeau_stations':
-                return self.db_service.upsert_groundwater_station({
-                    'code_bss': raw.get('code_bss'),
-                    'bss_id': raw.get('bss_id'),
-                    'urn_bss': raw.get('urn_bss'),
-                    'city_id_proche': city_id,
-                    'nom_station': raw.get('nom_station'),
+            # Upsert commune
+            code_commune = raw.get('code_commune')
+            nom_commune = raw.get('nom_commune')
+            if code_commune:
+                self.db_service.upsert_eau_potable_commune(code_commune, nom_commune)
+            
+            date_prelevement_str = raw.get('date_prelevement')
+            if date_prelevement_str:
+                dt = datetime.fromisoformat(date_prelevement_str.replace('Z', '+00:00'))
+                
+            time_info = self.db_service._resolve_date_and_hour(dt)
+            if not time_info: return False
+            
+            date_val, hour_val = time_info
+            return self.db_service.insert_fact_eau_potable({
+                'date_value': date_val,
+                'hour_of_day': hour_val,
+                'city_id': city_id,
+                'code_commune': code_commune,
+                'libelle_parametre': raw.get('libelle_parametre'),
+                'resultat_numerique': raw.get('resultat_numerique'),
+                'libelle_unite': raw.get('libelle_unite'),
+                'conclusion_conformite': raw.get('conclusion_conformite_prelevement'),
+                'date_prelevement': date_prelevement_str
+            })
+        except Exception as e:
+            logger.error(f"Erreur hubeau_eau_potable transform {entry.get('id')}: {e}")
+            return False
+
+    def transform_and_load_cours_deau(self, entry: dict) -> bool:
+        try:
+            source = entry['source']
+            raw = entry['raw_data']
+            collected_at_str = entry.get('collected_at', datetime.now(timezone.utc).isoformat())
+            dt = datetime.fromisoformat(collected_at_str.replace('Z', '+00:00'))
+            
+            if source == 'hubeau_cd_stations':
+                return self.db_service.upsert_cours_deau_station({
+                    'code_station': raw.get('code_station'),
+                    'libelle_station': raw.get('libelle_station'),
                     'latitude': raw.get('latitude'),
                     'longitude': raw.get('longitude'),
-                    'altitude_station_m': raw.get('altitude_station_m')
+                    'code_commune': raw.get('code_commune'),
+                    'libelle_commune': raw.get('libelle_commune')
                 }) is not None
                 
-            elif source == 'hubeau_chroniques_tr':
-                # Utiliser la VRAIE date de la mesure, pas la date de collecte de l'API
-                real_date_str = raw.get('date_mesure_utc')
-                if real_date_str:
-                    dt = datetime.fromisoformat(real_date_str.replace('Z', '+00:00'))
-                    
+            elif source == 'hubeau_cd_observations':
+                date_prelevement_str = raw.get('date_prelevement')
+                if date_prelevement_str:
+                    try:
+                        # try to parse date like "2024-03-12"
+                        if len(date_prelevement_str) == 10:
+                            dt = datetime.strptime(date_prelevement_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                        else:
+                            dt = datetime.fromisoformat(date_prelevement_str.replace('Z', '+00:00'))
+                    except ValueError:
+                        pass
                 time_info = self.db_service._resolve_date_and_hour(dt)
-                st_id = self.db_service.upsert_groundwater_station({'code_bss': raw.get('code_bss')})
+                st_id = self.db_service.upsert_cours_deau_station({'code_station': raw.get('code_station')})
                 if not time_info or not st_id: return False
                 
                 date_val, hour_val = time_info
-                return self.db_service.insert_fact_groundwater({
+                return self.db_service.insert_fact_cours_deau_observation({
                     'date_value': date_val,
                     'hour_of_day': hour_val,
-                    'groundwater_station_id': st_id,
-                    'groundwater_level_ngf_m': raw.get('groundwater_level_ngf_m'),
-                    'groundwater_depth_m': raw.get('groundwater_depth_m'),
-                    'altitude_repere_m': raw.get('altitude_repere_m'),
-                    'altitude_station_m': raw.get('altitude_station_m'),
-                    'source_timestamp': raw.get('timestamp_mesure')
+                    'station_id': st_id,
+                    'libelle_parametre': raw.get('libelle_parametre'),
+                    'resultat': raw.get('resultat'),
+                    'symbole_unite': raw.get('symbole_unite'),
+                    'code_remarque': raw.get('code_remarque'),
+                    'date_prelevement': date_prelevement_str
                 })
             return False
         except Exception as e:
-            logger.error(f"Erreur Hubeau transform {entry.get('id')}: {e}")
+            logger.error(f"Erreur Hubeau Cours d'Eau transform {entry.get('id')}: {e}")
             return False
-            
+
     def run(self, batch_size: int = 1000) -> dict:
         """Traite les données non traitées du Data Lake en combinant météo + AQI"""
         start_time = time.time()
@@ -507,7 +545,7 @@ class TransformToDB:
         # Identifier les catégories de données
         weather_aqi_data = [d for d in unprocessed_data if d['source'] in ('openweather', 'aqicn')]
         tomtom_data =      [d for d in unprocessed_data if d['source'] in ('tomtom_flow', 'tomtom_incidents')]
-        hubeau_data =      [d for d in unprocessed_data if d['source'] in ('hubeau_stations', 'hubeau_chroniques_tr')]
+        hubeau_data =      [d for d in unprocessed_data if d['source'] in ('hubeau_eau_potable', 'hubeau_cd_stations', 'hubeau_cd_observations')]
 
         logger.info(f"{len(unprocessed_data)} entrées à traiter (Météo/AQI: {len(weather_aqi_data)}, TomTom: {len(tomtom_data)}, Hub'eau: {len(hubeau_data)})")
         
@@ -542,7 +580,13 @@ class TransformToDB:
                 
         # 3. Groupe et traitement Hub'Eau
         for entry in hubeau_data:
-            if self.transform_and_load_hubeau(entry):
+            success = False
+            if entry['source'] == 'hubeau_eau_potable':
+                success = self.transform_and_load_eau_potable(entry)
+            elif entry['source'] in ('hubeau_cd_stations', 'hubeau_cd_observations'):
+                success = self.transform_and_load_cours_deau(entry)
+            
+            if success:
                 self.data_lake_service.mark_as_processed(entry['id'])
                 success_count += 1
                 processed_entries += 1

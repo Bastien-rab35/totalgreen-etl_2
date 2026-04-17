@@ -64,8 +64,6 @@ class DataQualityValidator:
         'vitesse_actuelle_kmph': (0, 200),
         'congestion_ratio': (0, 20),
         'speed_ratio': (0, 5),
-        'groundwater_level_ngf_m': (-100, 5000),
-        'groundwater_depth_m': (0, 1000),
         'incident_severity_score': (0, 1000)
     }
     
@@ -145,7 +143,7 @@ class DataQualityValidator:
         duplicates = 0
         
         for measure in measures:
-            key = (measure.get('table_source', 'fact_measures'), measure.get('city_id'), measure.get('captured_at'), measure.get('traffic_point_id'), measure.get('incident_category_id'), measure.get('groundwater_station_id'))
+            key = (measure.get('table_source', 'fact_measures'), measure.get('city_id'), measure.get('captured_at'), measure.get('traffic_point_id'), measure.get('incident_category_id'))
             if key in seen:
                 duplicates += 1
             seen.add(key)
@@ -465,23 +463,7 @@ class DataQualityValidator:
                 m['captured_at'] = f"{m['date_value']}T{int(m['hour_of_day']):02d}:00:00+00:00"
                 measures.append(m)
 
-            # 4. Groundwater
-            resp_gw = self.db.client.table('fact_groundwater_realtime') \
-                .select('*') \
-                .gte('date_value', date_str) \
-                .execute()
-            for m in resp_gw.data:
-                m['table_source'] = 'fact_groundwater_realtime'
-                m['capture_date'] = m['date_value']
-                m['captured_at'] = f"{m['date_value']}T{int(m['hour_of_day']):02d}:00:00+00:00"
-                m['city_id'] = -1  # Bypass null check since it is not linked directly to cities
-                measures.append(m)
-                
-        except Exception as e:
-            print(f"\nERREUR: Impossible de charger les données: {e}")
-            return False
-        
-        # Exécuter les validations
+            # Exécuter les validations
         self.validate_structural_integrity(measures)
         self.validate_temporal_coherence(measures)
         self.validate_business_rules(measures)

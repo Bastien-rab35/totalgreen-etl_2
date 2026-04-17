@@ -1,7 +1,3 @@
-"""
-Service Hub'Eau pour la donnée piézométrique (Nappes Phréatiques)
-Stations, Historique (Chroniques) et Temps Réel (Chroniques TR)
-"""
 import logging
 import requests
 import time
@@ -12,20 +8,21 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 class HubeauService:
-    """Service de récupération de données d'eaux souterraines via Hub'Eau"""
+    """Service de récupération de données qualité de l'eau via Hub'Eau"""
     
-    def __init__(self, stations_url: str, chroniques_url: str, chroniques_tr_url: str):
-        self.stations_url = stations_url
-        self.chroniques_url = chroniques_url
-        self.chroniques_tr_url = chroniques_tr_url
+    def __init__(self, eau_potable_url: str, cd_stations_url: str, cd_observations_url: str):
+        self.eau_potable_url = eau_potable_url
+        self.cd_stations_url = cd_stations_url
+        self.cd_observations_url = cd_observations_url
         
-    def _fetch_all_pages(self, url: str, params: Dict) -> List[Dict]:
-        """Récupère toutes les pages en suivant l'URL 'next' (Pagination Hub'Eau)"""
+    def _fetch_all_pages(self, url: str, params: Dict, limit_pages: int = 10) -> List[Dict]:
+        """Récupère avec une limite de pages pour ne pas exploser la mémoire"""
         results = []
         current_url = url
         current_params = params.copy()
         
-        while current_url:
+        pages = 0
+        while current_url and pages < limit_pages:
             start_time = time.time()
             try:
                 response = requests.get(current_url, params=current_params, timeout=15)
@@ -35,7 +32,6 @@ class HubeauService:
                 latence = int((time.time() - start_time) * 1000)
                 
                 for item in data.get('data', []):
-                    # Stocker temporairement les métadonnées techniques pour chaque occurence
                     item['_technical'] = {
                         "request_id": str(uuid.uuid4()),
                         "statut_http": response.status_code,
@@ -43,13 +39,14 @@ class HubeauService:
                     }
                     results.append(item)
                 
-                # Suivre le lien 'next' si présent (qui inclus la string de query complète)
                 next_link = data.get('next')
                 if next_link:
                     current_url = next_link
-                    current_params = None  # Plus besoin de passer les params car ils sont déjà dans l'URL next
+                    current_params = None
                 else:
                     current_url = None
+                
+                pages += 1
                     
             except requests.exceptions.RequestException as e:
                 logger.error(f"Erreur requête Hub'Eau: {e}")
@@ -57,35 +54,52 @@ class HubeauService:
                 
         return results
 
-    def get_stations_by_bbox(self, bbox: str) -> List[Dict]:
-        """
-        Récupère les stations de prélèvement via une Bounding Box
-        """
+    def get_eau_potable(self, nom_commune: str) -> List[Dict]:
+        """Récupère les résultats qualité de l'eau potable pour une commune (dernière année en général)"""
+        # On va chercher les résultats récents pour une commune donnée
+        # (ex: nom_commune = 'Paris', mais attention aux arrondissements ou homonymes)
+        params = {'nom_commune': nom_commune, 'size': 20}
+        raw_results = self._fetch_all_pages(self.eau_potable_url, params, limit_pages=1)
+        
+        formatted = []
+        for item in raw_results:
+            tech = item.pop('_technical', {})
+            formatted.append({
+                "source_api": "hubeau_eau_potable",
+                "api_version": "v1",
+                "horodatage_collecte_utc": datetime.now(timezone.utc).isoformat(),
+                "nom_commune": item.get('nom_commune'),
+                "code_commune": item.get('code_commune'),
+                "date_prelevement": item.get('date_prelevement'),
+                "libelle_parametre": item.get('libelle_parametre'),
+                "resultat_numerique": item.get('resultat_numerique'),
+                "libelle_unite": item.get('libelle_unite'),
+                "conclusion_conformite_prelevement": item.get('conclusion_conformite_prelevement'),
+                "request_id": tech.get('request_id'),
+                "statut_http": tech.get('statut_http'),
+                "latence_ms": tech.get('latence_ms'),
+                "donnees_brutes": item
+            })
+        return formatted
+
+    def get_cours_deau_stations(self, bbox: str) -> List[Dict]:
+        """Récupère les stations de mesure de cours d'eau par bbox"""
         params = {'bbox': bbox, 'size': 100}
-        raw_stations = self._fetch_all_pages(self.stations_url, params)
+        raw_stations = self._fetch_all_pages(self.cd_stations_url, params, limit_pages=1)
         
         formatted = []
         for station in raw_stations:
             tech = station.pop('_technical', {})
             formatted.append({
-                "source_api": "hubeau_stations",
-                "api_version": "1.4.1",
+                "source_api": "hubeau_cd_stations",
+                "api_version": "v2",
                 "horodatage_collecte_utc": datetime.now(timezone.utc).isoformat(),
-                "bss_id": station.get('bss_id'),
-                "code_bss": station.get('code_bss'),
-                "urn_bss": station.get('urn_bss'),
-                "nom_station": station.get('nom_commune', 'Inconnu'),
-                "code_commune_insee": station.get('code_commune_insee'),
-                "nom_commune": station.get('nom_commune'),
-                "code_departement": station.get('code_departement'),
-                "nom_departement": station.get('nom_departement'),
-                "latitude": station.get('y'),  # Hubeau donne y=lat et x=lon (WGS84)
-                "longitude": station.get('x'),
-                "altitude_station_m": station.get('altitude_station'),
-                "nb_mesures_piezo": station.get('nb_mesures_piezo'),
-                "date_debut_mesure": station.get('date_debut_mesure'),
-                "date_fin_mesure": station.get('date_fin_mesure'),
-                "date_maj": station.get('date_maj'),
+                "code_station": station.get('code_station'),
+                "libelle_station": station.get('libelle_station'),
+                "latitude": station.get('latitude'),
+                "longitude": station.get('longitude'),
+                "code_commune": station.get('code_commune'),
+                "libelle_commune": station.get('libelle_commune'),
                 "request_id": tech.get('request_id'),
                 "statut_http": tech.get('statut_http'),
                 "latence_ms": tech.get('latence_ms'),
@@ -93,74 +107,31 @@ class HubeauService:
             })
         return formatted
 
-    def get_chroniques(self, code_bss: str) -> List[Dict]:
-        """
-        Récupère l'historique complet (chroniques) des niveaux pour une station.
-        Utiliser prudemment en phase de bootstrap car volumineux.
-        """
-        params = {'code_bss': code_bss, 'size': 500}
-        raw_chroniques = self._fetch_all_pages(self.chroniques_url, params)
-        
-        formatted = []
-        for chrono in raw_chroniques:
-            tech = chrono.pop('_technical', {})
-            formatted.append({
-                "source_api": "hubeau_chroniques",
-                "api_version": "1.4.1",
-                "horodatage_collecte_utc": datetime.now(timezone.utc).isoformat(),
-                "code_bss": chrono.get('code_bss'),
-                "date_mesure": chrono.get('date_mesure'),
-                "timestamp_mesure": chrono.get('timestamp_mesure'),
-                "groundwater_level_ngf_m": chrono.get('niveau_eau_ngf'),
-                "groundwater_depth_m": chrono.get('profondeur_nappe'),
-                "statut_mesure": chrono.get('statut', 'inconnu'),
-                "qualification_mesure": chrono.get('qualification'),
-                "mode_obtention": chrono.get('mode_obtention'),
-                "code_producteur": chrono.get('code_producteur'),
-                "nom_producteur": chrono.get('nom_producteur'),
-                "request_id": tech.get('request_id'),
-                "statut_http": tech.get('statut_http'),
-                "latence_ms": tech.get('latence_ms'),
-                "donnees_brutes": chrono
-            })
-        return formatted
-
-    def get_chroniques_tr(self, code_bss: str) -> List[Dict]:
-        """
-        Récupère les niveaux d'eau Temps Réel (Chroniques TR) pour la journée en cours
-        """
-        # Filtre sur les dernières 24 heures pour éviter d'extraire tout l'historique
-        start_date = datetime.now(timezone.utc)
+    def get_cours_deau_observations(self, code_station: str) -> List[Dict]:
+        """Récupère les observations physico-chimiques d'un cours d'eau (Limitation aux 5 dernières pages)"""
         params = {
-            'code_bss': code_bss, 
-            'size': 100, 
-            'sort': 'desc',
-            'date_debut_mesure': start_date.strftime('%Y-%m-%d')
+            'code_station': code_station,
+            'size': 20,
+            'sort': 'desc'  # Les plus récentes en premier
         }
-        raw_chroniques = self._fetch_all_pages(self.chroniques_tr_url, params)
+        raw_obs = self._fetch_all_pages(self.cd_observations_url, params, limit_pages=1)
         
         formatted = []
-        for chrono in raw_chroniques:
-            tech = chrono.pop('_technical', {})
+        for obs in raw_obs:
+            tech = obs.pop('_technical', {})
             formatted.append({
-                "source_api": "hubeau_chroniques_tr",
-                "api_version": "1.4.1",
+                "source_api": "hubeau_cd_observations",
+                "api_version": "v2",
                 "horodatage_collecte_utc": datetime.now(timezone.utc).isoformat(),
-                "bss_id": chrono.get('bss_id'),
-                "code_bss": chrono.get('code_bss'),
-                "urn_bss": chrono.get('urn_bss'),
-                "date_mesure_utc": chrono.get('date_mesure'),
-                "timestamp_mesure": chrono.get('timestamp_mesure'),
-                "date_maj_utc": chrono.get('date_maj'),
-                "groundwater_level_ngf_m": chrono.get('niveau_eaux_souterraines'),
-                "groundwater_depth_m": chrono.get('profondeur_nappe'),
-                "altitude_station_m": chrono.get('altitude_station'),
-                "altitude_repere_m": chrono.get('altitude_repere'),
-                "latitude": chrono.get('y'),
-                "longitude": chrono.get('x'),
+                "code_station": obs.get('code_station'),
+                "date_prelevement": obs.get('date_prelevement'),
+                "libelle_parametre": obs.get('libelle_parametre'),
+                "resultat": obs.get('resultat'),
+                "symbole_unite": obs.get('symbole_unite'),
+                "code_remarque": obs.get('code_remarque'),
                 "request_id": tech.get('request_id'),
                 "statut_http": tech.get('statut_http'),
                 "latence_ms": tech.get('latence_ms'),
-                "donnees_brutes": chrono
+                "donnees_brutes": obs
             })
         return formatted

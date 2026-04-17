@@ -13,7 +13,7 @@ Ce dossier regroupe les scripts d'exploitation utilises autour des pipelines ETL
   - Pratique apres un import massif.
 
 - `validate_data_quality.py`
-  - Lance les controles qualite sur toutes les tables de faits (`fact_measures`, `fact_traffic_flow_hourly`, `fact_traffic_incident_hourly`, `fact_groundwater_realtime`).
+  - Lance les controles qualite sur toutes les tables de faits (`fact_measures`, `fact_traffic_flow_hourly`, `fact_traffic_incident_hourly`).
   - Ecrit les anomalies dans la table `anomalies`.
 
 - `cleanup_data_quality_issues.py`
