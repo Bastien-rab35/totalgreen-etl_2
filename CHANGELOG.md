@@ -2,6 +2,10 @@
 
 Historique des evolutions principales du projet.
 
+## 2.6.1 - Optimisation Extract Hub'Eau et Parsing (17 avril 2026)
+- **Hub'Eau Service** : Ajout du filtrage `date_debut_prelevement='2024-01-01'` et du tri décroissant (`sort='desc'`) sur les APIs Qualité des Cours d'Eau et Eau Potable. Cela permet de n'extraire que les dernières mesures récentes à chaque run horaire et d'ignorer la volumétrie historique depuis 2011.
+- **ETL Transform** : Sécurisation du formateur de dates. Le service fusionne désormais `"date_prelevement"` et `"heure_prelevement"` en un unique timestamp UTC valide. Amélioration de la résilience face aux dates absentes de la dimension temporelle `dim_date` (qui commence en 2024).
+
 ## 2.6.0 - Implémentation Extract & Transform via TomTom & Hub'Eau (16 avril 2026)
 - **TomTom Service** : Ajout de l'extraction API du trafic routier (`tomtom_flow`) et des incidents (`tomtom_incidents`) avec bounding box par ville, gestion des quotas 429 et calcul de KPI sur la congestion.
 - **Hub'Eau Service** : Ajout de l'extraction API des nappes phréatiques (stations et `chroniques_tr` Temps Réel), gestion de la pagination et de la bounding box.
