@@ -499,15 +499,21 @@ class TransformToDB:
                 
             elif source == 'hubeau_cd_observations':
                 date_prelevement_str = raw.get('date_prelevement')
+                heure_str = raw.get('heure_prelevement')
+                full_datetime_str = date_prelevement_str
+                
                 if date_prelevement_str:
                     try:
-                        # try to parse date like "2024-03-12"
-                        if len(date_prelevement_str) == 10:
+                        if heure_str:
+                            full_datetime_str = f"{date_prelevement_str}T{heure_str}"
+                            dt = datetime.strptime(full_datetime_str, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+                        elif len(date_prelevement_str) == 10:
                             dt = datetime.strptime(date_prelevement_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
                         else:
                             dt = datetime.fromisoformat(date_prelevement_str.replace('Z', '+00:00'))
                     except ValueError:
                         pass
+                
                 time_info = self.db_service._resolve_date_and_hour(dt)
                 st_id = self.db_service.upsert_cours_deau_station({'code_station': raw.get('code_station')})
                 if not time_info or not st_id: return False
@@ -521,7 +527,7 @@ class TransformToDB:
                     'resultat': raw.get('resultat'),
                     'symbole_unite': raw.get('symbole_unite'),
                     'code_remarque': raw.get('code_remarque'),
-                    'date_prelevement': date_prelevement_str
+                    'date_prelevement': f"{full_datetime_str}Z" if full_datetime_str and 'T' in full_datetime_str else full_datetime_str
                 })
             return False
         except Exception as e:

@@ -58,7 +58,7 @@ class HubeauService:
         """Récupère les résultats qualité de l'eau potable pour une commune (dernière année en général)"""
         # On va chercher les résultats récents pour une commune donnée
         # (ex: nom_commune = 'Paris', mais attention aux arrondissements ou homonymes)
-        params = {'nom_commune': nom_commune, 'size': 20}
+        params = {'nom_commune': nom_commune, 'date_min_prelevement': '2024-01-01', 'size': 20}
         raw_results = self._fetch_all_pages(self.eau_potable_url, params, limit_pages=1)
         
         formatted = []
@@ -111,8 +111,9 @@ class HubeauService:
         """Récupère les observations physico-chimiques d'un cours d'eau (Limitation aux 5 dernières pages)"""
         params = {
             'code_station': code_station,
+            'date_debut_prelevement': '2024-01-01',
             'size': 20,
-            'sort': 'desc'  # Les plus récentes en premier
+            'sort': 'desc'
         }
         raw_obs = self._fetch_all_pages(self.cd_observations_url, params, limit_pages=1)
         
