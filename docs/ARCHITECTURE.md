@@ -72,6 +72,8 @@ Validate -> controle qualite + table anomalies
 
 ### 3) Validate (`scripts/validate_data_quality.py`)
 
+- Validation étendue sur l'ensemble des tables de faits (`fact_measures`, `fact_traffic_flow_hourly`, `fact_traffic_incident_hourly`, `fact_groundwater_realtime`).
+- Vérifie l'intégrité de la structure, la temporalité, la couverture spatiale, les outliers statistiques et les limites métiers des variables (ex: trafic congestionné, hauteur des nappes, PM10).
 - Analyse une fenetre temporelle (`--hours`, defaut 24).
 - Retourne un code de sortie d'exploitation.
 - Sauvegarde les anomalies detectees (severity/category/details).
