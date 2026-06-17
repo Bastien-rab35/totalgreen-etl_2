@@ -249,7 +249,7 @@ class DatabaseService:
                 logger.info(f"~ Mesure existante mise à jour (measure_id={existing_id})")
             else:
                 self.client.table('fact_measures').insert(fact_measure).execute()
-                logger.info(f"✓ Mesure insérée dans modèle en étoile - city_id={measure.get('city_id')}")
+            logger.info(f"OK : Mesure insérée dans modèle en étoile - city_id={measure.get('city_id')}")
             return True
             
         except Exception as e:
@@ -335,7 +335,7 @@ class DatabaseService:
                         row.get('pm10', 0)
                     ])
             
-            logger.info(f"✓ {len(data)} mesures historiques récupérées pour ML")
+            logger.info(f"OK : {len(data)} mesures historiques récupérées pour ML")
             return data if len(data) >= 100 else None
             
         except Exception as e:
@@ -354,7 +354,7 @@ class DatabaseService:
         """
         try:
             response = self.client.table('anomalies').insert(anomaly).execute()
-            logger.debug(f"✓ Anomalie enregistrée: {anomaly.get('anomaly_type')} - {anomaly.get('field_name')}")
+            logger.debug(f"OK : Anomalie enregistrée: {anomaly.get('anomaly_type')} - {anomaly.get('field_name')}")
             return True
             
         except Exception as e:

@@ -76,7 +76,7 @@ python scripts/validate_data_quality.py --hours 24
 python scripts/process_all_remaining.py
 ```
 
-### 📊 Dashboard Interactif Streamlit
+### Dashboard Interactif Streamlit
 ```bash
 streamlit run app/dashboard.py
 ```
@@ -89,7 +89,7 @@ Accès : http://localhost:8501
 - Export CSV/Excel
 - Filtrage par ville et plage horaire
 
-### 📈 Modèles Statistiques & Machine Learning
+### Modèles Statistiques & Machine Learning
 ```bash
 jupyter notebook notebooks/02_statistical_models.ipynb
 ```
@@ -100,7 +100,7 @@ jupyter notebook notebooks/02_statistical_models.ipynb
 - Modèle ARIMA pour prédictions séries temporelles
 - RandomForest pour prédiction PM2.5 (R² > 0.6)
 
-✅ **Critères d'évaluation MSPR couverts** : Modèles statistiques + Data Visualization
+**Critères d'évaluation MSPR couverts** : Modèles statistiques + Data Visualization
 
 ## Orchestration Scaleway
 

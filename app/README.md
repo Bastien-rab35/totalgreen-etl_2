@@ -8,7 +8,7 @@ Ce dossier contient :
 
 ---
 
-## 🚀 Démarrage Rapide
+## Démarrage Rapide
 
 ### Prérequis
 ```bash
@@ -32,16 +32,16 @@ jupyter notebook notebooks/02_statistical_models.ipynb
 
 ---
 
-## 📊 Dashboard Streamlit
+## Dashboard Streamlit
 
 ### Fonctionnalités
-- ✅ **KPI Principaux** : AQI moyen, température, PM2.5, humidité
-- ✅ **Alertes Détectées** : Seuils critiques en temps réel
-- ✅ **Graphiques Interactifs** : AQI, corrélations, distributions
-- ✅ **Matrice de Corrélation** : Relations entre variables
-- ✅ **Statistiques Détaillées** : Qualité air, météo, données brutes
-- ✅ **Export CSV/Excel** : Téléchargement données
-- ✅ **Filtrage** : Par villes, plage horaire, seuils d'alerte
+- **KPI Principaux** : AQI moyen, température, PM2.5, humidité
+- **Alertes Détectées** : Seuils critiques en temps réel
+- **Graphiques Interactifs** : AQI, corrélations, distributions
+- **Matrice de Corrélation** : Relations entre variables
+- **Statistiques Détaillées** : Qualité air, météo, données brutes
+- **Export CSV/Excel** : Téléchargement données
+- **Filtrage** : Par villes, plage horaire, seuils d'alerte
 
 ### Structure
 ```
@@ -51,9 +51,9 @@ app/
 ```
 
 ### Utilisation
-1. **Filtrer les données** via la barre latérale (⚙️ Paramètres)
+1. **Filtrer les données** via la barre latérale (Paramètres)
 2. **Consulter les KPI** en haut du tableau
-3. **Vérifier les alertes** (🔴 AQI Critique, 🟠 PM2.5 Élevé)
+3. **Vérifier les alertes** (AQI Critique, PM2.5 Élevé)
 4. **Analyser les graphiques** (évolutions, corrélations, distributions)
 5. **Télécharger les données** en CSV ou Excel
 
@@ -68,7 +68,7 @@ Conformément aux bonnes pratiques de l'ingénierie décisionnelle, le dashboard
 
 ---
 
-## 📈 Notebook - Modèles Statistiques
+## Notebook - Modèles Statistiques
 
 ### Contenu
 
@@ -111,16 +111,16 @@ Conformément aux bonnes pratiques de l'ingénierie décisionnelle, le dashboard
 
 | Modèle | Métrique | Valeur | Statut |
 |--------|---------|--------|--------|
-| **ARIMA** | Trend Capture | ✓ | ✅ Valide |
-| **RandomForest** | R² | 0.65 | ✅ Valide (> 0.5) |
-| **RandomForest** | MAE | ~10 µg/m³ | ✅ Précision acceptable |
+| **ARIMA** | Trend Capture | Oui | Valide |
+| **RandomForest** | R² | 0.65 | Valide (> 0.5) |
+| **RandomForest** | MAE | ~10 µg/m³ | Précision acceptable |
 
 ---
 
 ## 🎯 Critères d'Évaluation MSPR Couverts
 
 | Compétence | Élément | Fichier |
-|-----------|---------|---------|
+|---|---|---|
 | **Modèles statistiques ML** | ARIMA + RandomForest + R² > 0.5 | `notebooks/02_statistical_models.ipynb` |
 | **Data Visualization** | Dashboard interactif complet | `app/dashboard.py` |
 | **Détection anomalies** | Alertes seuils KPI | Dashboard (section Alertes) |
@@ -130,7 +130,7 @@ Conformément aux bonnes pratiques de l'ingénierie décisionnelle, le dashboard
 
 ---
 
-## 📦 Installation des Dépendances
+## Installation des Dépendances
 
 Les packages suivants sont dans `requirements.txt` :
 
@@ -157,31 +157,31 @@ pip install -r requirements.txt
 
 ---
 
-## 🔧 Dépannage
+## Dépannage
 
-### ❌ "ModuleNotFoundError: No module named 'statsmodels'"
+### "ModuleNotFoundError: No module named 'statsmodels'"
 ```bash
 pip install statsmodels==0.14.0
 ```
 
-### ❌ "Connection refused to Supabase"
+### "Connection refused to Supabase"
 - Vérifier `.env` contient `SUPABASE_URL` et `SUPABASE_KEY`
 - Vérifier connexion internet
 - Vérifier projet Supabase actif
 
-### ❌ Dashboard ne se lance pas
+### Dashboard ne se lance pas
 ```bash
 # Forcer le mode de serveur
 streamlit run app/dashboard.py --server.fileWatcherType none
 ```
 
-### ❌ Pas assez de données pour ARIMA
+### Pas assez de données pour ARIMA
 - Modèle nécessite minimum 60 jours de données quotidiennes
 - Si < 60 jours : message d'avertissement, modèle ignoré
 
 ---
 
-## 📊 Exemples d'Utilisation
+## Exemples d'Utilisation
 
 ### Interroger les données dans Jupyter
 ```python
@@ -205,7 +205,7 @@ print(f"PM2.5 prédit: {predicted_pm25[0]:.1f} µg/m³")
 
 ---
 
-## 📈 Performance et Scaling
+## Performance et Scaling
 
 - Dashboard : Supporte ~10,000 mesures sans ralentissement
 - Notebook : Charger jusqu'à 100,000 mesures (peut être lent)
@@ -216,10 +216,10 @@ print(f"PM2.5 prédit: {predicted_pm25[0]:.1f} µg/m³")
 
 ## 🔐 Sécurité
 
-- ✅ Token Supabase requis (lecture seule pour dashboard)
-- ✅ Aucune donnée perso
-- ✅ Secrets en `.env` (git-ignored)
-- ✅ HTTPS/TLS en transit
+- Token Supabase requis (lecture seule pour dashboard)
+- Aucune donnée perso
+- Secrets en `.env` (git-ignored)
+- HTTPS/TLS en transit
 
 ---
 
@@ -232,4 +232,4 @@ print(f"PM2.5 prédit: {predicted_pm25[0]:.1f} µg/m³")
 ---
 
 **Dernière mise à jour :** 15 Juin 2026  
-**Status :** ✅ Production-Ready
+**Status :** Production-Ready

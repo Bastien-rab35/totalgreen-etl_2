@@ -8,13 +8,13 @@ Le projet GoodAir traite **exclusivement des données non-personnelles** et publ
 
 | Type | Exemples | Statut RGPD |
 |------|----------|------------|
-| **Données environnementales** | Température, humidité, AQI, PM2.5, ozone | ✅ Publiques |
-| **Données météorologiques** | Pression, vitesse vent, visibilité | ✅ Publiques |
-| **Données institutionnelles** | Qualité eau potable, cours d'eau | ✅ Publiques |
-| **Métadonnées géographiques** | Coordonnées villes, stations | ✅ Publiques |
-| **Données de trafic** | Débits, congestion, temps trajet | ✅ Non-personnelles |
+| **Données environnementales** | Température, humidité, AQI, PM2.5, ozone | Publiques |
+| **Données météorologiques** | Pression, vitesse vent, visibilité | Publiques |
+| **Données institutionnelles** | Qualité eau potable, cours d'eau | Publiques |
+| **Métadonnées géographiques** | Coordonnées villes, stations | Publiques |
+| **Données de trafic** | Débits, congestion, temps trajet | Non-personnelles |
 
-**❌ Aucune donnée personnelle n'est collectée** (pas de localisation d'utilisateurs, pas de données de santé individuelles, etc.)
+**Aucune donnée personnelle n'est collectée** (pas de localisation d'utilisateurs, pas de données de santé individuelles, etc.)
 
 ### 1.2 Légalité du Traitement
 
@@ -39,9 +39,9 @@ Chaque donnée collectée répond à une nécessité spécifique :
 | **Hub'Eau** | Qualité eau potable/rivières | Corrélations avec autres variables | 2 ans (archives) |
 
 ### 2.2 Minimisation Techniques
-- ✅ Agrégation par jour/heure (pas de granularité <15min sauf trafic)
-- ✅ Suppression automatique de données anciennes (scripts `cleanup_data_lake.py`)
-- ✅ Conservation uniquement des variables essentielles pour analyses
+- Agrégation par jour/heure (pas de granularité <15min sauf trafic)
+- Suppression automatique de données anciennes (scripts `cleanup_data_lake.py`)
+- Conservation uniquement des variables essentielles pour analyses
 
 ---
 
@@ -68,8 +68,8 @@ Bien qu'**aucune donnée personnelle** ne soit traitée, les droits RGPD suivant
 - Marquage `data_disputed = true` en base → exclusion des analyses jusqu'à vérification
 
 ### 3.5 Portabilité (Art. 20)
-- ✅ Export CSV/JSON des données via dashboard
-- ✅ Format standard, non-propriétaire
+- Export CSV/JSON des données via dashboard
+- Format standard, non-propriétaire
 
 ---
 
@@ -79,12 +79,12 @@ Bien qu'**aucune donnée personnelle** ne soit traitée, les droits RGPD suivant
 
 | Fournisseur | Type | Statut DPA | Notes |
 |---|---|---|---|
-| **OpenWeather** | Sous-traitant (processeur) | ✅ Standard DPA | [openweathermap.org/terms](https://openweathermap.org/terms) |
-| **AQICN** | Sous-traitant | ✅ Standard DPA | [aqicn.org/terms](https://aqicn.org/terms) |
-| **TomTom** | Sous-traitant | ✅ Enterprise DPA | Clause 28 RGPD incluse |
+| **OpenWeather** | Sous-traitant (processeur) | Standard DPA | openweathermap.org/terms |
+| **AQICN** | Sous-traitant | Standard DPA | aqicn.org/terms |
+| **TomTom** | Sous-traitant | Enterprise DPA | Clause 28 RGPD incluse |
 | **Hub'Eau (Eaufrance)** | Autorité publique (exception) | N/A | Données publiques en accès libre |
-| **Supabase** | Sous-traitant (infrastructure) | ✅ DPA signé | Hébergement EU, chiffrement |
-| **Scaleway** | Sous-traitant (cloud) | ✅ DPA signé | Serveurs physiquement en France (Fr-par-1) |
+| **Supabase** | Sous-traitant (infrastructure) | DPA signé | Hébergement EU, chiffrement |
+| **Scaleway** | Sous-traitant (cloud) | DPA signé | Serveurs physiquement en France (Fr-par-1) |
 
 ### 4.2 Garanties Contractuelles
 
@@ -129,9 +129,9 @@ Le respect de la propriété intellectuelle est fondamental dans la collecte des
 ```
 
 **Configuration:**
-- ✅ Authentification API par token (pas d'accès anonyme en écriture)
-- ✅ Row-Level Security activé : utilisateurs voient données publiques seulement
-- ✅ Logs d'accès : Supabase enregistre chaque requête
+- Authentification API par token (pas d'accès anonyme en écriture)
+- Row-Level Security activé : utilisateurs voient données publiques seulement
+- Logs d'accès : Supabase enregistre chaque requête
 
 ### 5.2 Chiffrement
 | Étape | Méthode | Implémentation |
@@ -142,10 +142,10 @@ Le respect de la propriété intellectuelle est fondamental dans la collecte des
 
 ### 5.3 Gestion des Secrets
 ```python
-# ✅ BON
+# BON
 OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY')  # Depuis env/Secret Manager
 
-# ❌ MAUVAIS
+# MAUVAIS
 OPENWEATHER_API_KEY = "sk_live_123456"  # Hard-coded
 ```
 
@@ -173,10 +173,10 @@ CREATE TABLE audit_log (
 
 ### 6.2 Logs d'ETL
 Chaque exécution ETL enregistre :
-- ✅ Nombre de lignes extraites/transformées
-- ✅ Erreurs/anomalies détectées
-- ✅ Durée d'exécution
-- ✅ Anomalies en table `anomalies`
+- Nombre de lignes extraites/transformées
+- Erreurs/anomalies détectées
+- Durée d'exécution
+- Anomalies en table `anomalies`
 
 **Rétention :** 90 jours en base, puis archive
 
@@ -240,22 +240,22 @@ Si un citoyen demande suppression de ses données (applicable seulement si donn�
 | Accès non autorisé | Basse | Moyen | RLS + logging |
 
 ### 9.2 Conclusion DPIA
-✅ **Projet conforme RGPD** (risques résiduels acceptables avec mitigations)
+**Projet conforme RGPD** (risques résiduels acceptables avec mitigations)
 
 ---
 
 ## 10. Déclarations de Conformité
 
 ### 10.1 Hébergement et Localisation
-- ✅ **Supabase (PostgreSQL)** : EU data center (Ireland / Netherlands)
-- ✅ **Scaleway S3** : France (fr-par-1 region)
-- ✅ **DNS/CDN** : Cloudflare (edge nodes Europe)
-- ✅ Pas de transferts de données hors UE
+- **Supabase (PostgreSQL)** : EU data center (Ireland / Netherlands)
+- **Scaleway S3** : France (fr-par-1 region)
+- **DNS/CDN** : Cloudflare (edge nodes Europe)
+- Pas de transferts de données hors UE
 
 ### 10.2 Certifications Fournisseurs
-- ✅ Supabase : SOC 2 Type II, GDPR compliant
-- ✅ Scaleway : ISO 27001, GDPR compliant
-- ✅ OpenWeather : GDPR + Standard Contractual Clauses
+- Supabase : SOC 2 Type II, GDPR compliant
+- Scaleway : ISO 27001, GDPR compliant
+- OpenWeather : GDPR + Standard Contractual Clauses
 
 ### 10.3 Politique de Modification
 Toute évolution du traitement (nouvelle source, ajout données) nécessite :

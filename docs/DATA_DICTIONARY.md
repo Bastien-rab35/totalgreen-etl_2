@@ -207,12 +207,12 @@ Observations physico-chimiques des cours d'eau.
 
 ## 7. Conformité RGPD
 
-✅ **Aucune donnée personnelle** collectée dans le flux standard
+**Aucune donnée personnelle** collectée dans le flux standard
 - Données publiques (météo, air)
 - Données institutionnelles (cours d'eau, eau potable)
 - Métadonnées géographiques (villes, stations)
 
-⚠️ **Recommandations:**
+**Recommandations:**
 - Politique de rétention : 2 ans de données actives minimum
 - Accès : Authentication API requise
 - Chiffrement : En transit (HTTPS), au repos (Supabase encrypted)

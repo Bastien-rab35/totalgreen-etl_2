@@ -4,26 +4,26 @@ Historique des evolutions principales du projet.
 
 ## 3.0.0 - Finalisation MSPR: Modèles ML + Dashboard + Documentation (15 juin 2026)
 
-### 🎯 Nouvelles Fonctionnalités Critiques MSPR
+### Nouvelles Fonctionnalités Critiques MSPR
 
 #### Modèles Statistiques & Machine Learning
 - **Notebook `notebooks/02_statistical_models.ipynb`** :
-  - ✅ Analyse de corrélations (Heatmap matrices)
-  - ✅ Décomposition saisonnière (seasonal_decompose, period=30)
-  - ✅ Modèle ARIMA(1,1,1) pour prédiction AQI (7 jours)
-  - ✅ RandomForest pour prédiction PM2.5 (R² = 0.65 > critère 0.5)
-  - ✅ Feature importance : AQI > Température > Humidité > Pression
+  - Analyse de corrélations (Heatmap matrices)
+  - Décomposition saisonnière (seasonal_decompose, period=30)
+  - Modèle ARIMA(1,1,1) pour prédiction AQI (7 jours)
+  - RandomForest pour prédiction PM2.5 (R² = 0.65 > critère 0.5)
+  - Feature importance : AQI > Température > Humidité > Pression
   - **Impact** : Couvre compétence MSPR "Proposer modèles statistiques/ML"
 
 #### Dashboard Interactif Streamlit
 - **Application `app/dashboard.py`** (200+ lignes) :
-  - ✅ KPI temps réel : AQI moyen, PM2.5, Température, Humidité
-  - ✅ Alertes détectées : Seuils critiques (🔴 AQI > 300, 🟠 PM2.5 > 150)
-  - ✅ Graphiques interactifs : Évolutions, scatter plot corrélations, box plots
-  - ✅ Matrice de corrélation (Plotly heatmap)
-  - ✅ Statistiques détaillées (AQI, Météo, Qualité air)
-  - ✅ Export CSV/Excel (téléchargement direct)
-  - ✅ Filtrage multi-critères : Villes, plages horaires, seuils personnalisés
+  - KPI temps réel : AQI moyen, PM2.5, Température, Humidité
+  - Alertes détectées : Seuils critiques (AQI > 300, PM2.5 > 150)
+  - Graphiques interactifs : Évolutions, scatter plot corrélations, box plots
+  - Matrice de corrélation (Plotly heatmap)
+  - Statistiques détaillées (AQI, Météo, Qualité air)
+  - Export CSV/Excel (téléchargement direct)
+  - Filtrage multi-critères : Villes, plages horaires, seuils personnalisés
   - **Impact** : Couvre compétence MSPR "Organiser data sous forme résultats exploitables (dataviz)"
 
 #### Documentation & Conformité
@@ -70,50 +70,50 @@ Historique des evolutions principales du projet.
 - **`setup.sh`** : Script activation environnement
 - **Updated main `README.md`** : Instructions dashboard & notebooks
 
-### 📈 Métriques de Couverture MSPR
+### Métriques de Couverture MSPR
 
 | Compétence MSPR | Élément | Fichier | Status |
 |---|---|---|---|
-| **1. Référentiel données** | DATA_DICTIONARY.md | docs/DATA_DICTIONARY.md | ✅ |
-| **2. Préparation données** | Nettoyage + validation | notebooks/02_statistical_models.ipynb + src/ | ✅ |
-| **3. Qualité données** | Anomalies, validation | scripts/validate_data_quality.py, sql/anomalies_table.sql | ✅ |
-| **4. RGPD/Sécurité** | Conformité complète | docs/RGPD_COMPLIANCE.md | ✅ |
-| **5. Data Lake & DLM** | S3 + Rétention | src/data_lake_service.py | ✅ |
-| **6. Modèles ML/Stat** | ARIMA + RandomForest (R²>0.5) | notebooks/02_statistical_models.ipynb | ✅ |
-| **7. Data Visualization** | Dashboard interactif | app/dashboard.py | ✅ |
-| **8. Services BD/ETL** | SQL + Python + Scaleway | src/ + sql/ | ✅ |
+| **1. Référentiel données** | DATA_DICTIONARY.md | docs/DATA_DICTIONARY.md | OK |
+| **2. Préparation données** | Nettoyage + validation | notebooks/02_statistical_models.ipynb + src/ | OK |
+| **3. Qualité données** | Anomalies, validation | scripts/validate_data_quality.py, sql/anomalies_table.sql | OK |
+| **4. RGPD/Sécurité** | Conformité complète | docs/RGPD_COMPLIANCE.md | OK |
+| **5. Data Lake & DLM** | S3 + Rétention | src/data_lake_service.py | OK |
+| **6. Modèles ML/Stat** | ARIMA + RandomForest (R²>0.5) | notebooks/02_statistical_models.ipynb | OK |
+| **7. Data Visualization** | Dashboard interactif | app/dashboard.py | OK |
+| **8. Services BD/ETL** | SQL + Python + Scaleway | src/ + sql/ | OK |
 
-### 🎯 Critères d'Évaluation Détaillés
+### Critères d'Évaluation Détaillés
 
 #### Modèles ML (Critère: R² > 0.5)
-- RandomForest PM2.5 : **R² = 0.65** ✅ VALIDÉ
+- RandomForest PM2.5 : **R² = 0.65** VALIDÉ
 - MAE = ~10 µg/m³
 - Features utilisées : Température, Humidité, Pression, AQI
 
 #### Modèles Statistiques
-- ARIMA(1,1,1) capture tendance + saisonnalité ✅
-- Corrélation Température/AQI : r = 0.65 ✅
-- Décomposition saisonnière visible ✅
+- ARIMA(1,1,1) capture tendance + saisonnalité
+- Corrélation Température/AQI : r = 0.65
+- Décomposition saisonnière visible
 
 #### Data Visualization
-- KPI principaux affichés ✅
-- Alertes interactives ✅
-- Graphiques multiples (line, scatter, box, heatmap) ✅
-- Export CSV/Excel ✅
+- KPI principaux affichés
+- Alertes interactives
+- Graphiques multiples (line, scatter, box, heatmap)
+- Export CSV/Excel
 
-### 📊 État du Projet
+### État du Projet
 
-**Status Global** : 🟢 **PRODUCTION READY**
+**Status Global** : **PRODUCTION READY**
 
-- ✅ Pipeline ETL complet en production (Scaleway)
-- ✅ Data Warehouse normalisé (Star Schema)
-- ✅ Modèles ML avec validation MSPR
-- ✅ Dashboard interactif & accessible
-- ✅ Documentation technique complète (5 docs)
-- ✅ Conformité RGPD certifiée
-- ✅ Monitoring & alertes implémentés
+- Pipeline ETL complet en production (Scaleway)
+- Data Warehouse normalisé (Star Schema)
+- Modèles ML avec validation MSPR
+- Dashboard interactif & accessible
+- Documentation technique complète (5 docs)
+- Conformité RGPD certifiée
+- Monitoring & alertes implémentés
 
-### 🚀 Déploiement
+### Déploiement
 
 ```bash
 # Installation

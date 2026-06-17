@@ -17,7 +17,6 @@ from supabase import create_client
 # Configuration Streamlit
 st.set_page_config(
     page_title="GoodAir Dashboard",
-    page_icon="🌍",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -93,12 +92,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="main-title">🌍 GoodAir - Tableau de Bord</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">GoodAir - Tableau de Bord</div>', unsafe_allow_html=True)
 st.markdown("**Qualité de l'air et conditions météorologiques en France**")
 
 # ========== SIDEBAR - FILTRES ==========
 with st.sidebar:
-    st.header("⚙️ Paramètres")
+    st.header("Paramètres")
     
     hours_filter = st.slider(
         "Période à analyser (heures)",
@@ -118,7 +117,7 @@ with st.sidebar:
     pm25_threshold = st.slider("PM2.5 (µg/m³)", 50, 500, 150)
     
     st.divider()
-    if st.button("🔄 Rafraîchir les données"):
+    if st.button("Rafraîchir les données"):
         st.cache_data.clear()
         st.rerun()
 
@@ -127,22 +126,22 @@ try:
     df = load_data(hours=hours_filter)
     
     if len(df) == 0:
-        st.warning("⚠️ Aucune donnée disponible pour cette période")
+        st.warning("Aucune donnée disponible pour cette période")
         st.stop()
     
     # Filtrer par villes sélectionnées
     df = df[df['city_name'].isin(selected_cities)]
     
     if len(df) == 0:
-        st.warning("⚠️ Aucune donnée pour les villes sélectionnées")
+        st.warning("Aucune donnée pour les villes sélectionnées")
         st.stop()
     
 except Exception as e:
-    st.error(f"❌ Erreur de connexion: {e}")
+    st.error(f"Erreur de connexion: {e}")
     st.stop()
 
 # ========== KPI PRINCIPAUX ==========
-st.subheader("📊 Indicateurs Clés de Performance")
+st.subheader("Indicateurs Clés de Performance")
 
 col1, col2, col3, col4 = st.columns(4)
 
@@ -179,7 +178,7 @@ with col4:
     )
 
 # ========== ALERTES ==========
-st.subheader("⚠️ Alertes Détectées")
+st.subheader("Alertes Détectées")
 
 alerts = []
 
@@ -188,7 +187,7 @@ df_alert_aqi = df[df['aqi'] > aqi_threshold]
 if len(df_alert_aqi) > 0:
     st.markdown(f"""
     <div class="alert-danger">
-    <strong>🔴 AQI Critique:</strong> {len(df_alert_aqi)} mesures au-dessus de {aqi_threshold}
+    <strong>AQI Critique:</strong> {len(df_alert_aqi)} mesures au-dessus de {aqi_threshold}
     </div>
     """, unsafe_allow_html=True)
 
@@ -197,15 +196,15 @@ df_alert_pm25 = df[df['pm2_5'] > pm25_threshold]
 if len(df_alert_pm25) > 0:
     st.markdown(f"""
     <div class="alert-warning">
-    <strong>🟠 PM2.5 Élevé:</strong> {len(df_alert_pm25)} mesures au-dessus de {pm25_threshold} µg/m³
+    <strong>PM2.5 Élevé:</strong> {len(df_alert_pm25)} mesures au-dessus de {pm25_threshold} µg/m³
     </div>
     """, unsafe_allow_html=True)
 
 if len(df_alert_aqi) == 0 and len(df_alert_pm25) == 0:
-    st.info("✅ Aucune alerte détectée - Qualité de l'air satisfaisante")
+    st.info("Aucune alerte détectée - Qualité de l'air satisfaisante")
 
 # ========== GRAPHIQUES ==========
-st.subheader("📈 Évolution Temporelle")
+st.subheader("Évolution Temporelle")
 
 # Graphique 1: Evolution AQI par ville
 fig_aqi = px.line(
@@ -244,7 +243,7 @@ fig_pm25.add_hline(y=pm25_threshold, line_dash="dash", line_color="orange", anno
 st.plotly_chart(fig_pm25, use_container_width=True)
 
 # ========== TABLEAU DE DONNÉES ==========
-st.subheader("📋 Données Détaillées")
+st.subheader("Données Détaillées")
 
 # Agrégation par ville
 agg_data = df.groupby('city_name').agg({
@@ -260,7 +259,7 @@ agg_data.columns = ['AQI Moy', 'AQI Max', 'AQI Min', 'Temp (°C)', 'PM2.5', 'PM1
 st.dataframe(agg_data, use_container_width=True)
 
 # ========== HEATMAP CORRÉLATIONS ==========
-st.subheader("🔗 Matrice de Corrélation")
+st.subheader("Matrice de Corrélation")
 
 correlation_cols = ['temperature', 'humidity', 'pressure', 'aqi', 'pm2_5', 'pm10']
 corr_matrix = df[correlation_cols].corr()
@@ -281,7 +280,7 @@ fig_heatmap.update_layout(title="Corrélations entre Variables", width=800, heig
 st.plotly_chart(fig_heatmap, use_container_width=True)
 
 # ========== STATISTIQUES DÉTAILLÉES ==========
-st.subheader("📊 Statistiques Détaillées")
+st.subheader("Statistiques Détaillées")
 
 tab1, tab2, tab3 = st.tabs(["Qualité de l'air", "Météo", "Télécharger"])
 
@@ -337,7 +336,7 @@ with tab3:
     # CSV
     csv = df.sort_values('captured_at').to_csv(index=False)
     st.download_button(
-        label="📥 Télécharger en CSV",
+        label="Télécharger en CSV",
         data=csv,
         file_name=f"goodair_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
         mime="text/csv"
@@ -352,7 +351,7 @@ with tab3:
         
         with open(buffer.path, 'rb') as f:
             st.download_button(
-                label="📊 Télécharger en Excel",
+                label="Télécharger en Excel",
                 data=f.read(),
                 file_name=f"goodair_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
             )
@@ -363,8 +362,8 @@ with tab3:
 st.divider()
 st.markdown("""
 <div style='text-align: center; color: grey; font-size: 12px;'>
-    🌍 GoodAir - Laboratoire de Recherche TotalGreen  
+    GoodAir - Laboratoire de Recherche TotalGreen  
     Dernière mise à jour: """ + datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC') + """  
-    📧 Contact: research@goodair.fr
+    Contact: research@goodair.fr
 </div>
 """, unsafe_allow_html=True)

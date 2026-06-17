@@ -62,7 +62,7 @@ class TransformToDB:
     def _train_anomaly_model(self):
         """Entraîne le modèle Isolation Forest sur les données historiques"""
         try:
-            logger.info("⚡ Entraînement du modèle ML (Isolation Forest)...")
+            logger.info("Entraînement du modèle ML (Isolation Forest)...")
             
             # Récupérer données historiques
             historical_data = self.db_service.get_historical_data_for_ml(limit=5000)
@@ -73,9 +73,9 @@ class TransformToDB:
                 
                 # Entraîner le modèle
                 self.anomaly_service.train_isolation_forest(X)
-                logger.info(f"✓ Modèle ML entraîné sur {len(historical_data)} mesures")
+                logger.info(f"Modèle ML entraîné sur {len(historical_data)} mesures")
             else:
-                logger.warning("⚠️  Pas assez de données historiques pour ML (min: 100). Détection ML désactivée.")
+                logger.warning("Pas assez de données historiques pour ML (min: 100). Détection ML désactivée.")
                 
         except Exception as e:
             logger.error(f"Erreur entraînement modèle ML: {e}")
@@ -147,10 +147,10 @@ class TransformToDB:
             if success:
                 # Marquer comme traité
                 self.data_lake_service.mark_as_processed(lake_id)
-                logger.info(f"✓ {source} - {city_name} → BDD")
+                logger.info(f"{source} - {city_name} → BDD")
                 return True
             else:
-                logger.error(f"✗ Échec insertion {source} - {city_name}")
+                logger.error(f"Échec insertion {source} - {city_name}")
                 return False
             
         except Exception as e:
@@ -214,7 +214,7 @@ class TransformToDB:
                     dt = datetime.fromisoformat(data['aqi']['collected_at'].replace('Z', '+00:00'))
                     age = (now - dt.replace(tzinfo=None)).total_seconds() / 3600
                     age_info = f" (âge: {age:.1f}h)"
-                logger.warning(f"⏳ Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}{age_info}")
+                logger.warning(f"Mesure incomplète: City {city_id} @ {timestamp[:19]} - manque {missing}{age_info}")
 
         return grouped, discarded_ids
     
@@ -275,7 +275,7 @@ class TransformToDB:
                         'raw_aqi_id': aqi_entry['id']
                     })
             
-            # ⚡ DÉTECTION D'ANOMALIES ML
+            # DÉTECTION D'ANOMALIES ML
             anomalies_detected = []
             anomaly_score = 0.0
             
@@ -311,12 +311,12 @@ class TransformToDB:
                     severity_counts[sev] = severity_counts.get(sev, 0) + 1
                 
                 severity_str = ', '.join([f"{k}:{v}" for k, v in severity_counts.items()])
-                logger.warning(f"🚨 Anomalies détectées pour {city_name}: {severity_str}")
+                logger.warning(f"Anomalies détectées pour {city_name}: {severity_str}")
                 
                 # Rejeter les mesures avec anomalies critiques
                 critical_anomalies = [a for a in anomalies_list if a.get('severity') == 'critical']
                 if critical_anomalies:
-                    logger.error(f"❌ Mesure rejetée pour {city_name} : {len(critical_anomalies)} anomalies critiques")
+                    logger.error(f"Mesure rejetée pour {city_name} : {len(critical_anomalies)} anomalies critiques")
                     
                     # Stocker les anomalies critiques
                     for anom in critical_anomalies:
@@ -344,11 +344,11 @@ class TransformToDB:
                 if weather_entry: sources.append('weather')
                 if aqi_entry: sources.append('aqi')
                 
-                anomaly_flag = " 🚨" if is_anomaly else ""
-                logger.info(f"✓ {city_name} [{'+'.join(sources)}] → fact_measures (⭐ modèle en étoile){anomaly_flag}")
+                anomaly_flag = " (Anomalie)" if is_anomaly else ""
+                logger.info(f"{city_name} [{'+'.join(sources)}] → fact_measures (modèle en étoile){anomaly_flag}")
                 return True
             else:
-                logger.error(f"✗ Échec insertion {city_name}")
+                logger.error(f"Échec insertion {city_name}")
                 return False
             
         except Exception as e:
@@ -575,7 +575,7 @@ class TransformToDB:
                 success_count += 1
                 processed_entries += 1
                 if processed_entries % 100 == 0:
-                    logger.info(f"⏳ Progression : {processed_entries} entrées traitées...")
+                    logger.info(f"Progression : {processed_entries} entrées traitées...")
                 
         # 3. Groupe et traitement Hub'Eau
         for entry in hubeau_data:
@@ -590,7 +590,7 @@ class TransformToDB:
                 success_count += 1
                 processed_entries += 1
                 if processed_entries % 100 == 0:
-                    logger.info(f"⏳ Progression : {processed_entries} entrées traitées...")
+                    logger.info(f"Progression : {processed_entries} entrées traitées...")
         
         # BATCH UPDATE (Mise à jour groupée : évite les requêtes N+1 et timeouts)
         if ids_to_mark:

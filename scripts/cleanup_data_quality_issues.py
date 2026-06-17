@@ -40,7 +40,7 @@ class DataQualityCleanup:
     
     def find_duplicates(self) -> List[Dict]:
         """Trouve les doublons (même city_id + captured_at)."""
-        print("\n🔍 Recherche des doublons...")
+        print("\nRecherche des doublons...")
         
         # Récupérer toutes les mesures
         response = self.db.client.table('fact_measures').select(
@@ -70,7 +70,7 @@ class DataQualityCleanup:
     
     def find_future_dates(self) -> List[Dict]:
         """Trouve les mesures avec captured_at dans le futur."""
-        print("\n🔍 Recherche des dates futures...")
+        print("\nRecherche des dates futures...")
         
         now = datetime.now(timezone.utc).isoformat()
         
@@ -101,7 +101,7 @@ class DataQualityCleanup:
                 deleted_count += len(batch)
                 print(f"   Supprimé {deleted_count}/{len(measure_ids)} mesures...")
             except Exception as e:
-                print(f"   ❌ Erreur lors de la suppression: {e}")
+                print(f"   Erreur lors de la suppression: {e}")
         
         return deleted_count
     
@@ -110,10 +110,10 @@ class DataQualityCleanup:
         duplicates = self.find_duplicates()
         
         if not duplicates:
-            print("   ✅ Aucun doublon trouvé")
+            print("   Aucun doublon trouvé")
             return 0
         
-        print(f"   ⚠️  {len(duplicates)} doublons trouvés")
+        print(f"   {len(duplicates)} doublons trouvés")
         
         # Afficher quelques exemples
         print("\n   Exemples de doublons:")
@@ -137,10 +137,10 @@ class DataQualityCleanup:
         future_measures = self.find_future_dates()
         
         if not future_measures:
-            print("   ✅ Aucune date future trouvée")
+            print("   Aucune date future trouvée")
             return 0
         
-        print(f"   ⚠️  {len(future_measures)} mesures avec dates futures")
+        print(f"   {len(future_measures)} mesures avec dates futures")
         
         # Afficher les mesures futures
         print("\n   Mesures futures:")
@@ -162,7 +162,7 @@ class DataQualityCleanup:
         print("=" * 70)
         
         if self.dry_run:
-            print("\n⚠️  MODE DRY-RUN - Aucune modification réelle")
+            print("\nMODE DRY-RUN - Aucune modification réelle")
         
         print(f"\nDate: {datetime.now(timezone.utc).isoformat()}")
         
@@ -190,9 +190,9 @@ class DataQualityCleanup:
         print(f"\nTotal mesures supprimées: {self.issues_fixed['total_deleted']}")
         
         if self.dry_run:
-            print("\n⚠️  MODE DRY-RUN - Relancer sans --dry-run pour appliquer les modifications")
+            print("\nMODE DRY-RUN - Relancer sans --dry-run pour appliquer les modifications")
         else:
-            print("\n✅ Nettoyage terminé avec succès")
+            print("\nNettoyage terminé avec succès")
         
         print("=" * 70)
 

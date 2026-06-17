@@ -1,14 +1,14 @@
 # Guide de Soutenance MSPR - 20 minutes
 
-## 📌 Structure Recommandée (20 min)
+## Structure Recommandée (20 min)
 
-### ⏱️ 1-2 min : Contexte & Problématique
+### 1-2 min : Contexte & Problématique
 **Slide 1 : Le contexte GoodAir**
 - Laboratoire TotalGreen - Recherche qualité air + eau
 - Besoin : Collecter, analyser, visualiser données environnementales 10 villes FR
 - Challenge : RGPD, qualité données, prédictions
 
-### ⏱️ 2-3 min : Architecture Technique
+### 2-3 min : Architecture Technique
 **Slide 2 : Vue d'ensemble**
 ```
 APIs (OpenWeather, AQICN, TomTom, Hub'Eau)
@@ -27,7 +27,7 @@ Dashboard + Modèles ML
 - Orchestration : Scaleway Serverless Jobs
 - Stockage : Supabase (PostgreSQL) + S3 Scaleway
 
-### ⏱️ 3-4 min : Modélisation des Données
+### 3-4 min : Modélisation des Données
 **Slide 3 : Star Schema simplifié**
 - Fact table principale : `fact_measures` (météo + AQI)
 - Tables de dimensions : `dim_city`, `dim_date`
@@ -38,7 +38,7 @@ Dashboard + Modèles ML
 - ✓ 7 sources de données intégrées
 - ✓ 10 villes couvertes
 
-### ⏱️ 4-5 min : Modèles Statistiques & ML
+### 4-5 min : Modèles Statistiques & ML
 **Slide 4 : Analyses prédictives**
 
 **Corrélations** :
@@ -53,11 +53,11 @@ Dashboard + Modèles ML
 
 **Modèle RandomForest** :
 - Prédire PM2.5 à partir : Temp, Humidité, Pression, AQI
-- **R² = 0.65** ✅ (critère MSPR : > 0.5)
+- **R² = 0.65** (critère MSPR : > 0.5)
 - Feature importance : AQI > Température > Humidité > Pression
 - MAE : ~10 µg/m³
 
-### ⏱️ 5-6 min : Dashboard & Visualisations
+### 5-6 min : Dashboard & Visualisations
 **Slide 5 : Démonstration dashboard**
 
 **LIVE DEMO** :
@@ -71,10 +71,10 @@ Dashboard + Modèles ML
 
 **Fonctionnalités** :
 - Filtrage par ville & plage horaire
-- Alertes temps réel (🔴 AQI > 300, 🟠 PM2.5 > 150)
+- Alertes temps réel (AQI > 300, PM2.5 > 150)
 - Export CSV/Excel (rapports automatisés)
 
-### ⏱️ 3-4 min : Qualité & Sécurité
+### 3-4 min : Qualité & Sécurité
 **Slide 6 : Gouvernance des données**
 
 **Qualité des données** :
@@ -84,26 +84,26 @@ Dashboard + Modèles ML
 - Taux complétude : 95%+ par source
 
 **RGPD & Sécurité** :
-- ✅ Zéro donnée personnelle (données publiques)
-- ✅ Hébergement UE (Supabase, Scaleway)
-- ✅ Chiffrement TLS 1.3 + AES-256
-- ✅ Authentification API (tokens Supabase)
-- ✅ Politique rétention : 1-2 ans selon source
+- Zéro donnée personnelle (données publiques)
+- Hébergement UE (Supabase, Scaleway)
+- Chiffrement TLS 1.3 + AES-256
+- Authentification API (tokens Supabase)
+- Politique rétention : 1-2 ans selon source
 
 **Documentation** :
 - DATA_DICTIONARY.md : Description complète données
 - RGPD_COMPLIANCE.md : Clauses DPA, conformité légale
 - ARCHITECTURE.md : Détails techniques
 
-### ⏱️ 2-3 min : Résultats & Impact
+### 2-3 min : Résultats & Impact
 **Slide 7 : Livrables & KPI**
 
 **Livrables produits** :
-- ✅ Pipeline ETL en production (Scaleway)
-- ✅ Data Warehouse normalisé (Star Schema)
-- ✅ Modèles statistiques/ML avec validité > 0.5
-- ✅ Dashboard interactif accessible
-- ✅ Documentation complète (5 docs techniques)
+- Pipeline ETL en production (Scaleway)
+- Data Warehouse normalisé (Star Schema)
+- Modèles statistiques/ML avec validité > 0.5
+- Dashboard interactif accessible
+- Documentation complète (5 docs techniques)
 
 **Impact métier** :
 - Chercheurs : Accès rapide à 100k+ mesures propres
@@ -111,7 +111,7 @@ Dashboard + Modèles ML
 - Data Science : Données prêtes pour analyses avancées (trend analysis, forecasting)
 - Santé publique : Corrélations air/climat pour recommandations population
 
-### ⏱️ 1 min : Conclusion & Questions
+### 1 min : Conclusion & Questions
 **Slide 8 : Fermeture**
 - Architecture scalable & robuste (sans point unique de défaillance)
 - Conforme RGPD & sécurité information
@@ -120,7 +120,7 @@ Dashboard + Modèles ML
 
 ---
 
-## 🎯 Points Clés à Souligner
+## Points Clés à Souligner
 
 ### Compétences MSPR Démontrées
 
@@ -137,7 +137,7 @@ Dashboard + Modèles ML
 
 ---
 
-## 📊 Slides Recommandées (8 slides = 20 min)
+## Slides Recommandées (8 slides = 20 min)
 
 ```
 Slide 1: Contexte GoodAir
@@ -151,9 +151,9 @@ Slide 3: Star Schema
   └─ 100k+ mesures
 
 Slide 4: Modèles ML
-  └─ Corrélations (heatmap)
+  └─ Corrélations (Heatmap)
   └─ ARIMA (séries temporelles)
-  └─ RandomForest (R² = 0.65) ✅
+  └─ RandomForest (R² = 0.65)
 
 Slide 5: Dashboard LIVE
   └─ KPI, Alertes, Graphiques interactifs
@@ -161,7 +161,7 @@ Slide 5: Dashboard LIVE
 
 Slide 6: Qualité & Sécurité
   └─ Validation multi-niveaux
-  └─ RGPD ✅, Chiffrement ✅, UE ✅
+  └─ RGPD, Chiffrement, UE
 
 Slide 7: Livrables & Impact
   └─ 6 livrables produits
@@ -172,7 +172,7 @@ Slide 8: Questions
 
 ---
 
-## 🎬 Scénario de Démonstration (Live)
+## Scénario de Démonstration (Live)
 
 ### Option A : Démonstration Dashboard (5 min)
 ```bash
@@ -203,7 +203,7 @@ jupyter notebook notebooks/02_statistical_models.ipynb
 
 ---
 
-## ✅ Checklist Avant Présentation
+## Checklist Avant Présentation
 
 - [ ] `.env` configuré (clés API OK)
 - [ ] Supabase accessible (données chargées)
@@ -217,7 +217,7 @@ jupyter notebook notebooks/02_statistical_models.ipynb
 
 ---
 
-## 🤔 Questions Probables du Jury
+## Questions Probables du Jury
 
 ### Sur l'Architecture
 **Q : Pourquoi Supabase + S3 et pas une seule solution ?**
@@ -248,7 +248,7 @@ A : Non-applicable (zéro donnée perso). Données publiques, exception légale.
 
 ---
 
-## 🎤 Tips de Présentation
+## Tips de Présentation
 
 - **Parler clair, pas trop vite** (jury non-technique possible)
 - **Éviter jargon** : dire "modèle prédictif" pas "estimateur OLS"
