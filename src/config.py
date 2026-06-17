@@ -22,25 +22,26 @@ class Config:
     """Configuration centralisée de l'application (Singleton-like behavior)."""
     
     # APIs
-    OPENWEATHER_API_KEY: str = os.getenv('OPENWEATHER_API_KEY', '')
-    AQICN_API_KEY: str = os.getenv('AQICN_API_KEY', '')
-    TOMTOM_API_KEY: str = os.getenv('TOMTOM_API_KEY', '')
+    OPENWEATHER_API_KEY: str = os.getenv('OPENWEATHER_API_KEY', '').strip(' "\'\n\r')
+    AQICN_API_KEY: str = os.getenv('AQICN_API_KEY', '').strip(' "\'\n\r')
+    TOMTOM_API_KEY: str = os.getenv('TOMTOM_API_KEY', '').strip(' "\'\n\r')
     
     # Supabase
-    SUPABASE_URL: str = os.getenv('SUPABASE_URL', '')
-    SUPABASE_KEY: str = os.getenv('SUPABASE_KEY', '')
+    SUPABASE_URL: str = os.getenv('SUPABASE_URL', '').strip(' "\'\n\r')
+    SUPABASE_KEY: str = os.getenv('SUPABASE_KEY', '').strip(' "\'\n\r')
     
     # S3 Object Storage (Scaleway)
-    S3_ENDPOINT_URL: str = os.getenv('S3_ENDPOINT_URL', 'https://s3.fr-par.scw.cloud')
-    S3_ACCESS_KEY: str = os.getenv('S3_ACCESS_KEY', '')
-    S3_SECRET_KEY: str = os.getenv('S3_SECRET_KEY', '')
-    S3_BUCKET_NAME: str = os.getenv('S3_BUCKET_NAME', '')
+    S3_ENDPOINT_URL: str = os.getenv('S3_ENDPOINT_URL', 'https://s3.fr-par.scw.cloud').strip(' "\'\n\r')
+    S3_ACCESS_KEY: str = os.getenv('S3_ACCESS_KEY', '').strip(' "\'\n\r')
+    S3_SECRET_KEY: str = os.getenv('S3_SECRET_KEY', '').strip(' "\'\n\r')
+    S3_BUCKET_NAME: str = os.getenv('S3_BUCKET_NAME', '').strip(' "\'\n\r')
     
     # Collecte
     COLLECTION_INTERVAL: int = int(os.getenv('COLLECTION_INTERVAL', 60))
     
     # URLs de base
     OPENWEATHER_BASE_URL: str = "https://api.openweathermap.org/data/2.5/weather"
+    OPENWEATHER_FORECAST_URL: str = "https://api.openweathermap.org/data/2.5/forecast"
     AQICN_BASE_URL: str = "https://api.waqi.info/feed"
     TOMTOM_FLOW_BASE_URL: str = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
     TOMTOM_INCIDENTS_BASE_URL: str = "https://api.tomtom.com/traffic/services/5/incidentDetails"

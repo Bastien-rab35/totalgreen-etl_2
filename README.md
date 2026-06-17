@@ -126,7 +126,6 @@ MSPR 2/
 ├── data/
 │   └── cities_reference.json
 ├── deploy/scaleway/
-│   ├── .env.example
 │   └── scw_provision_jobs.sh
 ├── docs/
 │   ├── ARCHITECTURE.md
@@ -152,7 +151,6 @@ MSPR 2/
 └── src/
     ├── config.py
     ├── etl_extract_to_lake.py
-    ├── etl_pipeline.py
     ├── etl_transform_to_db.py
     └── services/
 ```

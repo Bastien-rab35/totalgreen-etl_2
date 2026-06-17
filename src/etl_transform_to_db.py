@@ -52,12 +52,26 @@ class TransformToDB:
             # Service de détection d'anomalies ML
             self.anomaly_service = AnomalyDetectionService(contamination=0.05)
             self._train_anomaly_model()
+            self.weather_conditions_map = self._load_weather_conditions()
             
             logger.info("Service de transformation initialisé (avec ML anomaly detection)")
             
         except Exception as e:
             logger.error(f"Erreur d'initialisation: {e}")
             raise
+    
+    def _load_weather_conditions(self) -> dict:
+        """Charge le mapping des conditions météo pour éviter les requêtes N+1."""
+        try:
+            response = self.db_service.client.table('dim_weather_condition').select('weather_id, weather_condition_id').execute()
+            if response.data:
+                logger.info(f"✓ Mapping dim_weather_condition chargé ({len(response.data)} conditions)")
+                return {item['weather_id']: item['weather_condition_id'] for item in response.data}
+            logger.warning("Impossible de charger le mapping dim_weather_condition.")
+            return {}
+        except Exception as e:
+            logger.error(f"Erreur chargement dim_weather_condition: {e}")
+            return {}
     
     def _train_anomaly_model(self):
         """Entraîne le modèle Isolation Forest sur les données historiques"""
@@ -254,8 +268,7 @@ class TransformToDB:
                         'snow_1h': parsed.get('snow_1h'),
                         'weather_id': parsed.get('weather_id'),
                         'weather_main': parsed.get('weather_main'),
-                        'weather_description': parsed.get('weather_description'),
-                        'raw_weather_id': weather_entry['id']
+                        'weather_description': parsed.get('weather_description')
                     })
             
             # Ajouter les données AQI si disponibles
@@ -271,8 +284,7 @@ class TransformToDB:
                         'o3': parsed.get('o3'),
                         'so2': parsed.get('so2'),
                         'co': parsed.get('co'),
-                        'station_attribution': parsed.get('station_attribution'),
-                        'raw_aqi_id': aqi_entry['id']
+                        'station_attribution': parsed.get('station_attribution')
                     })
             
             # ⚡ DÉTECTION D'ANOMALIES ML
@@ -355,6 +367,79 @@ class TransformToDB:
             logger.error(f"Erreur transformation combinée: {e}")
             import traceback
             traceback.print_exc()
+            return False
+
+    def transform_and_load_forecast(self, entry: dict) -> bool:
+        """Transforme et charge les prévisions météorologiques"""
+        try:
+            raw = entry['raw_data']
+            city_id = entry['city_id']
+            city_name = entry['city_name']
+            
+            made_at_timestamp = entry.get('collected_at', datetime.utcnow().isoformat())
+            forecast_list = raw.get('list', [])
+            
+            success_overall = True
+            for forecast in forecast_list:
+                try:
+                    # Time metadata
+                    ts = forecast.get('dt')
+                    if not ts:
+                        continue
+                        
+                    forecast_timestamp_utc = datetime.fromtimestamp(float(ts), tz=timezone.utc)
+                    forecast_date = forecast_timestamp_utc.date().isoformat()
+                    forecast_hour = forecast_timestamp_utc.hour
+                    
+                    # Weather meta
+                    main_data = forecast.get('main', {})
+                    wind_data = forecast.get('wind', {})
+                    weather_list = forecast.get('weather', [{}])
+                    weather_main = weather_list[0] if weather_list else {}
+                    
+                    weather_id = weather_main.get('id')
+                    weather_condition_id = self.weather_conditions_map.get(weather_id)
+                        
+                    pop = forecast.get('pop')
+                    rain = forecast.get('rain', {})
+                    snow = forecast.get('snow', {})
+                    
+                    fact = {
+                        'city_id': city_id,
+                        'forecast_date': forecast_date,
+                        'forecast_hour': forecast_hour,
+                        'forecast_timestamp': forecast_timestamp_utc.isoformat(),
+                        'made_at_timestamp': made_at_timestamp,
+                        'weather_condition_id': weather_condition_id,
+                        'temperature': main_data.get('temp'),
+                        'feels_like': main_data.get('feels_like'),
+                        'pressure': main_data.get('pressure'),
+                        'humidity': main_data.get('humidity'),
+                        'wind_speed': wind_data.get('speed'),
+                        'wind_deg': wind_data.get('deg'),
+                        'wind_gust': wind_data.get('gust'),
+                        'clouds': forecast.get('clouds', {}).get('all'),
+                        'visibility': forecast.get('visibility'),
+                        'pop': pop,
+                        'rain_3h': rain.get('3h', 0),
+                        'snow_3h': snow.get('3h', 0),
+                        'raw_forecast_id': entry['id']
+                    }
+                    
+                    # Nettoyer les nuls pour Supabase
+                    fact = {k: v for k, v in fact.items() if v is not None}
+                    
+                    if not self.db_service.insert_fact_weather_forecast(fact):
+                        success_overall = False
+                        
+                except Exception as e:
+                    logger.error(f"Erreur parsing unitaire prévision {city_name}: {e}")
+                    success_overall = False
+                    
+            return success_overall
+            
+        except Exception as e:
+            logger.error(f"Erreur dans transform_and_load_forecast: {e}")
             return False
 
     def transform_and_load_tomtom(self, entry: dict) -> bool:
@@ -538,10 +623,11 @@ class TransformToDB:
         
         # Identifier les catégories de données
         weather_aqi_data = [d for d in unprocessed_data if d['source'] in ('openweather', 'aqicn')]
+        forecast_data =    [d for d in unprocessed_data if d['source'] == 'openweather_forecast']
         tomtom_data =      [d for d in unprocessed_data if d['source'] in ('tomtom_flow', 'tomtom_incidents')]
         hubeau_data =      [d for d in unprocessed_data if d['source'] in ('hubeau_eau_potable', 'hubeau_cd_stations', 'hubeau_cd_observations')]
 
-        logger.info(f"{len(unprocessed_data)} entrées à traiter (Météo/AQI: {len(weather_aqi_data)}, TomTom: {len(tomtom_data)}, Hub'eau: {len(hubeau_data)})")
+        logger.info(f"{len(unprocessed_data)} entrées à traiter (Météo/AQI: {len(weather_aqi_data)}, Forecast: {len(forecast_data)}, TomTom: {len(tomtom_data)}, Hub'eau: {len(hubeau_data)})")
         
         success_count = 0
         processed_entries = 0
@@ -567,6 +653,15 @@ class TransformToDB:
         # Marquer comme traitées les entrées Météo/Air dédoublonnées...
         discarded_marked = len(discarded_ids)
         ids_to_mark.extend(list(discarded_ids))
+
+        # 1.5 Traitement Forecast
+        for entry in forecast_data:
+            if self.transform_and_load_forecast(entry):
+                ids_to_mark.append(entry['id'])
+                success_count += 1
+                processed_entries += 1
+                if processed_entries % 100 == 0:
+                    logger.info(f"⏳ Progression : {processed_entries} entrées traitées...")
 
         # 2. Groupe et traitement TomTom
         for entry in tomtom_data:

@@ -9,8 +9,13 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+print("[DIAG] Script started", flush=True)
+
 from config import config, setup_logging
+print("[DIAG] config imported", flush=True)
+
 from services import WeatherService, AirQualityService, DatabaseService, DataLakeService, TomTomService, HubeauService
+print("[DIAG] services imported", flush=True)
 import uuid
 
 # Création du dossier logs
@@ -27,27 +32,36 @@ class ExtractToLake:
     def __init__(self):
         """Initialise les services"""
         try:
+            print("[DIAG] Validating config...", flush=True)
             config.validate()
+            print("[DIAG] Config OK. SUPABASE_URL prefix:", config.SUPABASE_URL[:20] if config.SUPABASE_URL else 'EMPTY', flush=True)
             
             self.weather_service = WeatherService(
                 config.OPENWEATHER_API_KEY,
-                config.OPENWEATHER_BASE_URL
+                config.OPENWEATHER_BASE_URL,
+                config.OPENWEATHER_FORECAST_URL
             )
+            print("[DIAG] WeatherService OK", flush=True)
             
             self.air_quality_service = AirQualityService(
                 config.AQICN_API_KEY,
                 config.AQICN_BASE_URL
             )
+            print("[DIAG] AirQualityService OK", flush=True)
             
+            print("[DIAG] Creating DatabaseService...", flush=True)
             self.db_service = DatabaseService(
                 config.SUPABASE_URL,
                 config.SUPABASE_KEY
             )
+            print("[DIAG] DatabaseService OK", flush=True)
             
+            print("[DIAG] Creating DataLakeService...", flush=True)
             self.data_lake_service = DataLakeService(
                 config.SUPABASE_URL,
                 config.SUPABASE_KEY
             )
+            print("[DIAG] DataLakeService OK", flush=True)
             
             self.tomtom_service = TomTomService(
                 config.TOMTOM_API_KEY,
@@ -119,7 +133,7 @@ class ExtractToLake:
             weather_success = False
             aqi_success = False
             
-            # 1. Extraction Météo
+            # 1. Extraction Météo (Current)
             weather_data = self.weather_service.fetch_weather_data(city_name)
             if weather_data and weather_data.get('raw'):
                 # Extraire le timestamp réel de l'API
@@ -131,6 +145,16 @@ class ExtractToLake:
                     logger.info(f"✓ Météo {city_name} → Data Lake (ID: {raw_weather_id})")
                     success = True
                     weather_success = True
+            
+            # 1.1 Extraction Météo (Forecast)
+            forecast_data = self.weather_service.fetch_forecast_data(city_name)
+            if forecast_data and forecast_data.get('raw'):
+                # On utilise auto-timestamp ou datetime.now() pour le made_at
+                raw_forecast_id = self.data_lake_service.store_raw_data(
+                    city_id, city_name, 'openweather_forecast', forecast_data['raw']
+                )
+                if raw_forecast_id:
+                    logger.info(f"✓ Prévisions météo {city_name} → Data Lake (ID: {raw_forecast_id})")
             
             # 2. Extraction Qualité de l'air (avec station spécifique)
             aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
@@ -183,6 +207,7 @@ class ExtractToLake:
             
             aqi_station = self._resolve_aqi_station(city)
             weather_data = self.weather_service.fetch_weather_data(city_name)
+            forecast_data = self.weather_service.fetch_forecast_data(city_name)
             aqi_data = self.air_quality_service.fetch_air_quality_data(city_name, aqi_station)
 
             if weather_data and weather_data.get('raw'):
@@ -192,6 +217,13 @@ class ExtractToLake:
                 )
                 if raw_weather_id:
                     weather_inserted_count += 1
+                    
+            if forecast_data and forecast_data.get('raw'):
+                raw_forecast_id = self.data_lake_service.store_raw_data(
+                    city_id, city_name, 'openweather_forecast', forecast_data['raw']
+                )
+                if raw_forecast_id:
+                    pass # Optional count metric
 
             if aqi_data and aqi_data.get('raw'):
                 aqi_timestamp = self.air_quality_service.get_timestamp(aqi_data['raw'])
@@ -251,7 +283,7 @@ class ExtractToLake:
 
             if weather_data and weather_data.get('raw'):
                 city_success_count += 1
-            time.sleep(1)  # Respect des limites API
+            time.sleep(0.2)  # Léger délai entre les villes
         
         # Stats
         duration = time.time() - start_time

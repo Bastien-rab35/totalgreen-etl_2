@@ -107,7 +107,7 @@ ensure_definition() {
   local cron_expr="$3"
 
   local def_id
-  def_id="$(scw jobs definition list region="$REGION" project-id="$PROJECT_ID" -o json | jq -r --arg name "$name" 'if type=="array" then .[] else .job_definitions[] end | select(.name == $name) | .id' | head -n 1)"
+  def_id="$(scw jobs definition list region="$REGION" project-id="$PROJECT_ID" -o json 2>/dev/null | grep -E '^\[|{' | jq -r --arg name "$name" 'if type=="array" then .[] else .job_definitions[] end | select(.name == $name) | .id' | head -n 1)"
 
   if [[ -z "$def_id" ]]; then
     def_id="$(scw jobs definition create \
@@ -148,20 +148,7 @@ ensure_secret_binding() {
   local def_id="$1"
   local secret_id="$2"
   local env_name="$3"
-  local secret_revision
-
-  secret_revision="$(scw secret version list "$secret_id" region="$REGION" -o json | jq -r '
-    if type=="array" then
-      (if length > 0 then (([.[] | select(.latest == true)][0].revision) // (max_by(.revision).revision)) else empty end)
-    else
-      (if (.versions | length) > 0 then ((([.versions[] | select(.latest == true)][0].revision) // (.versions | max_by(.revision).revision))) else empty end)
-    end
-  ' )"
-
-  if [[ -z "$secret_revision" ]]; then
-    echo "Failed to find latest revision for secret: $secret_id" >&2
-    exit 1
-  fi
+  local secret_revision="latest"
 
   local refs_json
   refs_json="$(scw jobs secret list region="$REGION" job-definition-id="$def_id" -o json)"
@@ -182,6 +169,7 @@ ensure_secret_binding() {
       secrets.0.secret-manager-id="$secret_id" \
       secrets.0.secret-manager-version="$secret_revision" \
       secrets.0.env-var-name="$env_name" >/dev/null
+    sleep 1
   else
     local first_id=""
     while IFS= read -r ref_id; do
@@ -193,6 +181,7 @@ ensure_secret_binding() {
           secret-id="$ref_id" \
           secret-manager-version="$secret_revision" \
           env-var-name="$env_name" >/dev/null
+        sleep 1
       else
         # Nettoie les doublons eventuels sur la meme variable d'environnement.
         scw jobs secret delete region="$REGION" secret-id="$ref_id" >/dev/null
@@ -221,6 +210,10 @@ for def_id in "$DEF_EXTRACT" "$DEF_TRANSFORM" "$DEF_VALIDATE"; do
 
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_URL_ID" SUPABASE_URL
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_KEY_ID" SUPABASE_KEY
+
+  ensure_secret_binding "$def_id" "$SECRET_S3_ACCESS_KEY_ID" S3_ACCESS_KEY
+  ensure_secret_binding "$def_id" "$SECRET_S3_SECRET_KEY_ID" S3_SECRET_KEY
+  ensure_secret_binding "$def_id" "$SECRET_S3_BUCKET_NAME_ID" S3_BUCKET_NAME
 done
 
 echo "==> Done"

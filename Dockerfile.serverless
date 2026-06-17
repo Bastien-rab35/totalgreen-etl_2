@@ -6,8 +6,8 @@ ENV PIP_NO_CACHE_DIR=1
 
 WORKDIR /app
 
-COPY requirements.txt /app/requirements.txt
-RUN pip install --upgrade pip && pip install -r /app/requirements.txt
+COPY requirements.serverless.txt /app/requirements.serverless.txt
+RUN pip install --upgrade pip && pip install -r /app/requirements.serverless.txt
 
 COPY src /app/src
 COPY scripts /app/scripts

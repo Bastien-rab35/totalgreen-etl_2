@@ -134,6 +134,9 @@ class DataLakeService:
                 data['id'] = key
                 unprocessed.append(data)
                 
+                if len(unprocessed) % 50 == 0:
+                    logger.info(f"Téléchargé {len(unprocessed)} fichiers depuis S3...")
+                
             return unprocessed
         except Exception as e:
             logger.error(f"Erreur lors de la récupération depuis S3: {e}")
