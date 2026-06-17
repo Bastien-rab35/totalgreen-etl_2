@@ -299,4 +299,54 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
 
+-- ============================================
+-- TABLE DE FAITS - PRÉVISIONS MÉTÉO (FORECAST)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS fact_weather_forecast (
+    forecast_id BIGSERIAL PRIMARY KEY,
+
+    -- Clés de dimension
+    city_id INTEGER REFERENCES dim_city(city_id),
+    forecast_date DATE NOT NULL REFERENCES dim_date(date_value),
+    forecast_hour INTEGER NOT NULL,
+    
+    -- Chronologie
+    forecast_timestamp TIMESTAMP WITH TIME ZONE NOT NULL, -- Date/heure ciblée par la prévision
+    made_at_timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP, -- Moment où la prévision a été récupérée
+    
+    -- Météo
+    weather_condition_id INTEGER REFERENCES dim_weather_condition(weather_condition_id),
+    temperature DECIMAL(5,2),
+    feels_like DECIMAL(5,2),
+    pressure INTEGER,
+    humidity INTEGER,
+    wind_speed DECIMAL(5,2),
+    wind_deg INTEGER,
+    wind_gust DECIMAL(5,2),
+    clouds INTEGER,
+    visibility INTEGER,
+    pop DECIMAL(5,2), -- Probabilité de précipitation (0 à 1)
+    rain_3h DECIMAL(5,2) DEFAULT 0,
+    snow_3h DECIMAL(5,2) DEFAULT 0,
+
+    -- Métadonnées
+    raw_forecast_id BIGINT,
+
+    UNIQUE (city_id, forecast_timestamp, made_at_timestamp)
+);
+
+-- Index pour optimiser les requêtes sur les prévisions
+CREATE INDEX IF NOT EXISTS idx_fact_forecast_date ON fact_weather_forecast(forecast_date);
+CREATE INDEX IF NOT EXISTS idx_fact_forecast_city ON fact_weather_forecast(city_id);
+CREATE INDEX IF NOT EXISTS idx_fact_forecast_made_at ON fact_weather_forecast(made_at_timestamp);
+
+COMMENT ON TABLE fact_weather_forecast IS 'Table de faits - prévisions météorologiques issues de l''API OpenWeatherMap';
+
 COMMENT ON FUNCTION get_aqi_level_id IS 'Trouve le niveau AQI pour une valeur donnée';
+
+-- ============================================
+-- SÉCURITÉ (RLS)
+-- ============================================
+ALTER TABLE fact_weather_forecast ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Lecture publique des prévisions" ON fact_weather_forecast FOR SELECT USING (true);

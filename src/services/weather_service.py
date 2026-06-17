@@ -12,9 +12,10 @@ logger = logging.getLogger(__name__)
 class WeatherService:
     """Service de récupération des données météorologiques"""
     
-    def __init__(self, api_key: str, base_url: str):
+    def __init__(self, api_key: str, base_url: str, forecast_url: str = "https://api.openweathermap.org/data/2.5/forecast"):
         self.api_key = api_key
         self.base_url = base_url
+        self.forecast_url = forecast_url
     
     def fetch_weather_data(self, city_name: str) -> Optional[Dict]:
         """Récupère les données météo (brutes + parsées)"""
@@ -46,6 +47,38 @@ class WeatherService:
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Erreur météo pour {city_name}: {e}")
+            return None
+
+    def fetch_forecast_data(self, city_name: str) -> Optional[Dict]:
+        """Récupère les prévisions météo (brutes) via l'endpoint forecast"""
+        try:
+            params = {
+                'q': f"{city_name},FR",
+                'appid': self.api_key,
+                'units': 'metric',
+                'lang': 'fr'
+            }
+            
+            response = requests.get(self.forecast_url, params=params, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            if isinstance(data, str):
+                try:
+                    data = json.loads(data)
+                except json.JSONDecodeError:
+                    logger.error(f"Réponse prévision invalide pour {city_name}: JSON string non parsable")
+                    return None
+
+            if not isinstance(data, dict):
+                logger.error(f"Réponse prévision invalide pour {city_name}: type inattendu {type(data).__name__}")
+                return None
+            
+            logger.info(f"Données prévisions (forecast) récupérées pour {city_name} ({len(data.get('list', []))} items)")
+            return {'raw': data, 'parsed': None} # Rendu direct depuis ETL/Transform
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Erreur prévision (forecast) pour {city_name}: {e}")
             return None
     
     def _parse_weather_data(self, raw_data: Dict) -> Dict:

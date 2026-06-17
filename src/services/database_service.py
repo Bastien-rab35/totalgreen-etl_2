@@ -394,6 +394,18 @@ class DatabaseService:
             logger.error(f"Erreur upsert_traffic_point: {e}")
             return None
 
+    def insert_fact_weather_forecast(self, data: dict) -> bool:
+        """Insère une ligne dans fact_weather_forecast"""
+        try:
+            self.client.table('fact_weather_forecast').insert(data).execute()
+            return True
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e):
+                logger.warning(f"Entrée fact_weather_forecast ignorée (déjà existante).")
+                return True
+            logger.error(f"Erreur insert_fact_weather_forecast: {e}")
+            return False
+
     def insert_fact_traffic_flow(self, flow: Dict) -> bool:
         """Insère une ligne dans fact_traffic_flow_hourly"""
         try:
