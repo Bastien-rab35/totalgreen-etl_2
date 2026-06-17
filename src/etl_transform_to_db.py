@@ -127,7 +127,7 @@ class TransformToDB:
                     'weather_id': parsed_data.get('weather_id'),
                     'weather_main': parsed_data.get('weather_main'),
                     'weather_description': parsed_data.get('weather_description'),
-                    'raw_weather_id': lake_id
+                'raw_weather_id': None  # Désactivé: on utilise l'Object Storage
                 })
             elif source == 'aqicn':
                 measure.update({
@@ -323,13 +323,7 @@ class TransformToDB:
                         anomaly_record = format_anomaly_for_db(anom, city_id, city_name, captured_at)
                         self.db_service.insert_anomaly(anomaly_record)
                     
-                    # Marquer comme traité mais ne pas insérer dans fact_measures
-                    if weather_entry:
-                        self.data_lake_service.mark_as_processed(weather_entry['id'])
-                    if aqi_entry:
-                        self.data_lake_service.mark_as_processed(aqi_entry['id'])
-                    
-                    return False  # Mesure rejetée
+                    return True  # Rejetée par le métier, mais considérée comme traitée informatiquement
             
             # Ajouter les flags d'anomalie dans la mesure
             measure['is_anomaly'] = is_anomaly
@@ -339,12 +333,6 @@ class TransformToDB:
             success = self.db_service.insert_into_star_schema(measure)
             
             if success:
-                # Marquer toutes les entrées comme traitées
-                if weather_entry:
-                    self.data_lake_service.mark_as_processed(weather_entry['id'])
-                if aqi_entry:
-                    self.data_lake_service.mark_as_processed(aqi_entry['id'])
-                
                 # Stocker les anomalies non-critiques (flagged)
                 if anomalies_detected:
                     for anom in anomalies_detected:
@@ -557,6 +545,7 @@ class TransformToDB:
         
         success_count = 0
         processed_entries = 0
+        ids_to_mark = []
         
         # 1. Groupe et traitement Métio/Air
         grouped, discarded_ids = self.group_by_city_and_time(weather_aqi_data)
@@ -568,21 +557,25 @@ class TransformToDB:
             
             if self.transform_and_load_combined(weather, aqi):
                 success_count += 1
-                if weather: processed_entries += 1
-                if aqi: processed_entries += 1
+                if weather: 
+                    processed_entries += 1
+                    ids_to_mark.append(weather['id'])
+                if aqi: 
+                    processed_entries += 1
+                    ids_to_mark.append(aqi['id'])
                 
         # Marquer comme traitées les entrées Météo/Air dédoublonnées...
-        discarded_marked = 0
-        for lake_id in discarded_ids:
-            if self.data_lake_service.mark_as_processed(lake_id):
-                discarded_marked += 1
+        discarded_marked = len(discarded_ids)
+        ids_to_mark.extend(list(discarded_ids))
 
         # 2. Groupe et traitement TomTom
         for entry in tomtom_data:
             if self.transform_and_load_tomtom(entry):
-                self.data_lake_service.mark_as_processed(entry['id'])
+                ids_to_mark.append(entry['id'])
                 success_count += 1
                 processed_entries += 1
+                if processed_entries % 100 == 0:
+                    logger.info(f"⏳ Progression : {processed_entries} entrées traitées...")
                 
         # 3. Groupe et traitement Hub'Eau
         for entry in hubeau_data:
@@ -593,9 +586,15 @@ class TransformToDB:
                 success = self.transform_and_load_cours_deau(entry)
             
             if success:
-                self.data_lake_service.mark_as_processed(entry['id'])
+                ids_to_mark.append(entry['id'])
                 success_count += 1
                 processed_entries += 1
+                if processed_entries % 100 == 0:
+                    logger.info(f"⏳ Progression : {processed_entries} entrées traitées...")
+        
+        # BATCH UPDATE (Mise à jour groupée : évite les requêtes N+1 et timeouts)
+        if ids_to_mark:
+            self.data_lake_service.mark_as_processed_batch(ids_to_mark, batch_size=500)
         
         if discarded_marked:
             logger.info(f"{discarded_marked} entrées Météo/Air dupliquées marquées comme traitées")

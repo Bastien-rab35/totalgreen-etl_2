@@ -47,3 +47,8 @@ scripts/temp/
 docs/archive/
 scripts/archive/
 sql/archive/
+
+# Machine Learning
+notebooks/
+*.pkl
+*.joblib

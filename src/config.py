@@ -30,6 +30,12 @@ class Config:
     SUPABASE_URL: str = os.getenv('SUPABASE_URL', '')
     SUPABASE_KEY: str = os.getenv('SUPABASE_KEY', '')
     
+    # S3 Object Storage (Scaleway)
+    S3_ENDPOINT_URL: str = os.getenv('S3_ENDPOINT_URL', 'https://s3.fr-par.scw.cloud')
+    S3_ACCESS_KEY: str = os.getenv('S3_ACCESS_KEY', '')
+    S3_SECRET_KEY: str = os.getenv('S3_SECRET_KEY', '')
+    S3_BUCKET_NAME: str = os.getenv('S3_BUCKET_NAME', '')
+    
     # Collecte
     COLLECTION_INTERVAL: int = int(os.getenv('COLLECTION_INTERVAL', 60))
     
@@ -52,6 +58,10 @@ class Config:
         if not self.SUPABASE_URL: missing.append('SUPABASE_URL')
         if not self.SUPABASE_KEY: missing.append('SUPABASE_KEY')
             
+        if not self.S3_ACCESS_KEY: missing.append('S3_ACCESS_KEY')
+        if not self.S3_SECRET_KEY: missing.append('S3_SECRET_KEY')
+        if not self.S3_BUCKET_NAME: missing.append('S3_BUCKET_NAME')
+            
         if missing:
             raise ValueError(f"Variables d'environnement manquantes : {', '.join(missing)}")
         
@@ -59,4 +69,3 @@ class Config:
 
 # Instance globale à utiliser dans tous les autres modules
 config = Config()
-

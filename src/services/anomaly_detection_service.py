@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple, Optional
 from datetime import datetime
 from sklearn.ensemble import IsolationForest
 from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -64,6 +65,8 @@ class AnomalyDetectionService:
         self.contamination = contamination
         self.isolation_forest = None
         self.scaler = StandardScaler()
+        # Imputer pour remplacer les NaN avant normalisation/prédiction
+        self.imputer = SimpleImputer(strategy='mean')
         self.is_trained = False
         
     def check_business_rules(self, measure: Dict) -> List[Dict]:
@@ -172,9 +175,29 @@ class AnomalyDetectionService:
             return
         
         try:
-            # Normalisation des données
-            X_scaled = self.scaler.fit_transform(historical_data)
-            
+            # Fit l'imputer sur les données historiques. Certaines colonnes
+            # peuvent être entièrement NaN => SimpleImputer.statistics_ contiendra des NaN.
+            # On corrige ces statistiques en remplaçant les NaN par la moyenne
+            # colonne (ou 0.0 si la colonne est complètement vide) avant de transformer.
+            self.imputer.fit(historical_data)
+
+            # S'assurer que les valeurs statistiques ne contiennent pas de NaN
+            stats = np.array(self.imputer.statistics_, dtype=float)
+            if np.isnan(stats).any():
+                col_means = np.nanmean(historical_data, axis=0)
+                col_means = np.where(np.isnan(col_means), 0.0, col_means)
+                stats[np.isnan(stats)] = col_means[np.isnan(stats)]
+                self.imputer.statistics_ = stats
+
+            # Transformer puis normaliser
+            X_imputed = self.imputer.transform(historical_data)
+
+            # Si des NaN persistent (cas extrême), remplacer par 0
+            if np.isnan(X_imputed).any():
+                X_imputed = np.nan_to_num(X_imputed, nan=0.0)
+
+            X_scaled = self.scaler.fit_transform(X_imputed)
+
             # Entraînement du modèle
             self.isolation_forest = IsolationForest(
                 contamination=self.contamination,
@@ -183,12 +206,12 @@ class AnomalyDetectionService:
                 max_samples='auto',
                 n_jobs=-1
             )
-            
+
             self.isolation_forest.fit(X_scaled)
             self.is_trained = True
-            
-            logger.info(f"✓ Isolation Forest entraîné sur {len(historical_data)} mesures")
-            
+
+            logger.info(f"✓ Isolation Forest entraîné sur {len(historical_data)} mesures (imputation appliquée)")
+
         except Exception as e:
             logger.error(f"Erreur lors de l'entraînement Isolation Forest: {e}")
             self.is_trained = False
@@ -204,57 +227,100 @@ class AnomalyDetectionService:
             Dictionnaire d'anomalie si détectée, None sinon
         """
         if not self.is_trained:
+            logger.debug("ML skip: modèle non entraîné")
             return None
-        
+
+        # Construire un array avec NaN pour les valeurs manquantes
+        features = [
+            np.nan if measure.get('temperature') is None else measure.get('temperature'),
+            np.nan if measure.get('humidity') is None else measure.get('humidity'),
+            np.nan if measure.get('pressure') is None else measure.get('pressure'),
+            np.nan if measure.get('aqi') is None else measure.get('aqi'),
+            np.nan if measure.get('pm2_5') is None else measure.get('pm2_5'),
+            np.nan if measure.get('pm10') is None else measure.get('pm10')
+        ]
+
+        # Appliquer imputer (fallback si non-fitté)
         try:
-            # Extraire les features dans le bon ordre
-            features = [
-                measure.get('temperature', 0),
-                measure.get('humidity', 0),
-                measure.get('pressure', 0),
-                measure.get('aqi', 0),
-                measure.get('pm2_5', 0),
-                measure.get('pm10', 0)
-            ]
-            
-            # Normaliser
-            X = self.scaler.transform([features])
-            
+            if not hasattr(self.imputer, 'statistics_'):
+                logger.debug("Imputer non fitté — fit rapide sur l'échantillon")
+                # fit sur l'échantillon pour éviter l'erreur; pas idéal mais empêche la levée
+                try:
+                    self.imputer.fit(np.array([features], dtype=float))
+                except Exception:
+                    # si impossible (ex: toutes les valeurs NaN), on remplace par 0
+                    logger.warning('Imputer.fit failed on sample — remplissage NaN par 0')
+                    features = [0 if (v is None or (isinstance(v, float) and np.isnan(v))) else v for v in features]
+
+            X_imputed = self.imputer.transform([features])
+
+            # Si l'imputer a des statistiques NaN (colonne vide lors du fit),
+            # transform peut produire des NaN. On s'en protège ici.
+            if np.isnan(X_imputed).any():
+                logger.warning('Imputer.transform a produit des NaN — application de nan_to_num')
+                X_imputed = np.nan_to_num(X_imputed, nan=0.0)
+
+            logger.debug(f'X_imputed: {X_imputed}')
+
+        except Exception as e:
+            logger.warning(f"Imputer transform fallback: {e} — remplacement NaN par 0")
+            features = [0 if (v is None or (isinstance(v, float) and np.isnan(v))) else v for v in features]
+            X_imputed = np.array([features], dtype=float)
+
+        # Appliquer scaler (fallback si non-fitté)
+        try:
+            if not hasattr(self.scaler, 'scale_'):
+                logger.debug("Scaler non fitté — fit rapide sur l'échantillon imputed")
+                try:
+                    self.scaler.fit(X_imputed)
+                except Exception:
+                    logger.warning('Scaler.fit failed on sample — utilisation directe des valeurs')
+
+            X = self.scaler.transform(X_imputed)
+
+        except Exception as e:
+            logger.error(f"Scaler transform failed: {e}")
+            return None
+
+        # Vérifier que le modèle existe
+        if self.isolation_forest is None:
+            logger.warning('IsolationForest non initialisé')
+            return None
+
+        try:
             # Prédiction (-1 = anomalie, 1 = normal)
             prediction = self.isolation_forest.predict(X)[0]
-            
-            # Score d'anomalie (plus négatif = plus anormal)
+            # Score d'anomalie
             anomaly_score = self.isolation_forest.score_samples(X)[0]
-            
-            if prediction == -1:
-                # Déterminer la sévérité basée sur le score
-                # Score typique: entre -0.5 (peu anormal) et -1.0 (très anormal)
-                if anomaly_score < -0.8:
-                    severity = 'critical'
-                elif anomaly_score < -0.6:
-                    severity = 'high'
-                elif anomaly_score < -0.4:
-                    severity = 'medium'
-                else:
-                    severity = 'low'
-                
-                return {
-                    'anomaly_type': 'ml_isolation_forest',
-                    'severity': severity,
-                    'field_name': 'multivariate',
-                    'actual_value': None,
-                    'expected_range_min': None,
-                    'expected_range_max': None,
-                    'anomaly_score': float(anomaly_score),
-                    'description': f"Anomalie multivariée détectée (score={anomaly_score:.3f})",
-                    'action_taken': 'flagged' if severity in ['low', 'medium'] else 'rejected'
-                }
-            
-            return None
-            
+
         except Exception as e:
-            logger.error(f"Erreur lors de la détection ML: {e}")
+            logger.error(f"Erreur lors de la prédiction IsolationForest: {e}")
             return None
+
+        if prediction == -1:
+            # Déterminer la sévérité basée sur le score
+            if anomaly_score < -0.8:
+                severity = 'critical'
+            elif anomaly_score < -0.6:
+                severity = 'high'
+            elif anomaly_score < -0.4:
+                severity = 'medium'
+            else:
+                severity = 'low'
+
+            return {
+                'anomaly_type': 'ml_isolation_forest',
+                'severity': severity,
+                'field_name': 'multivariate',
+                'actual_value': None,
+                'expected_range_min': None,
+                'expected_range_max': None,
+                'anomaly_score': float(anomaly_score),
+                'description': f"Anomalie multivariée détectée (score={anomaly_score:.3f})",
+                'action_taken': 'flagged' if severity in ['low', 'medium'] else 'rejected'
+            }
+
+        return None
     
     def detect_anomalies(
         self, 
@@ -326,6 +392,5 @@ def format_anomaly_for_db(anomaly: Dict, city_id: int, city_name: str, captured_
         'expected_range_min': anomaly.get('expected_range_min'),
         'expected_range_max': anomaly.get('expected_range_max'),
         'anomaly_score': anomaly.get('anomaly_score'),
-        'description': anomaly.get('description'),
-        'action_taken': anomaly.get('action_taken')
+        'description': f"{anomaly.get('description')} (Action: {anomaly.get('action_taken')})" if anomaly.get('action_taken') else anomaly.get('description')
     }

@@ -17,6 +17,8 @@ Executer les 3 taches (`extract`, `transform`, `validate`) sur une image Docker 
   - `TOMTOM_API_KEY`
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
+  - `SMTP_USER` (pour les alertes email)
+  - `SMTP_PASSWORD`
 
 ## Provisioning recommandé
 
@@ -39,6 +41,8 @@ export AQICN_API_KEY="<...>"
 export TOMTOM_API_KEY="<...>"
 export SUPABASE_URL="https://<project>.supabase.co"
 export SUPABASE_KEY="<...>"
+export SMTP_USER="mon-email@gmail.com"
+export SMTP_PASSWORD="mon-mot-de-passe-applicatif"
 
 # Recommande sur Mac Apple Silicon
 export IMAGE_PLATFORM="linux/amd64"
@@ -58,10 +62,10 @@ Variables utiles du script:
 ## Configuration manuelle (si necessaire)
 
 1. Construire et publier l'image `Dockerfile.serverless` dans le registry Scaleway.
-2. Creer les 5 secrets (`OPENWEATHER_API_KEY`, `AQICN_API_KEY`, `TOMTOM_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`).
+2. Creer les 7 secrets (incluant `SMTP_USER` et `SMTP_PASSWORD`).
 3. Creer 3 definitions de jobs utilisant la meme image et les variables:
    - `JOB_TYPE=extract`, cron `0 * * * *` (extraction API, limite historique Hub'Eau 24h)
-   - `JOB_TYPE=transform`, cron `5 * * * *` (transformation en base, limit batch_size=1000)
+   - `JOB_TYPE=transform`, cron `5,20,35,50 * * * *` (transformation en base, auto-rattrapage rapide)
    - `JOB_TYPE=validate`, cron `15 0,12 * * *`
 4. Ajouter sur le job `validate`:
    - `VALIDATION_HOURS=24`

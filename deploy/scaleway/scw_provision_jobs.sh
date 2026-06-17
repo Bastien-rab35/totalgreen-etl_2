@@ -29,6 +29,10 @@ TOMTOM_API_KEY="${TOMTOM_API_KEY:-}"
 SUPABASE_URL="${SUPABASE_URL:-}"
 SUPABASE_KEY="${SUPABASE_KEY:-}"
 
+S3_ACCESS_KEY="${S3_ACCESS_KEY:-}"
+S3_SECRET_KEY="${S3_SECRET_KEY:-}"
+S3_BUCKET_NAME="${S3_BUCKET_NAME:-}"
+
 # Validation defaults
 VALIDATION_HOURS="${VALIDATION_HOURS:-24}"
 VALIDATION_STRICT="${VALIDATION_STRICT:-false}"
@@ -51,7 +55,7 @@ if [[ -z "$PROJECT_ID" ]]; then
   exit 1
 fi
 
-for required_var in OPENWEATHER_API_KEY AQICN_API_KEY TOMTOM_API_KEY SUPABASE_URL SUPABASE_KEY; do
+for required_var in OPENWEATHER_API_KEY AQICN_API_KEY TOMTOM_API_KEY SUPABASE_URL SUPABASE_KEY S3_ACCESS_KEY S3_SECRET_KEY S3_BUCKET_NAME; do
   if [[ -z "${!required_var}" ]]; then
     echo "Missing env var: ${required_var}" >&2
     exit 1
@@ -92,6 +96,10 @@ SECRET_TOMTOM_ID="$(create_or_update_secret TOMTOM_API_KEY "$TOMTOM_API_KEY")"
 
 SECRET_SUPABASE_URL_ID="$(create_or_update_secret SUPABASE_URL "$SUPABASE_URL")"
 SECRET_SUPABASE_KEY_ID="$(create_or_update_secret SUPABASE_KEY "$SUPABASE_KEY")"
+
+SECRET_S3_ACCESS_KEY_ID="$(create_or_update_secret S3_ACCESS_KEY "$S3_ACCESS_KEY")"
+SECRET_S3_SECRET_KEY_ID="$(create_or_update_secret S3_SECRET_KEY "$S3_SECRET_KEY")"
+SECRET_S3_BUCKET_NAME_ID="$(create_or_update_secret S3_BUCKET_NAME "$S3_BUCKET_NAME")"
 
 ensure_definition() {
   local name="$1"

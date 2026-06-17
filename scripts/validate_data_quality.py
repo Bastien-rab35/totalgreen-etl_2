@@ -35,6 +35,10 @@ from typing import Dict, List, Tuple
 import argparse
 import uuid
 import json
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -286,6 +290,59 @@ class DataQualityValidator:
         except Exception as e:
             print(f"\n⚠ Erreur lors de la sauvegarde des anomalies en BDD: {e}")
             # On ne bloque pas la validation si la sauvegarde échoue
+            
+    def send_alert_email(self, strict_mode: bool = False) -> None:
+        """
+        Envoie un email d'alerte si des problèmes critiques (ou warnings en mode strict) 
+        sont détectés.
+        """
+        critical_count = len(self.issues['critical'])
+        warning_count = len(self.issues['warning'])
+        
+        if critical_count == 0 and (not strict_mode or warning_count == 0):
+            return
+            
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_password = os.getenv("SMTP_PASSWORD")
+        
+        if not smtp_user or not smtp_password:
+            print("\n⚠️ Variables SMTP_USER ou SMTP_PASSWORD manquantes, impossible d'envoyer l'alerte email.")
+            return
+
+        print("\n📧 Envoi de l'alerte email aux équipes...")
+
+        msg = MIMEMultipart()
+        msg['From'] = f"GoodAir Data Pipeline <{smtp_user}>"
+        msg['To'] = "data-owner@totalgreen.fr"
+        msg['Subject'] = "🚨 ALERTE: Échec de la Qualité des Données GoodAir"
+
+        body = f"""Bonjour,
+
+Des anomalies de qualité de données ont été détectées lors de la dernière exécution du job ETL sur Scaleway.
+
+Détails de l'analyse :
+- Run ID : {self.validation_run_id}
+- Période analysée : {self.hours} dernières heures
+- Problèmes critiques : {critical_count}
+- Avertissements : {warning_count}
+
+Veuillez consulter la table 'anomalies' dans Supabase (filtrer sur validation_run_id='{self.validation_run_id}') ou le Dashboard GoodAir pour plus de détails.
+
+Cordialement,
+Scaleway Serverless ETL Validator
+"""
+        msg.attach(MIMEText(body, 'plain'))
+
+        try:
+            # Configuration pour Outlook / Office 365
+            server = smtplib.SMTP('smtp.office365.com', 587)
+            server.starttls() # Requis par le serveur Microsoft
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+            server.quit()
+            print("   ✅ Email d'alerte envoyé avec succès.")
+        except Exception as e:
+            print(f"   ❌ Erreur lors de l'envoi de l'email : {e}")
         
     def validate_business_rules(self, measures: List[Dict]) -> None:
         """Vérifie les limites physiques (business rules)"""
@@ -413,7 +470,7 @@ class DataQualityValidator:
         for field, data in outliers.items():
             print(f"      - {field}: {data['count']} ({data['percentage']:.1f}%) - max Z={data['max_z_score']:.1f}")
         
-    def run_validation(self) -> bool:
+    def run_validation(self, strict_mode: bool = False) -> bool:
         """
         Exécute toutes les validations
         
@@ -475,6 +532,9 @@ class DataQualityValidator:
         
         # Sauvegarder les anomalies en BDD
         self.save_anomalies_to_db()
+        
+        # Envoi de l'alerte email
+        self.send_alert_email(strict_mode)
         
         # Retourner True si pas de problèmes critiques
         return len(self.issues['critical']) == 0
@@ -553,7 +613,7 @@ def main():
         validator = DataQualityValidator(db, hours=args.hours)
         
         # Exécuter la validation
-        validation_ok = validator.run_validation()
+        validation_ok = validator.run_validation(args.strict)
         
         # Déterminer le code de sortie
         if not validation_ok:
