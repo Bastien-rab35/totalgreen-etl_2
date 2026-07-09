@@ -25,6 +25,11 @@ case "$JOB_TYPE" in
     cd /app
     exec python scripts/validate_data_quality.py --hours "$HOURS" $STRICT_FLAG
     ;;
+  ml)
+    echo "[serverless] Running ML predictions job"
+    cd /app
+    exec python scripts/ml_model.py
+    ;;
   *)
     echo "[serverless] Unknown JOB_TYPE='$JOB_TYPE' (expected: extract|transform|validate)" >&2
     exit 64

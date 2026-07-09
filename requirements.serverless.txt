@@ -20,7 +20,12 @@ supabase==2.31.0
 # AWS S3 (Scaleway Object Storage)
 boto3==1.34.69
 
-# PostgreSQL direct (optionnel, pour compatibilité)
+# Base de données
 psycopg2-binary==2.9.12
 SQLAlchemy==2.0.51
 greenlet==3.5.1
+
+# Machine Learning
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.4.2

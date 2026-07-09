@@ -19,7 +19,7 @@ IMAGE_PLATFORM="${IMAGE_PLATFORM:-linux/amd64}"
 CPU_LIMIT="${CPU_LIMIT:-500}"
 MEMORY_LIMIT="${MEMORY_LIMIT:-1024}"
 LOCAL_STORAGE_CAPACITY="${LOCAL_STORAGE_CAPACITY:-1024}"
-JOB_TIMEOUT="${JOB_TIMEOUT:-900s}"
+JOB_TIMEOUT="${JOB_TIMEOUT:-3600s}"
 
 # Required runtime secrets
 OPENWEATHER_API_KEY="${OPENWEATHER_API_KEY:-}"
@@ -55,7 +55,7 @@ if [[ -z "$PROJECT_ID" ]]; then
   exit 1
 fi
 
-for required_var in OPENWEATHER_API_KEY AQICN_API_KEY TOMTOM_API_KEY SUPABASE_URL SUPABASE_KEY S3_ACCESS_KEY S3_SECRET_KEY S3_BUCKET_NAME; do
+for required_var in OPENWEATHER_API_KEY AQICN_API_KEY TOMTOM_API_KEY SUPABASE_URL SUPABASE_KEY S3_ACCESS_KEY S3_SECRET_KEY S3_BUCKET_NAME DB_PASSWORD; do
   if [[ -z "${!required_var}" ]]; then
     echo "Missing env var: ${required_var}" >&2
     exit 1
@@ -96,6 +96,7 @@ SECRET_TOMTOM_ID="$(create_or_update_secret TOMTOM_API_KEY "$TOMTOM_API_KEY")"
 
 SECRET_SUPABASE_URL_ID="$(create_or_update_secret SUPABASE_URL "$SUPABASE_URL")"
 SECRET_SUPABASE_KEY_ID="$(create_or_update_secret SUPABASE_KEY "$SUPABASE_KEY")"
+SECRET_DB_PASSWORD_ID="$(create_or_update_secret DB_PASSWORD "$DB_PASSWORD")"
 
 SECRET_S3_ACCESS_KEY_ID="$(create_or_update_secret S3_ACCESS_KEY "$S3_ACCESS_KEY")"
 SECRET_S3_SECRET_KEY_ID="$(create_or_update_secret S3_SECRET_KEY "$S3_SECRET_KEY")"
@@ -190,10 +191,11 @@ ensure_secret_binding() {
   fi
 }
 
-echo "==> 4) Create/update the 3 job definitions"
+echo "==> 4) Create/update the 4 job definitions"
 DEF_EXTRACT="$(ensure_definition totalgreen-etl-extract extract '0 * * * *')"
 DEF_TRANSFORM="$(ensure_definition totalgreen-etl-transform transform '5 * * * *')"
 DEF_VALIDATE="$(ensure_definition totalgreen-etl-validate validate '15 0,12 * * *')"
+DEF_ML="$(ensure_definition totalgreen-etl-ml ml '0 14 * * *')"
 
 echo "==> 5) Add validation-specific env vars"
 scw jobs definition update "$DEF_VALIDATE" \
@@ -203,13 +205,14 @@ scw jobs definition update "$DEF_VALIDATE" \
   environment-variables.VALIDATION_STRICT="$VALIDATION_STRICT" >/dev/null
 
 echo "==> 6) Attach runtime secrets to all jobs"
-for def_id in "$DEF_EXTRACT" "$DEF_TRANSFORM" "$DEF_VALIDATE"; do
+for def_id in "$DEF_EXTRACT" "$DEF_TRANSFORM" "$DEF_VALIDATE" "$DEF_ML"; do
   ensure_secret_binding "$def_id" "$SECRET_OPENWEATHER_ID" OPENWEATHER_API_KEY
   ensure_secret_binding "$def_id" "$SECRET_AQICN_ID" AQICN_API_KEY
   ensure_secret_binding "$def_id" "$SECRET_TOMTOM_ID" TOMTOM_API_KEY
 
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_URL_ID" SUPABASE_URL
   ensure_secret_binding "$def_id" "$SECRET_SUPABASE_KEY_ID" SUPABASE_KEY
+  ensure_secret_binding "$def_id" "$SECRET_DB_PASSWORD_ID" DB_PASSWORD
 
   ensure_secret_binding "$def_id" "$SECRET_S3_ACCESS_KEY_ID" S3_ACCESS_KEY
   ensure_secret_binding "$def_id" "$SECRET_S3_SECRET_KEY_ID" S3_SECRET_KEY
@@ -221,9 +224,11 @@ echo "Definitions:"
 echo "  extract:   $DEF_EXTRACT"
 echo "  transform: $DEF_TRANSFORM"
 echo "  validate:  $DEF_VALIDATE"
+echo "  ml:        $DEF_ML"
 
 echo
 echo "Smoke tests (manual starts):"
 echo "  scw jobs definition start ${DEF_EXTRACT} region=${REGION}"
 echo "  scw jobs definition start ${DEF_TRANSFORM} region=${REGION}"
 echo "  scw jobs definition start ${DEF_VALIDATE} region=${REGION}"
+echo "  scw jobs definition start ${DEF_ML} region=${REGION}"

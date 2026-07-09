@@ -331,7 +331,7 @@ CREATE TABLE IF NOT EXISTS fact_weather_forecast (
     snow_3h DECIMAL(5,2) DEFAULT 0,
 
     -- Métadonnées
-    raw_forecast_id BIGINT,
+    raw_forecast_id VARCHAR(255),
 
     UNIQUE (city_id, forecast_timestamp, made_at_timestamp)
 );

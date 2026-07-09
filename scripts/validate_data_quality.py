@@ -293,27 +293,35 @@ class DataQualityValidator:
             
     def send_alert_email(self, strict_mode: bool = False) -> None:
         """
-        Envoie un email d'alerte si des problèmes critiques (ou warnings en mode strict) 
+        Envoie un email d'alerte si des problèmes critiques (ou warnings en mode strict)
         sont détectés.
         """
         critical_count = len(self.issues['critical'])
         warning_count = len(self.issues['warning'])
-        
+
         if critical_count == 0 and (not strict_mode or warning_count == 0):
             return
-            
-        smtp_user = os.getenv("SMTP_USER")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        
+
+        smtp_user = os.getenv("SMTP_USER", "")
+        smtp_password = os.getenv("SMTP_PASSWORD", "")
+
+        # Format compact (quota Scaleway = 10 secrets/job) :
+        # SMTP_USER peut contenir "user@gmail.com:app_password"
+        if not smtp_password and ":" in smtp_user:
+            smtp_user, smtp_password = smtp_user.split(":", 1)
+
         if not smtp_user or not smtp_password:
             print("\n⚠️ Variables SMTP_USER ou SMTP_PASSWORD manquantes, impossible d'envoyer l'alerte email.")
             return
+
+        # Destinataire : ALERT_EMAIL si défini, sinon on s'envoie à soi-même
+        alert_recipient = os.getenv("ALERT_EMAIL", smtp_user)
 
         print("\n📧 Envoi de l'alerte email aux équipes...")
 
         msg = MIMEMultipart()
         msg['From'] = f"GoodAir Data Pipeline <{smtp_user}>"
-        msg['To'] = "data-owner@totalgreen.fr"
+        msg['To'] = alert_recipient
         msg['Subject'] = "🚨 ALERTE: Échec de la Qualité des Données GoodAir"
 
         body = f"""Bonjour,
@@ -334,13 +342,17 @@ Scaleway Serverless ETL Validator
         msg.attach(MIMEText(body, 'plain'))
 
         try:
-            # Configuration pour Outlook / Office 365
-            server = smtplib.SMTP('smtp.office365.com', 587)
-            server.starttls() # Requis par le serveur Microsoft
+            # Gmail SMTP via STARTTLS (port 587)
+            # Nécessite un App Password Google (pas le mot de passe du compte)
+            # https://myaccount.google.com/apppasswords
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
             server.login(smtp_user, smtp_password)
             server.send_message(msg)
             server.quit()
-            print("   ✅ Email d'alerte envoyé avec succès.")
+            print(f"   ✅ Email d'alerte envoyé avec succès à {alert_recipient}.")
         except Exception as e:
             print(f"   ❌ Erreur lors de l'envoi de l'email : {e}")
         
@@ -496,7 +508,7 @@ Scaleway Serverless ETL Validator
                 m['table_source'] = 'fact_measures'
 
             date_str = self.start_time.strftime('%Y-%m-%d')
-            
+
             # 2. Traffic Flow
             resp_flow = self.db.client.table('fact_traffic_flow_hourly') \
                 .select('*') \
@@ -521,23 +533,29 @@ Scaleway Serverless ETL Validator
                 measures.append(m)
 
             # Exécuter les validations
-        self.validate_structural_integrity(measures)
-        self.validate_temporal_coherence(measures)
-        self.validate_business_rules(measures)
-        self.validate_data_coverage(measures)
-        self.validate_statistical_outliers(measures)
-        
-        # Rapport final
-        self.print_report()
-        
-        # Sauvegarder les anomalies en BDD
-        self.save_anomalies_to_db()
-        
-        # Envoi de l'alerte email
-        self.send_alert_email(strict_mode)
-        
-        # Retourner True si pas de problèmes critiques
-        return len(self.issues['critical']) == 0
+            self.validate_structural_integrity(measures)
+            self.validate_temporal_coherence(measures)
+            self.validate_business_rules(measures)
+            self.validate_data_coverage(measures)
+            self.validate_statistical_outliers(measures)
+
+            # Rapport final
+            self.print_report()
+
+            # Sauvegarder les anomalies en BDD
+            self.save_anomalies_to_db()
+
+            # Envoi de l'alerte email
+            self.send_alert_email(strict_mode)
+
+            # Retourner True si pas de problèmes critiques
+            return len(self.issues['critical']) == 0
+
+        except Exception as e:
+            print(f"\nERREUR lors de la validation: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
         
     def print_report(self) -> None:
         """Affiche le rapport de validation"""

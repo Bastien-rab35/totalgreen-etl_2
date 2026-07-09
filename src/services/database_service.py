@@ -32,14 +32,24 @@ class DatabaseService:
     
     def get_all_cities(self) -> List[Dict]:
         """
-        Récupère toutes les villes du référentiel
+        Récupère toutes les villes du référentiel (depuis dim_city)
         
         Returns:
             Liste des villes avec leurs coordonnées
         """
         try:
-            response = self.client.table('cities').select('*').execute()
-            return response.data
+            response = self.client.table('dim_city').select('city_id, city_name, latitude, longitude, timezone').execute()
+            # Mapping pour conserver la rétrocompatibilité (les scripts attendent 'id' et 'name')
+            cities = []
+            for row in response.data:
+                cities.append({
+                    'id': row['city_id'],
+                    'name': row['city_name'],
+                    'latitude': row['latitude'],
+                    'longitude': row['longitude'],
+                    'timezone': row['timezone']
+                })
+            return cities
         except Exception as e:
             logger.error(f"Erreur lors de la récupération des villes: {e}")
             return []
