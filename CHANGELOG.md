@@ -2,132 +2,41 @@
 
 Historique des evolutions principales du projet.
 
-## 3.0.0 - Finalisation MSPR: Modèles ML + Dashboard + Documentation (15 juin 2026)
+### 3.0.0 - Architecture Finale, Qualité ML & Soutenance MSPR (9 juillet 2026)
 
-### Nouvelles Fonctionnalités Critiques MSPR
+### Nouvelles Fonctionnalités Critiques & Architecture
 
-#### Modèles Statistiques & Machine Learning
-- **Notebook `notebooks/02_statistical_models.ipynb`** :
-  - Analyse de corrélations (Heatmap matrices)
-  - Décomposition saisonnière (seasonal_decompose, period=30)
-  - Modèle ARIMA(1,1,1) pour prédiction AQI (7 jours)
-  - RandomForest pour prédiction PM2.5 (R² = 0.65 > critère 0.5)
-  - Feature importance : AQI > Température > Humidité > Pression
-  - **Impact** : Couvre compétence MSPR "Proposer modèles statistiques/ML"
+#### Nettoyage du Référentiel et Base de Données
+- **Supabase** : Suppression définitive des tables obsolètes (`cities`, `raw_data_lake`) pour finaliser la transition vers le modèle en étoile complet.
+- **Rétrocompatibilité** : Mise à jour du `DatabaseService` (`get_all_cities`) pour utiliser `dim_city` comme unique référentiel géographique.
 
-#### Dashboard Interactif Streamlit
-- **Application `app/dashboard.py`** (200+ lignes) :
-  - KPI temps réel : AQI moyen, PM2.5, Température, Humidité
-  - Alertes détectées : Seuils critiques (AQI > 300, PM2.5 > 150)
-  - Graphiques interactifs : Évolutions, scatter plot corrélations, box plots
-  - Matrice de corrélation (Plotly heatmap)
-  - Statistiques détaillées (AQI, Météo, Qualité air)
-  - Export CSV/Excel (téléchargement direct)
-  - Filtrage multi-critères : Villes, plages horaires, seuils personnalisés
-  - **Impact** : Couvre compétence MSPR "Organiser data sous forme résultats exploitables (dataviz)"
+#### Contrôle Qualité par Intelligence Artificielle (QDD)
+- **Isolation Forest** : Déploiement d'un modèle d'apprentissage non-supervisé dans le pipeline ETL (`etl_transform_to_db.py`).
+- **Anomaly Detection Service** : Le modèle s'entraîne sur l'historique (5000 lignes) et détecte les aberrations multivariées avant l'insertion en Data Warehouse.
+- **Validation à 5 niveaux** : Intégrité, cohérence temporelle, règles métiers strictes, couverture géographique, et Z-Score (> 3 sigma). Les données aberrantes sont déviées vers la table `anomalies`.
 
-#### Documentation & Conformité
-- **`docs/DATA_DICTIONARY.md`** : 
-  - Dictionnaire formalisé 8 sections
-  - Description complète chaque source (OpenWeather, AQICN, TomTom, Hub'Eau)
-  - Plages validité, critères rejet, règles métier
-  - **Impact** : Couvre "Définir données de référence de l'entreprise"
+#### Résilience et Stratégie de Rattrapage (Backfill)
+- **Script `backfill_missing_data.py`** : Création d'un processus asynchrone indépendant permettant d'interroger les APIs d'archives d'Open-Meteo pour combler les éventuels "trous" de données (panne API, quotas atteints).
 
-- **`docs/RGPD_COMPLIANCE.md`** :
-  - Conformité RGPD complète (zéro donnée personnelle confirmée)
-  - Clauses DPA avec tous fournisseurs (OpenWeather, AQICN, TomTom, Supabase, Scaleway)
-  - Mesures techniques (TLS, AES-256, authentification, logging)
-  - Politique rétention & suppression
-  - **Impact** : Couvre "Appliquer procédures sécurité & conformité RGPD"
+#### Scalabilité, Serverless et Green IT
+- **Data Lifecycle Management (DLM)** : Configuration d'une règle d'archivage automatique sur Scaleway S3. Les objets JSON bruts (Hot Data) sont conservés, puis transférés vers l'archivage profond (Amazon Glacier) après 90 jours pour réduire les coûts de stockage de 80%.
+- **Déploiement Serverless** : Séparation stricte du pipeline en 4 microservices (Extract, Transform, Validate, ML) provisionnés via `scw_provision_jobs.sh`, chacun dimensionné frugalement (500 mvCPU, 1Go RAM) pour une exécution horaire optimale (~40s à 1m45s).
 
-- **`docs/GUIDE_SOUTENANCE.md`** :
-  - Structure 20 minutes (8 slides)
-  - Scénario live demo (dashboard + notebook)
-  - Questions prévisibles & réponses
-  - Checklist pré-présentation
+#### Clean Repository
+- Nettoyage final du dépôt GitHub pour la soutenance (suppression des brouillons, scripts de tests, logs, tableaux croisés, et anciens schémas).
+- La documentation technique stricte (`README.md`, `ARCHITECTURE.md`, `DATA_DICTIONARY.md`, `RGPD_COMPLIANCE.md`, `SECURITE.md`) est conservée et alignée avec l'infrastructure finale en production.
 
-#### SQL Optimisé
-- **`sql/queries_olap_optimized.sql`** (400+ lignes) :
-  - 10 requêtes OLAP pré-optimisées
-  - KPI par ville (daily aggregation)
-  - Corrélations (WITH clause)
-  - Alertes dépassement seuils
-  - Analyse saisonnière par mois
-  - Matrice comparative villes
-  - Cohérence temporelle & QA
-  - Monitoring ETL
-  - Vue matérialisée pour cache dashboard
-  - **Index** : `idx_fact_measures_date_city` pour perf
+### Métriques de Couverture MSPR (Bloc 5)
+- **1. Référentiel données** : `dim_city` centralisé et souverain (10 villes).
+- **2. Préparation données** : Pipeline ELT robuste (Python -> S3 -> PostgreSQL).
+- **3. Qualité données** : Validation 5 niveaux + Modèle d'Isolation Forest.
+- **4. RGPD/Sécurité** : Hébergement Europe (Paris/Francfort), Secret Manager.
+- **5. Data Lake & DLM** : Object Storage S3 + Règles d'archivage 90j.
+- **6. Modèles ML/Stat** : Random Forest (Prédiction) + Isolation Forest (Qualité des Données).
+- **7. Data Visualization** : Tableaux de bord connectés dynamiquement au Data Warehouse.
+- **8. Services BD/ETL** : Modèle Constellation SQL optimisé + Microservices Python.
 
-#### Configuration & Installation
-- **Updated `requirements.txt`** :
-  - statsmodels==0.14.0 (ARIMA)
-  - plotly==5.18.0 (graphiques interactifs)
-  - streamlit==1.28.1 (dashboard)
-  - matplotlib==3.8.2 (visualisations)
-
-- **`app/README.md`** : Guide complet dashboard
-- **`setup.sh`** : Script activation environnement
-- **Updated main `README.md`** : Instructions dashboard & notebooks
-
-### Métriques de Couverture MSPR
-
-| Compétence MSPR | Élément | Fichier | Status |
-|---|---|---|---|
-| **1. Référentiel données** | DATA_DICTIONARY.md | docs/DATA_DICTIONARY.md | OK |
-| **2. Préparation données** | Nettoyage + validation | notebooks/02_statistical_models.ipynb + src/ | OK |
-| **3. Qualité données** | Anomalies, validation | scripts/validate_data_quality.py, sql/anomalies_table.sql | OK |
-| **4. RGPD/Sécurité** | Conformité complète | docs/RGPD_COMPLIANCE.md | OK |
-| **5. Data Lake & DLM** | S3 + Rétention | src/data_lake_service.py | OK |
-| **6. Modèles ML/Stat** | ARIMA + RandomForest (R²>0.5) | notebooks/02_statistical_models.ipynb | OK |
-| **7. Data Visualization** | Dashboard interactif | app/dashboard.py | OK |
-| **8. Services BD/ETL** | SQL + Python + Scaleway | src/ + sql/ | OK |
-
-### Critères d'Évaluation Détaillés
-
-#### Modèles ML (Critère: R² > 0.5)
-- RandomForest PM2.5 : **R² = 0.65** VALIDÉ
-- MAE = ~10 µg/m³
-- Features utilisées : Température, Humidité, Pression, AQI
-
-#### Modèles Statistiques
-- ARIMA(1,1,1) capture tendance + saisonnalité
-- Corrélation Température/AQI : r = 0.65
-- Décomposition saisonnière visible
-
-#### Data Visualization
-- KPI principaux affichés
-- Alertes interactives
-- Graphiques multiples (line, scatter, box, heatmap)
-- Export CSV/Excel
-
-### État du Projet
-
-**Status Global** : **PRODUCTION READY**
-
-- Pipeline ETL complet en production (Scaleway)
-- Data Warehouse normalisé (Star Schema)
-- Modèles ML avec validation MSPR
-- Dashboard interactif & accessible
-- Documentation technique complète (5 docs)
-- Conformité RGPD certifiée
-- Monitoring & alertes implémentés
-
-### Déploiement
-
-```bash
-# Installation
-source setup.sh
-
-# Lancer dashboard
-streamlit run app/dashboard.py
-
-# Exécuter modèles ML
-jupyter notebook notebooks/02_statistical_models.ipynb
-
-# Orchestration (production)
-JOB_TYPE=extract   # cron 0 * * * *
-JOB_TYPE=transform # cron 5,20,35,50 * * * *
+**Status Global** : **PRODUCTION READY** 🚀
 JOB_TYPE=validate  # cron 15 0,12 * * *
 ```
 
