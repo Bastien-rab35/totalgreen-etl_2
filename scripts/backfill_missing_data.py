@@ -63,6 +63,25 @@ def fetch_aqi_history(lat, lon, start_date, end_date):
     print(f"Erreur AQI: {response.text}")
     return None
 
+def fetch_traffic_history(lat, lon, start_date, end_date):
+    """
+    [HYPOTHÉTIQUE] Récupère l'historique du trafic.
+    Note pour le jury : L'API historique de TomTom (Traffic Stats) nécessite une licence Premium Enterprise.
+    Dans une vraie situation de backfill complet, on appellerait cet endpoint ici.
+    """
+    # url = "https://api.tomtom.com/traffic/trafficstats/historical/..."
+    # return requests.get(url, params=...).json()
+    return {"status": "hypothetical_success", "data": []}
+
+def fetch_water_history(lat, lon, start_date, end_date):
+    """
+    [HYPOTHÉTIQUE] Récupère l'historique des nappes phréatiques.
+    L'API Hub'Eau possède bien un endpoint historique (chroniques) que l'on pourrait interroger ici.
+    """
+    # url = "https://hubeau.eaufrance.fr/api/v1/nappes/chroniques"
+    # return requests.get(url, params=...).json()
+    return {"status": "hypothetical_success", "data": []}
+
 def main():
     print("Démarrage du script de backfill...")
     conn = get_db_connection()
@@ -80,9 +99,11 @@ def main():
         
         weather_data = fetch_weather_history(lat, lon, START_DATE, END_DATE)
         aqi_data = fetch_aqi_history(lat, lon, START_DATE, END_DATE)
+        traffic_data = fetch_traffic_history(lat, lon, START_DATE, END_DATE)
+        water_data = fetch_water_history(lat, lon, START_DATE, END_DATE)
         
         if not weather_data or not aqi_data:
-            print(f"  -> Données manquantes pour {name}, on passe.")
+            print(f"  -> Données Météo/AQI manquantes pour {name}, on passe.")
             continue
             
         # Parcourir les heures
